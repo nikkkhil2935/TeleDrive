@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   Play,
@@ -10,7 +10,6 @@ import {
   Trash2,
   FolderPlus,
   X,
-  Filter,
   ArrowUpDown,
   UploadCloud,
   RefreshCw,
@@ -20,7 +19,9 @@ import {
   Check,
   ChevronRight,
   ChevronDown,
-  MapPin,
+  Grid3X3,
+  Grid2X2,
+  LayoutGrid,
   Image as ImageIcon
 } from 'lucide-react';
 import { db } from '../db';
@@ -38,6 +39,7 @@ export const TimelineView: React.FC = () => {
     selectAllIds,
     clearSelection,
     gridDensity,
+    setGridDensity,
     mediaFilter,
     setMediaFilter,
     sortOption,
@@ -60,17 +62,30 @@ export const TimelineView: React.FC = () => {
 
   // Scrubber Hover State
   const [hoveredScrubYear, setHoveredScrubYear] = useState<number | null>(null);
+  // Shift-click range anchor
+  const [lastSelectedId, setLastSelectedId] = useState<number | null>(null);
+
+  // Keyboard shortcut: Escape clears selection
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedIds.size > 0) {
+        clearSelection();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedIds, clearSelection]);
 
   const allMedia = useLiveQuery(
     async () => {
       try {
         let items = await db.media.toArray();
 
-        // Security & Account Isolation: Scoped strictly to current authenticated Telegram channel / account
+        // Account & Channel Isolation
         if (session?.channelId) {
           items = items.filter(m => m.libraryId === session.channelId || (session.userId && m.libraryId === session.userId));
         } else if (!session) {
-          return []; // If not logged in, show ZERO photos
+          return [];
         }
 
         // Filter by Tab (matching Google Photos collections)
@@ -188,7 +203,7 @@ export const TimelineView: React.FC = () => {
       const d = new Date(item.takenAt);
       const year = isNaN(d.getFullYear()) ? new Date().getFullYear() : d.getFullYear();
 
-      // Format like Google Photos: "Tuesday", "Monday", "Sunday"
+      // Format like Google Photos: "Tuesday, Nov 21", "Sunday, Apr 12"
       let dateKey = 'Recent';
       if (!isNaN(d.getTime())) {
         const weekday = d.toLocaleDateString(undefined, { weekday: 'long' });
@@ -244,17 +259,45 @@ export const TimelineView: React.FC = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Dense grid column class matching Google Photos desktop specs (3-5px gaps)
   const getGridColsClass = () => {
     if (gridDensity === 'small') {
-      return 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9 gap-1.5';
+      return 'grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-9 xl:grid-cols-10 gap-1';
     }
     if (gridDensity === 'large') {
-      return 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4';
+      return 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5';
     }
-    return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2';
+    // Default Medium (Dense Google Photos standard)
+    return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-1 sm:gap-1.5';
   };
 
   const isSelectionActive = selectedIds.size > 0;
+
+  // Toggle selection with Shift-Click range support (Spec Phase 5)
+  const handleItemClick = (e: React.MouseEvent, item: MediaItem) => {
+    if (e.shiftKey && lastSelectedId !== null && allMedia) {
+      // Range selection
+      const fromIdx = allMedia.findIndex(m => m.messageId === lastSelectedId);
+      const toIdx = allMedia.findIndex(m => m.messageId === item.messageId);
+      if (fromIdx !== -1 && toIdx !== -1) {
+        const start = Math.min(fromIdx, toIdx);
+        const end = Math.max(fromIdx, toIdx);
+        const newIds = new Set(selectedIds);
+        for (let i = start; i <= end; i++) {
+          newIds.add(allMedia[i].messageId);
+        }
+        selectAllIds(Array.from(newIds));
+        return;
+      }
+    }
+
+    if (isSelectionActive || e.metaKey || e.ctrlKey) {
+      toggleSelectId(item.messageId);
+      setLastSelectedId(item.messageId);
+    } else {
+      setSelectedMedia(item);
+    }
+  };
 
   const handleToggleGroupSelection = (items: MediaItem[]) => {
     const itemIds = items.map(i => i.messageId);
@@ -274,12 +317,12 @@ export const TimelineView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex overflow-hidden relative bg-white dark:bg-[#131314]">
+    <div className="flex-1 flex overflow-hidden relative bg-[#F8FAFD] dark:bg-[#131314]">
       {/* Main Timeline Scrollable Container */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 space-y-6 flex flex-col pr-8 sm:pr-12">
-        {/* Top Memories / Highlights Carousel (Screenshot 3) */}
+      <div ref={containerRef} className="flex-1 overflow-y-auto px-4 sm:px-8 py-3 sm:py-5 space-y-5 flex flex-col pr-8 sm:pr-12">
+        {/* Top Memories / Highlights Carousel (Spec Phase 4 & Screenshot 3) */}
         {activeTab === 'photos' && memoriesList.length > 0 && (
-          <div className="relative group/memories">
+          <div className="relative group/memories pt-1">
             <div
               ref={memoriesScrollRef}
               className="flex items-center gap-3.5 overflow-x-auto no-scrollbar scroll-smooth py-1"
@@ -288,7 +331,7 @@ export const TimelineView: React.FC = () => {
                 <div
                   key={i}
                   onClick={() => mem.media && setSelectedMedia(mem.media)}
-                  className="relative shrink-0 w-44 sm:w-52 h-64 sm:h-72 rounded-3xl overflow-hidden cursor-pointer select-none shadow-md group hover:scale-[1.02] transition-transform duration-300"
+                  className="relative shrink-0 w-44 sm:w-52 h-60 sm:h-68 rounded-3xl overflow-hidden cursor-pointer select-none shadow-sm hover:shadow-md group hover:scale-[1.015] transition-transform duration-300 bg-slate-200 dark:bg-slate-800"
                 >
                   {mem.media?.thumbnailDataUrl ? (
                     <img
@@ -301,12 +344,12 @@ export const TimelineView: React.FC = () => {
                   )}
 
                   {/* Bottom Vignette & Google Photos Typography */}
-                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex flex-col justify-end text-white">
+                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 via-black/35 to-transparent flex flex-col justify-end text-white">
                     <h3 className="font-semibold text-sm sm:text-base leading-tight drop-shadow-md">
                       {mem.title}
                     </h3>
                     {mem.sub && (
-                      <p className="text-[11px] text-white/70 mt-0.5">
+                      <p className="text-[11px] text-white/75 mt-0.5 font-normal">
                         {mem.sub}
                       </p>
                     )}
@@ -315,22 +358,22 @@ export const TimelineView: React.FC = () => {
               ))}
             </div>
 
-            {/* Scroll Right Button (Round dark button with chevron > from Screenshot 3) */}
+            {/* Scroll Right Chevron Arrow Button (Screenshot 3) */}
             <button
               onClick={scrollMemoriesRight}
               title="Next memories"
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1a73e8] hover:bg-[#1557b0] text-white flex items-center justify-center shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 border border-white/20"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-[#A8C7FA] dark:hover:bg-[#8AB4F8] text-white dark:text-[#041E49] flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-5 h-5 stroke-[2.5]" />
             </button>
           </div>
         )}
 
-        {/* Sub-Header: Filter Chips, Sort, & Album Breadcrumb */}
-        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 pb-2 border-b border-slate-200 dark:border-[#282a2c]">
+        {/* Sub-Header: Filter Chips, Density Switcher & Sort */}
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 pb-2 border-b border-slate-200 dark:border-[#444746]/40">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {selectedAlbum && (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-600 dark:text-sky-400 text-xs font-semibold">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D3E3FD] dark:bg-[#004A77] text-[#041E49] dark:text-[#C2E7FF] text-xs font-semibold">
                 <span>Album: {selectedAlbum}</span>
                 <button onClick={() => setSelectedAlbum(null)} className="hover:text-sky-300">
                   <X className="w-3.5 h-3.5" />
@@ -338,14 +381,14 @@ export const TimelineView: React.FC = () => {
               </div>
             )}
 
-            {/* Filter Chips */}
-            <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-100 dark:bg-[#1e1f20] rounded-xl border border-slate-200 dark:border-[#333538] text-[11px] sm:text-xs">
+            {/* Filter Chips (Spec Phase 5) */}
+            <div className="flex items-center gap-0.5 p-0.5 bg-[#F0F4F9] dark:bg-[#1E1F20] rounded-xl text-[11px] sm:text-xs">
               <button
                 onClick={() => setMediaFilter('all')}
                 className={`px-3 py-1 rounded-lg font-medium transition-all ${
                   mediaFilter === 'all'
-                    ? 'bg-white dark:bg-[#282a2c] text-[#0b57d0] dark:text-[#a8c7fa] shadow-xs'
-                    : 'text-slate-500 dark:text-[#8e918f] hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-[#282A2C] text-[#0B57D0] dark:text-[#A8C7FA] shadow-xs'
+                    : 'text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-white'
                 }`}
               >
                 All Media
@@ -354,8 +397,8 @@ export const TimelineView: React.FC = () => {
                 onClick={() => setMediaFilter('photo')}
                 className={`px-3 py-1 rounded-lg font-medium transition-all ${
                   mediaFilter === 'photo'
-                    ? 'bg-white dark:bg-[#282a2c] text-[#0b57d0] dark:text-[#a8c7fa] shadow-xs'
-                    : 'text-slate-500 dark:text-[#8e918f] hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-[#282A2C] text-[#0B57D0] dark:text-[#A8C7FA] shadow-xs'
+                    : 'text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-white'
                 }`}
               >
                 Photos
@@ -364,8 +407,8 @@ export const TimelineView: React.FC = () => {
                 onClick={() => setMediaFilter('video')}
                 className={`px-3 py-1 rounded-lg font-medium transition-all ${
                   mediaFilter === 'video'
-                    ? 'bg-white dark:bg-[#282a2c] text-[#0b57d0] dark:text-[#a8c7fa] shadow-xs'
-                    : 'text-slate-500 dark:text-[#8e918f] hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-[#282A2C] text-[#0B57D0] dark:text-[#A8C7FA] shadow-xs'
+                    : 'text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-white'
                 }`}
               >
                 Videos
@@ -373,42 +416,81 @@ export const TimelineView: React.FC = () => {
             </div>
           </div>
 
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
-            <span className="text-slate-400 dark:text-[#8e918f] flex items-center gap-1 font-medium">
-              <ArrowUpDown className="w-3.5 h-3.5" /> Sort:
-            </span>
-            <select
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value as any)}
-              className="bg-slate-100 dark:bg-[#1e1f20] border border-slate-200 dark:border-[#333538] rounded-lg px-2.5 py-1 text-slate-700 dark:text-[#e3e3e3] focus:outline-none focus:border-sky-500 font-medium cursor-pointer"
-            >
-              <option value="date-desc">Newest First</option>
-              <option value="date-asc">Oldest First</option>
-              <option value="size-desc">Largest First</option>
-              <option value="size-asc">Smallest First</option>
-              <option value="name-asc">Filename (A-Z)</option>
-            </select>
+          <div className="flex items-center gap-3">
+            {/* Grid Density Switcher (Spec Phase 5) */}
+            <div className="hidden sm:flex items-center p-0.5 bg-[#F0F4F9] dark:bg-[#1E1F20] rounded-xl text-[#5F6368] dark:text-[#C2C7CF]">
+              <button
+                onClick={() => setGridDensity('small')}
+                title="Dense Grid"
+                className={`p-1.5 rounded-lg transition-all ${
+                  gridDensity === 'small'
+                    ? 'bg-white dark:bg-[#282A2C] text-[#0B57D0] dark:text-[#A8C7FA] shadow-xs'
+                    : 'hover:text-[#1F1F1F] dark:hover:text-white'
+                }`}
+              >
+                <Grid3X3 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setGridDensity('medium')}
+                title="Standard Grid"
+                className={`p-1.5 rounded-lg transition-all ${
+                  gridDensity === 'medium'
+                    ? 'bg-white dark:bg-[#282A2C] text-[#0B57D0] dark:text-[#A8C7FA] shadow-xs'
+                    : 'hover:text-[#1F1F1F] dark:hover:text-white'
+                }`}
+              >
+                <Grid2X2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setGridDensity('large')}
+                title="Large Grid"
+                className={`p-1.5 rounded-lg transition-all ${
+                  gridDensity === 'large'
+                    ? 'bg-white dark:bg-[#282A2C] text-[#0B57D0] dark:text-[#A8C7FA] shadow-xs'
+                    : 'hover:text-[#1F1F1F] dark:hover:text-white'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs">
+              <span className="text-[#5F6368] dark:text-[#C2C7CF] flex items-center gap-1 font-medium">
+                <ArrowUpDown className="w-3.5 h-3.5" /> Sort:
+              </span>
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as any)}
+                className="bg-[#F0F4F9] dark:bg-[#1E1F20] border-none rounded-lg px-2.5 py-1 text-[#1F1F1F] dark:text-[#E3E3E3] focus:outline-none font-medium cursor-pointer"
+              >
+                <option value="date-desc">Newest First</option>
+                <option value="date-asc">Oldest First</option>
+                <option value="size-desc">Largest First</option>
+                <option value="size-asc">Smallest First</option>
+                <option value="name-asc">Filename (A-Z)</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Floating Multi-Selection Action Bar */}
+        {/* Floating Contextual Selection Action Bar (Spec Phase 5) */}
         {isSelectionActive && (
-          <div className="sticky top-2 z-30 mx-auto max-w-xl w-full bg-[#1e1f20] text-white px-5 py-2.5 rounded-full shadow-2xl backdrop-blur-xl flex items-center justify-between animate-in slide-in-from-top-3 zoom-in-95 duration-200 border border-sky-500/30 gap-3 ring-1 ring-white/10">
+          <div className="sticky top-2 z-30 mx-auto max-w-xl w-full bg-[#1E1F20] text-white px-5 py-2.5 rounded-full shadow-2xl backdrop-blur-xl flex items-center justify-between animate-in slide-in-from-top-3 zoom-in-95 duration-200 border border-sky-500/30 gap-3 ring-1 ring-white/10">
             <div className="flex items-center gap-3 shrink-0">
               <button
                 onClick={clearSelection}
                 className="p-1 rounded-full hover:bg-white/10 active:scale-95 text-slate-400 hover:text-white transition-all"
-                title="Clear Selection"
+                title="Clear Selection (Esc)"
               >
                 <X className="w-4 h-4" />
               </button>
-              <span className="text-xs font-semibold bg-sky-500/20 text-sky-400 px-2.5 py-0.5 rounded-full border border-sky-500/30">
+              <span className="text-xs font-semibold bg-[#0B57D0]/40 text-[#A8C7FA] px-2.5 py-0.5 rounded-full border border-sky-400/30">
                 {selectedIds.size} selected
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <button
                 onClick={bulkToggleFavorite}
                 title="Favorite Selected"
@@ -467,25 +549,25 @@ export const TimelineView: React.FC = () => {
               />
 
               <div className="relative mb-6">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-500 shadow-xl">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-[#D3E3FD] dark:bg-[#004A77] flex items-center justify-center text-[#0B57D0] dark:text-[#A8C7FA] shadow-sm">
                   <ImageIcon className="w-10 h-10 sm:w-12 sm:h-12" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#1a73e8] text-white flex items-center justify-center shadow-lg">
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#0B57D0] dark:bg-[#A8C7FA] text-white dark:text-[#041E49] flex items-center justify-center shadow-md">
                   <Sparkles className="w-4 h-4" />
                 </div>
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 dark:text-[#e3e3e3] tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#1F1F1F] dark:text-[#E3E3E3] tracking-tight">
                 Your Photos & Videos Live Here
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-[#8e918f] mt-2 max-w-md leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#5F6368] dark:text-[#C2C7CF] mt-2 max-w-md leading-relaxed">
                 Back up unlimited photos and videos directly to your Telegram cloud. Saved in original resolution with zero compression.
               </p>
 
               <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-medium text-xs sm:text-sm px-5 py-2.5 rounded-full shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="gp-btn-primary"
                 >
                   <UploadCloud className="w-4 h-4" />
                   <span>Upload Photos & Videos</span>
@@ -494,38 +576,38 @@ export const TimelineView: React.FC = () => {
                 <button
                   onClick={syncLibrary}
                   disabled={isSyncing}
-                  className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#1e1f20] dark:hover:bg-[#282a2c] text-slate-700 dark:text-[#c4c7c5] font-medium text-xs sm:text-sm px-4 py-2.5 rounded-full border border-slate-200 dark:border-[#333538] transition-colors"
+                  className="gp-btn-tonal"
                 >
-                  <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-sky-500' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-[#0B57D0]' : ''}`} />
                   <span>{isSyncing ? 'Syncing...' : 'Sync from Telegram'}</span>
                 </button>
               </div>
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-12 text-center select-none">
-              <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-[#1e1f20] border border-slate-200 dark:border-[#333538] flex items-center justify-center text-slate-400 dark:text-[#8e918f] mb-4 shadow-xs">
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-[#1E1F20] flex items-center justify-center text-slate-400 dark:text-[#8E918F] mb-4 shadow-xs">
                 <ImageOff className="w-8 h-8" />
               </div>
-              <h3 className="text-base font-semibold text-slate-800 dark:text-[#e3e3e3]">No media found</h3>
-              <p className="text-xs text-slate-500 dark:text-[#8e918f] max-w-sm mt-1">
+              <h3 className="text-base font-semibold text-[#1F1F1F] dark:text-[#E3E3E3]">No media found</h3>
+              <p className="text-xs text-[#5F6368] dark:text-[#C2C7CF] max-w-sm mt-1">
                 No items matching current filter in {activeTab}.
               </p>
             </div>
           )
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {groupedMedia.map((group) => {
               const allGroupSelected = group.items.every(i => selectedIds.has(i.messageId));
 
               return (
-                <section key={group.label} id={`year-anchor-${group.year}`} className="space-y-2">
-                  {/* Sticky Date Header (Google Photos Screenshot 3) */}
-                  <div className="flex items-center justify-between sticky top-0 bg-white/95 dark:bg-[#131314]/95 backdrop-blur-md py-2 z-10">
+                <section key={group.label} id={`year-anchor-${group.year}`} className="space-y-1.5">
+                  {/* Sticky Date Header (Google Photos Desktop Reference) */}
+                  <div className="flex items-center justify-between sticky top-0 bg-[#F8FAFD]/95 dark:bg-[#131314]/95 backdrop-blur-md py-1.5 z-10">
                     <div className="flex items-baseline gap-2">
-                      <h2 className="text-sm font-medium text-slate-800 dark:text-[#e3e3e3] flex items-center gap-1.5 cursor-pointer group/title">
+                      <h2 className="text-sm font-medium text-[#1F1F1F] dark:text-[#E3E3E3] flex items-center gap-1.5 cursor-pointer group/title">
                         <span>{group.label}</span>
                         {group.location && (
-                          <span className="text-xs text-slate-500 dark:text-[#8e918f] font-normal flex items-center gap-0.5">
+                          <span className="text-xs text-[#5F6368] dark:text-[#C2C7CF] font-normal flex items-center gap-0.5">
                             {group.location} <ChevronDown className="w-3.5 h-3.5 inline text-slate-400" />
                           </span>
                         )}
@@ -537,8 +619,8 @@ export const TimelineView: React.FC = () => {
                       title={allGroupSelected ? 'Deselect this day' : 'Select all photos for this day'}
                       className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
                         allGroupSelected
-                          ? 'bg-[#1a73e8] text-white'
-                          : 'text-slate-400 hover:text-slate-700 dark:hover:text-[#e3e3e3] hover:bg-slate-100 dark:hover:bg-[#1e1f20]'
+                          ? 'bg-[#0B57D0] dark:bg-[#A8C7FA] text-white dark:text-[#041E49]'
+                          : 'text-slate-400 hover:text-slate-700 dark:hover:text-[#E3E3E3] hover:bg-slate-200/50 dark:hover:bg-[#1E1F20]'
                       }`}
                     >
                       <Check className="w-3.5 h-3.5" />
@@ -546,7 +628,7 @@ export const TimelineView: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* Photo Grid with Video duration badge & Google Photos Hover selection */}
+                  {/* Dense Photo Grid with 3-5px gaps, 6-8px border radius, no distortion */}
                   <div className={`grid ${getGridColsClass()}`}>
                     {group.items.map((item) => {
                       const isSelected = selectedIds.has(item.messageId);
@@ -554,17 +636,11 @@ export const TimelineView: React.FC = () => {
                       return (
                         <div
                           key={item.messageId}
-                          onClick={() => {
-                            if (isSelectionActive) {
-                              toggleSelectId(item.messageId);
-                            } else {
-                              setSelectedMedia(item);
-                            }
-                          }}
-                          className={`group photo-card relative aspect-square bg-slate-100 dark:bg-[#1e1f20] overflow-hidden cursor-pointer select-none transition-all duration-200 ${
+                          onClick={(e) => handleItemClick(e, item)}
+                          className={`group photo-card relative aspect-square bg-slate-200 dark:bg-[#1E1F20] overflow-hidden cursor-pointer select-none rounded-md sm:rounded-lg ${
                             isSelected
-                              ? 'ring-4 ring-[#1a73e8] scale-[0.96] rounded-xl'
-                              : 'hover:brightness-95 hover:scale-[1.01] rounded-lg'
+                              ? 'ring-3 ring-[#0B57D0] dark:ring-[#A8C7FA] scale-[0.96]'
+                              : ''
                           }`}
                         >
                           {item.thumbnailDataUrl ? (
@@ -575,21 +651,22 @@ export const TimelineView: React.FC = () => {
                               loading="lazy"
                             />
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-[#1e1f20] p-2 text-center">
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-[#1E1F20] p-2 text-center">
                               <ImageIcon className="w-6 h-6 text-slate-400 dark:text-slate-600 mb-1" />
                               <span className="text-[10px] text-slate-400 truncate max-w-full font-mono">{item.filename}</span>
                             </div>
                           )}
 
-                          {/* Hover Checkmark (Top Left Circle - Google Photos Screenshot 3) */}
+                          {/* Hover Checkmark (Top Left Circle - Google Photos Desktop) */}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleSelectId(item.messageId);
+                              setLastSelectedId(item.messageId);
                             }}
-                            className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all ${
+                            className={`absolute top-1.5 left-1.5 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all ${
                               isSelected
-                                ? 'bg-[#1a73e8] text-white shadow-md'
+                                ? 'bg-[#0B57D0] dark:bg-[#A8C7FA] text-white dark:text-[#041E49] shadow-sm'
                                 : 'opacity-0 group-hover:opacity-100 bg-black/40 hover:bg-black/60 text-white backdrop-blur-xs'
                             }`}
                           >
@@ -598,14 +675,14 @@ export const TimelineView: React.FC = () => {
 
                           {/* Favorite Star Indicator */}
                           {item.isFavorite && (
-                            <div className="absolute top-2 right-2 z-10 p-1 rounded-full bg-black/40 backdrop-blur-xs text-amber-400">
+                            <div className="absolute top-1.5 right-1.5 z-10 p-1 rounded-full bg-black/40 backdrop-blur-xs text-amber-400">
                               <Heart className="w-3.5 h-3.5 fill-amber-400" />
                             </div>
                           )}
 
-                          {/* Video Duration Badge (Screenshot 3: e.g. 0:17, 0:26 with play icon) */}
+                          {/* Video Duration Badge (Play icon + 0:17) */}
                           {item.kind === 'video' && (
-                            <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-white text-[11px] font-medium flex items-center gap-1">
+                            <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-white text-[11px] font-medium flex items-center gap-1">
                               <span className="text-[10px] font-mono">{formatDuration(item.durationMs)}</span>
                               <Play className="w-2.5 h-2.5 fill-white" />
                             </div>
@@ -621,9 +698,9 @@ export const TimelineView: React.FC = () => {
         )}
       </div>
 
-      {/* Google Photos Vertical Date Scrubber */}
+      {/* Google Photos Vertical Date Scrubber (Spec Phase 5) */}
       {availableYears.length > 0 && (
-        <div className="w-8 sm:w-10 border-l border-slate-200 dark:border-[#282a2c] bg-white dark:bg-[#131314] flex flex-col items-center justify-center py-6 select-none shrink-0 relative">
+        <div className="w-8 sm:w-10 border-l border-slate-200 dark:border-[#444746]/40 bg-[#F8FAFD] dark:bg-[#131314] flex flex-col items-center justify-center py-6 select-none shrink-0 relative">
           <div className="space-y-4 flex flex-col items-center">
             {availableYears.map((yr) => (
               <div
@@ -633,13 +710,13 @@ export const TimelineView: React.FC = () => {
                 onMouseLeave={() => setHoveredScrubYear(null)}
                 className="group relative flex items-center justify-center cursor-pointer py-1"
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-[#5e5e5e] group-hover:scale-150 group-hover:bg-[#1a73e8] transition-all" />
-                <span className="text-[10px] font-mono text-slate-400 dark:text-[#8e918f] group-hover:text-[#1a73e8] group-hover:font-bold ml-1 hidden sm:inline transition-colors">
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-[#5E5E5E] group-hover:scale-150 group-hover:bg-[#0B57D0] dark:group-hover:bg-[#A8C7FA] transition-all" />
+                <span className="text-[10px] font-mono text-[#5F6368] dark:text-[#C2C7CF] group-hover:text-[#0B57D0] dark:group-hover:text-[#A8C7FA] group-hover:font-bold ml-1 hidden sm:inline transition-colors">
                   {yr}
                 </span>
 
                 {hoveredScrubYear === yr && (
-                  <div className="absolute right-9 z-40 px-3.5 py-1.5 rounded-full bg-[#1a73e8] text-white font-bold text-xs shadow-xl animate-in fade-in zoom-in-75 slide-in-from-right-2 duration-150 whitespace-nowrap">
+                  <div className="absolute right-9 z-40 px-3 py-1 rounded-full bg-[#0B57D0] dark:bg-[#A8C7FA] text-white dark:text-[#041E49] font-bold text-xs shadow-md animate-in fade-in zoom-in-75 slide-in-from-right-2 duration-150 whitespace-nowrap">
                     {yr}
                   </div>
                 )}

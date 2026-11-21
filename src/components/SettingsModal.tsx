@@ -129,35 +129,35 @@ export const SettingsModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150 select-none">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl flex flex-col text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 select-none animate-in fade-in duration-150">
+      <div className="bg-[#FFFFFF] dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl flex flex-col text-[#1F1F1F] dark:text-[#E3E3E3] transition-colors">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-500 dark:text-sky-400 flex items-center justify-center font-bold">
-              <Settings className="w-4 h-4" />
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-[#444746]/40 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#D3E3FD] dark:bg-[#004A77] text-[#0B57D0] dark:text-[#C2E7FF] flex items-center justify-center font-bold">
+              <Settings className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-bold">Preferences & Security</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Customization, transfer speed & zero-knowledge security</p>
+              <h3 className="text-base font-medium text-[#1F1F1F] dark:text-[#E3E3E3]">Settings & Preferences</h3>
+              <p className="text-xs text-[#5F6368] dark:text-[#C2C7CF]">Appearance, performance & zero-knowledge security</p>
             </div>
           </div>
           <button
             onClick={() => setIsSettingsOpen(false)}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1.5 rounded-full hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center px-4 sm:px-6 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/40 text-xs font-semibold gap-2 pt-2">
+        <div className="flex items-center px-4 sm:px-6 border-b border-slate-100 dark:border-[#444746]/40 bg-[#F8FAFD] dark:bg-[#131314] text-xs font-medium gap-2 pt-2">
           <button
             onClick={() => setActiveTab('customization')}
             className={`pb-2.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
               activeTab === 'customization'
-                ? 'border-sky-500 text-sky-600 dark:text-sky-400'
-                : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                ? 'border-[#0B57D0] dark:border-[#A8C7FA] text-[#0B57D0] dark:text-[#A8C7FA] font-semibold'
+                : 'border-transparent text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-white'
             }`}
           >
             <Sliders className="w-3.5 h-3.5" />
@@ -168,8 +168,8 @@ export const SettingsModal: React.FC = () => {
             onClick={() => setActiveTab('speed')}
             className={`pb-2.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
               activeTab === 'speed'
-                ? 'border-sky-500 text-sky-600 dark:text-sky-400'
-                : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                ? 'border-[#0B57D0] dark:border-[#A8C7FA] text-[#0B57D0] dark:text-[#A8C7FA] font-semibold'
+                : 'border-transparent text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-white'
             }`}
           >
             <Zap className="w-3.5 h-3.5" />
@@ -180,8 +180,8 @@ export const SettingsModal: React.FC = () => {
             onClick={() => setActiveTab('security')}
             className={`pb-2.5 px-3 border-b-2 transition-all flex items-center gap-1.5 ${
               activeTab === 'security'
-                ? 'border-sky-500 text-sky-600 dark:text-sky-400'
-                : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                ? 'border-[#0B57D0] dark:border-[#A8C7FA] text-[#0B57D0] dark:text-[#A8C7FA] font-semibold'
+                : 'border-transparent text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-white'
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
@@ -196,14 +196,14 @@ export const SettingsModal: React.FC = () => {
             <div className="space-y-6">
               {/* Theme Selection */}
               <div className="space-y-2">
-                <label className="font-semibold text-slate-800 dark:text-slate-200">Theme & Visual Experience</label>
+                <label className="font-medium text-[#1F1F1F] dark:text-[#E3E3E3] text-sm">Theme & Visual Experience</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     onClick={() => setTheme('light')}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all ${
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all cursor-pointer ${
                       theme === 'light'
-                        ? 'border-sky-500 bg-sky-50 text-sky-600 shadow-sm'
-                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400'
+                        ? 'border-[#0B57D0] bg-[#D3E3FD]/40 text-[#041E49] shadow-xs'
+                        : 'border-slate-200 dark:border-[#444746]/40 hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#5F6368] dark:text-[#C2C7CF]'
                     }`}
                   >
                     <Sun className="w-4 h-4 text-amber-500" />
@@ -212,22 +212,22 @@ export const SettingsModal: React.FC = () => {
 
                   <button
                     onClick={() => setTheme('dark')}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all ${
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all cursor-pointer ${
                       theme === 'dark'
-                        ? 'border-sky-500 bg-sky-950/40 text-sky-400 shadow-sm'
-                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400'
+                        ? 'border-[#A8C7FA] bg-[#004A77]/40 text-[#C2E7FF] shadow-xs'
+                        : 'border-slate-200 dark:border-[#444746]/40 hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#5F6368] dark:text-[#C2C7CF]'
                     }`}
                   >
                     <Moon className="w-4 h-4 text-sky-400" />
-                    <span className="font-medium text-[11px]">Dark Slate</span>
+                    <span className="font-medium text-[11px]">Dark (Google)</span>
                   </button>
 
                   <button
                     onClick={() => setTheme('midnight')}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all ${
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all cursor-pointer ${
                       theme === 'midnight'
-                        ? 'border-sky-500 bg-black text-sky-400 shadow-sm'
-                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400'
+                        ? 'border-[#A8C7FA] bg-black text-[#A8C7FA] shadow-xs'
+                        : 'border-slate-200 dark:border-[#444746]/40 hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#5F6368] dark:text-[#C2C7CF]'
                     }`}
                   >
                     <div className="w-4 h-4 rounded-full bg-black border border-slate-700" />
@@ -236,10 +236,10 @@ export const SettingsModal: React.FC = () => {
 
                   <button
                     onClick={() => setTheme('system')}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all ${
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all cursor-pointer ${
                       theme === 'system'
-                        ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 shadow-sm'
-                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400'
+                        ? 'border-[#0B57D0] dark:border-[#A8C7FA] bg-[#D3E3FD]/30 dark:bg-[#004A77]/30 text-[#041E49] dark:text-[#C2E7FF] shadow-xs'
+                        : 'border-slate-200 dark:border-[#444746]/40 hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#5F6368] dark:text-[#C2C7CF]'
                     }`}
                   >
                     <Laptop className="w-4 h-4 text-slate-400" />
@@ -250,34 +250,34 @@ export const SettingsModal: React.FC = () => {
 
               {/* Grid Density */}
               <div className="space-y-2">
-                <label className="font-semibold text-slate-800 dark:text-slate-200">Gallery Grid Density</label>
+                <label className="font-medium text-[#1F1F1F] dark:text-[#E3E3E3] text-sm">Gallery Grid Density</label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => setGridDensity('small')}
-                    className={`p-2.5 rounded-xl border text-center transition-all ${
+                    className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer ${
                       gridDensity === 'small'
-                        ? 'border-sky-500 bg-sky-500/10 text-sky-500 font-semibold'
-                        : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                        ? 'border-[#0B57D0] dark:border-[#A8C7FA] bg-[#D3E3FD]/40 dark:bg-[#004A77]/40 text-[#0B57D0] dark:text-[#A8C7FA] font-semibold'
+                        : 'border-slate-200 dark:border-[#444746]/40 text-[#5F6368] dark:text-[#C2C7CF]'
                     }`}
                   >
-                    Compact (6-9)
+                    Dense (6-9)
                   </button>
                   <button
                     onClick={() => setGridDensity('medium')}
-                    className={`p-2.5 rounded-xl border text-center transition-all ${
+                    className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer ${
                       gridDensity === 'medium'
-                        ? 'border-sky-500 bg-sky-500/10 text-sky-500 font-semibold'
-                        : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                        ? 'border-[#0B57D0] dark:border-[#A8C7FA] bg-[#D3E3FD]/40 dark:bg-[#004A77]/40 text-[#0B57D0] dark:text-[#A8C7FA] font-semibold'
+                        : 'border-slate-200 dark:border-[#444746]/40 text-[#5F6368] dark:text-[#C2C7CF]'
                     }`}
                   >
                     Standard (4-6)
                   </button>
                   <button
                     onClick={() => setGridDensity('large')}
-                    className={`p-2.5 rounded-xl border text-center transition-all ${
+                    className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer ${
                       gridDensity === 'large'
-                        ? 'border-sky-500 bg-sky-500/10 text-sky-500 font-semibold'
-                        : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                        ? 'border-[#0B57D0] dark:border-[#A8C7FA] bg-[#D3E3FD]/40 dark:bg-[#004A77]/40 text-[#0B57D0] dark:text-[#A8C7FA] font-semibold'
+                        : 'border-slate-200 dark:border-[#444746]/40 text-[#5F6368] dark:text-[#C2C7CF]'
                     }`}
                   >
                     Large (2-4)
@@ -286,20 +286,20 @@ export const SettingsModal: React.FC = () => {
               </div>
 
               {/* Maintenance Tools */}
-              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <label className="font-semibold text-slate-800 dark:text-slate-200">Index & Rebuild</label>
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-[#444746]/40">
+                <label className="font-medium text-[#1F1F1F] dark:text-[#E3E3E3] text-sm">Index & Recovery</label>
                 <button
                   onClick={() => {
                     setIsSettingsOpen(false);
                     setIsRebuildModalOpen(true);
                   }}
-                  className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/80 transition-colors"
+                  className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-[#F8FAFD] dark:bg-[#131314] hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] border border-slate-200 dark:border-[#444746]/50 transition-colors cursor-pointer"
                 >
-                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                    <RefreshCw className="w-4 h-4 text-sky-500" />
-                    <span>Rebuild Index from Telegram Channel</span>
+                  <div className="flex items-center gap-2.5 text-[#1F1F1F] dark:text-[#E3E3E3]">
+                    <RefreshCw className="w-4 h-4 text-[#0B57D0] dark:text-[#A8C7FA]" />
+                    <span className="font-medium">Rebuild Index from Telegram Channel</span>
                   </div>
-                  <span className="text-[11px] text-slate-400">Full scan</span>
+                  <span className="text-[11px] text-[#5F6368] dark:text-[#C2C7CF]">Full scan</span>
                 </button>
               </div>
             </div>
@@ -308,32 +308,32 @@ export const SettingsModal: React.FC = () => {
           {/* TAB 2: SPEED ENGINE */}
           {activeTab === 'speed' && (
             <div className="space-y-4">
-              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-sky-500/10 to-indigo-500/10 border border-sky-500/20 space-y-1.5">
-                <div className="flex items-center gap-2 font-semibold text-sky-500">
+              <div className="p-4 rounded-2xl bg-[#D3E3FD]/30 dark:bg-[#004A77]/30 border border-sky-400/30 space-y-1.5">
+                <div className="flex items-center gap-2 font-medium text-[#0B57D0] dark:text-[#A8C7FA] text-sm">
                   <Zap className="w-4 h-4" />
                   <span>High-Throughput Multi-Stream MTProto</span>
                 </div>
-                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p className="text-[11px] text-[#5F6368] dark:text-[#C2C7CF] leading-relaxed">
                   Uploads and downloads stream chunks concurrently via WebSockets directly to Telegram data centers. Zero intermediate proxy bottlenecks.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3 bg-slate-50 dark:bg-slate-950/40">
+              <div className="p-4 rounded-2xl border border-slate-200 dark:border-[#444746]/50 space-y-3 bg-[#F8FAFD] dark:bg-[#131314]">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-700 dark:text-slate-300">Multi-Part Concurrency:</span>
-                  <span className="font-bold text-sky-500">4 Parallel Streams</span>
+                  <span className="font-medium text-[#5F6368] dark:text-[#C2C7CF]">Multi-Part Concurrency:</span>
+                  <span className="font-semibold text-[#0B57D0] dark:text-[#A8C7FA]">2 Parallel Streams</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-700 dark:text-slate-300">Chunk Part Size:</span>
-                  <span className="font-bold text-emerald-500">512 KB (High Speed)</span>
+                  <span className="font-medium text-[#5F6368] dark:text-[#C2C7CF]">Chunk Part Size:</span>
+                  <span className="font-semibold text-emerald-500">512 KB (High Speed)</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-700 dark:text-slate-300">Zero-Copy File Streaming:</span>
-                  <span className="font-bold text-indigo-400">Enabled (CustomBuffer on-demand slice)</span>
+                  <span className="font-medium text-[#5F6368] dark:text-[#C2C7CF]">Zero-Copy File Streaming:</span>
+                  <span className="font-semibold text-indigo-400">Enabled (CustomBuffer on-demand slice)</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-700 dark:text-slate-300">In-Memory Object URL Cache:</span>
-                  <span className="font-bold text-sky-400">Active (Instant switching)</span>
+                  <span className="font-medium text-[#5F6368] dark:text-[#C2C7CF]">In-Memory Object URL Cache:</span>
+                  <span className="font-semibold text-sky-400">Active (Instant switching)</span>
                 </div>
               </div>
             </div>
@@ -343,41 +343,41 @@ export const SettingsModal: React.FC = () => {
           {activeTab === 'security' && (
             <div className="space-y-6">
               {/* Vault Encryption Status */}
-              <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 space-y-3">
+              <div className="p-4 rounded-2xl border border-slate-200 dark:border-[#444746]/50 bg-[#F8FAFD] dark:bg-[#131314] space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-sky-500" />
-                    <span className="font-semibold text-slate-900 dark:text-slate-100">Session Vault Encryption</span>
+                    <Lock className="w-4 h-4 text-[#0B57D0] dark:text-[#A8C7FA]" />
+                    <span className="font-medium text-[#1F1F1F] dark:text-[#E3E3E3] text-sm">Session Vault Encryption</span>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
                     hasEncryptedVault()
-                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                      : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
                   }`}>
                     {hasEncryptedVault() ? 'AES-256-GCM Encrypted' : 'Unencrypted Session'}
                   </span>
                 </div>
 
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
+                <p className="text-[11px] text-[#5F6368] dark:text-[#C2C7CF] leading-relaxed">
                   Encrypt your Telegram MTProto session key with a passphrase. When encrypted, the session can only be unwrapped in your browser with your passphrase.
                 </p>
 
                 {/* Set or Change Vault Passphrase */}
-                <form onSubmit={handleSetVaultPassphrase} className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <form onSubmit={handleSetVaultPassphrase} className="space-y-2.5 pt-2 border-t border-slate-200 dark:border-[#444746]/40">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <input
                       type={showPass ? 'text' : 'password'}
                       placeholder="Vault Passphrase (min 6 chars)"
                       value={newPassphrase}
                       onChange={(e) => setNewPassphrase(e.target.value)}
-                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-sky-500"
+                      className="bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B57D0]"
                     />
                     <input
                       type={showPass ? 'text' : 'password'}
                       placeholder="Confirm Passphrase"
                       value={confirmPassphrase}
                       onChange={(e) => setConfirmPassphrase(e.target.value)}
-                      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-sky-500"
+                      className="bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#0B57D0]"
                     />
                   </div>
 
@@ -395,7 +395,7 @@ export const SettingsModal: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowPass(!showPass)}
-                      className="text-slate-400 hover:text-slate-200 text-[11px] flex items-center gap-1"
+                      className="text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] text-[11px] flex items-center gap-1 cursor-pointer"
                     >
                       {showPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       <span>{showPass ? 'Hide' : 'Show'}</span>
@@ -404,7 +404,7 @@ export const SettingsModal: React.FC = () => {
                     <button
                       type="submit"
                       disabled={!newPassphrase || newPassphrase.length < 6}
-                      className="py-1.5 px-3 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-medium text-xs disabled:opacity-50 transition-colors"
+                      className="gp-btn-primary py-1.5 px-3.5 text-xs disabled:opacity-50"
                     >
                       {hasEncryptedVault() ? 'Update Vault Key' : 'Encrypt Session at Rest'}
                     </button>
@@ -413,36 +413,36 @@ export const SettingsModal: React.FC = () => {
               </div>
 
               {/* Active Sessions Management */}
-              <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 space-y-3">
+              <div className="p-4 rounded-2xl border border-slate-200 dark:border-[#444746]/50 bg-[#F8FAFD] dark:bg-[#131314] space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Smartphone className="w-4 h-4 text-indigo-500" />
-                    <span className="font-semibold text-slate-900 dark:text-slate-100">Telegram Authorizations & Devices</span>
+                    <span className="font-medium text-[#1F1F1F] dark:text-[#E3E3E3] text-sm">Telegram Authorizations & Devices</span>
                   </div>
                   <button
                     onClick={handleFetchActiveSessions}
                     disabled={isLoadingSessions}
-                    className="text-xs text-sky-500 hover:text-sky-400 font-medium"
+                    className="text-xs text-[#0B57D0] dark:text-[#A8C7FA] hover:underline font-medium cursor-pointer"
                   >
                     {isLoadingSessions ? 'Inspecting...' : 'Inspect Devices'}
                   </button>
                 </div>
 
                 {sessionsMsg && (
-                  <div className="text-sky-400 text-[11px] font-medium">{sessionsMsg}</div>
+                  <div className="text-[#0B57D0] dark:text-[#A8C7FA] text-[11px] font-medium">{sessionsMsg}</div>
                 )}
 
                 {sessionsList.length > 0 && (
-                  <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                  <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-[#444746]/40">
                     <div className="max-h-36 overflow-y-auto space-y-1.5">
                       {sessionsList.map((auth, idx) => (
-                        <div key={idx} className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] flex items-center justify-between">
+                        <div key={idx} className="p-2.5 rounded-xl bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/40 text-[11px] flex items-center justify-between">
                           <div>
-                            <div className="font-semibold text-slate-800 dark:text-slate-200">{auth.deviceModel} ({auth.appName})</div>
-                            <div className="text-slate-400">{auth.ip} · {auth.country || 'Unknown location'}</div>
+                            <div className="font-medium text-[#1F1F1F] dark:text-[#E3E3E3]">{auth.deviceModel} ({auth.appName})</div>
+                            <div className="text-[#5F6368] dark:text-[#C2C7CF]">{auth.ip} · {auth.country || 'Unknown location'}</div>
                           </div>
                           {auth.current ? (
-                            <span className="text-emerald-400 font-bold text-[10px]">Current Tab</span>
+                            <span className="text-emerald-500 font-semibold text-[10px]">Current Session</span>
                           ) : (
                             <span className="text-slate-400 text-[10px]">Active</span>
                           )}
@@ -452,7 +452,7 @@ export const SettingsModal: React.FC = () => {
 
                     <button
                       onClick={handleTerminateOtherSessions}
-                      className="w-full py-2 px-3 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold text-xs border border-rose-500/20 transition-colors"
+                      className="w-full py-2 px-3 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-medium text-xs border border-rose-500/20 transition-colors cursor-pointer"
                     >
                       Terminate All Other Telegram Sessions
                     </button>
@@ -461,17 +461,17 @@ export const SettingsModal: React.FC = () => {
               </div>
 
               {/* Nuclear Panic Wipe Button */}
-              <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/5 space-y-2.5">
-                <div className="flex items-center gap-2 text-rose-500 font-bold text-xs">
+              <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/5 space-y-2">
+                <div className="flex items-center gap-2 text-rose-500 font-semibold text-xs">
                   <AlertTriangle className="w-4 h-4" />
                   <span>Nuclear Panic Wipe</span>
                 </div>
-                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-normal">
+                <p className="text-[11px] text-[#5F6368] dark:text-[#C2C7CF] leading-normal">
                   Instantly zeroizes all local databases, cache, and session keys with zero trace left on this device.
                 </p>
                 <button
                   onClick={handlePanicWipe}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold text-xs shadow-lg shadow-rose-500/20 active:scale-[0.98] transition-all"
+                  className="w-full py-2 px-4 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-medium text-xs shadow-xs active:scale-[0.98] transition-all cursor-pointer"
                 >
                   Panic Wipe (Instant Zeroize)
                 </button>
@@ -479,10 +479,10 @@ export const SettingsModal: React.FC = () => {
 
               {/* True Logout */}
               {session && (
-                <div className="pt-2">
+                <div className="pt-1">
                   <button
                     onClick={handleLogout}
-                    className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-rose-500 font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-2.5 px-4 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-[#1E1F20] dark:hover:bg-[#282A2C] text-rose-500 font-medium text-xs border border-slate-200 dark:border-[#444746]/50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Log Out & Purge Local Data</span>

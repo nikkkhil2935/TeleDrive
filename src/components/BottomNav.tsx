@@ -1,16 +1,28 @@
 import React, { useRef } from 'react';
-import { Image, Compass, FolderHeart, Settings, UploadCloud } from 'lucide-react';
+import {
+  Image as ImageIcon,
+  Search,
+  Users,
+  FolderHeart,
+  Plus
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const BottomNav: React.FC = () => {
-  const { activeTab, setActiveTab, setIsSettingsOpen, uploadFiles } = useApp();
+  const {
+    activeTab,
+    setActiveTab,
+    uploadFiles,
+    setSelectedAlbum,
+    setIsCommandPaletteOpen
+  } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const navTabs = [
-    { id: 'photos', label: 'Photos', icon: Image },
-    { id: 'explore', label: 'Explore', icon: Compass },
-    { id: 'albums', label: 'Albums', icon: FolderHeart },
-    { id: 'settings', label: 'Settings', icon: Settings, action: () => setIsSettingsOpen(true) },
+    { id: 'photos', label: 'Photos', icon: ImageIcon },
+    { id: 'search', label: 'Search', icon: Search, action: () => setIsCommandPaletteOpen(true) },
+    { id: 'sharing', label: 'Sharing', icon: Users },
+    { id: 'albums', label: 'Library', icon: FolderHeart },
   ];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,7 +34,7 @@ export const BottomNav: React.FC = () => {
 
   return (
     <>
-      {/* Floating Action Button (FAB) for Mobile Upload above Bottom Nav (§8.1) */}
+      {/* Floating Action Button (FAB) for Mobile Upload above Bottom Nav (Google Photos Mobile Style) */}
       <input
         type="file"
         ref={fileInputRef}
@@ -34,13 +46,13 @@ export const BottomNav: React.FC = () => {
       <button
         onClick={() => fileInputRef.current?.click()}
         title="Upload photos or videos"
-        className="md:hidden fixed bottom-20 right-5 z-40 w-13 h-13 rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white shadow-xl shadow-sky-500/35 flex items-center justify-center transition-transform active:scale-95"
+        className="md:hidden fixed bottom-18 right-4 z-40 w-14 h-14 rounded-2xl bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-[#A8C7FA] dark:hover:bg-[#8AB4F8] text-white dark:text-[#041E49] shadow-xl flex items-center justify-center transition-transform active:scale-95"
       >
-        <UploadCloud className="w-6 h-6" />
+        <Plus className="w-7 h-7 stroke-[2.5]" />
       </button>
 
-      {/* 4-Tab Bottom Navigation Bar (<600px Compact Layout) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-2 py-1.5 transition-colors shadow-lg">
+      {/* 4-Tab Bottom Navigation Bar (<840px Compact Layout) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#131314]/95 backdrop-blur-lg border-t border-slate-200 dark:border-[#444746]/50 flex items-center justify-around px-2 py-1.5 transition-colors shadow-lg">
         {navTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -52,19 +64,30 @@ export const BottomNav: React.FC = () => {
                 if (tab.action) {
                   tab.action();
                 } else {
+                  setSelectedAlbum(null);
                   setActiveTab(tab.id);
                 }
               }}
-              className={`flex flex-col items-center justify-center py-1 px-4 rounded-xl text-[11px] font-medium transition-all ${
-                isActive
-                  ? 'text-sky-600 dark:text-sky-400 font-semibold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
+              className="flex flex-col items-center justify-center py-1 px-3 rounded-2xl text-[11px] font-medium transition-all group"
             >
-              <div className={`p-1 rounded-full transition-transform ${isActive ? 'scale-110 bg-sky-500/10' : ''}`}>
+              <div
+                className={`px-4 py-1 rounded-full transition-all flex items-center justify-center ${
+                  isActive
+                    ? 'bg-[#D3E3FD] dark:bg-[#004A77] text-[#041E49] dark:text-[#C2E7FF]'
+                    : 'text-[#5F6368] dark:text-[#C2C7CF] group-hover:bg-[#F1F3F4] dark:group-hover:bg-[#282A2C]'
+                }`}
+              >
                 <Icon className="w-5 h-5" />
               </div>
-              <span className="mt-0.5 tracking-tight">{tab.label}</span>
+              <span
+                className={`mt-0.5 tracking-tight ${
+                  isActive
+                    ? 'text-[#041E49] dark:text-[#C2E7FF] font-semibold'
+                    : 'text-[#5F6368] dark:text-[#C2C7CF]'
+                }`}
+              >
+                {tab.label}
+              </span>
             </button>
           );
         })}

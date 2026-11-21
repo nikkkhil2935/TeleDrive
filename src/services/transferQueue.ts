@@ -219,6 +219,27 @@ class TransferQueueService {
     this.notify();
   }
 
+  async retrySingleJob(jobId: string, channelId?: string) {
+    const job = await db.uploadJobs.get(jobId);
+    if (!job) return;
+    if (this.fileCache.has(jobId)) {
+      job.status = 'queued';
+      job.error = undefined;
+      job.progress = 0;
+      await db.uploadJobs.put(job);
+      this.notify();
+      if (channelId) {
+        this.processQueue(channelId);
+      }
+    }
+  }
+
+  async removeJob(jobId: string) {
+    await db.uploadJobs.delete(jobId);
+    this.fileCache.delete(jobId);
+    this.notify();
+  }
+
   async retryFailedJobs(channelId?: string) {
     const failedJobs = await db.uploadJobs.where('status').equals('error').toArray();
     for (const j of failedJobs) {

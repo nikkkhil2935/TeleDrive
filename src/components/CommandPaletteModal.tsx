@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Search,
-  Image,
+  Image as ImageIcon,
   Compass,
   Heart,
   FolderHeart,
@@ -52,7 +52,7 @@ export const CommandPaletteModal: React.FC = () => {
       id: 'photos',
       title: 'Go to Photos Timeline',
       category: 'Navigation',
-      icon: Image,
+      icon: ImageIcon,
       perform: () => setActiveTab('photos'),
     },
     {
@@ -148,7 +148,7 @@ export const CommandPaletteModal: React.FC = () => {
     },
     {
       id: 'theme-dark',
-      title: 'Switch to Dark Mode',
+      title: 'Switch to Dark Mode (Google Photos)',
       category: 'Appearance',
       icon: Moon,
       perform: () => setTheme('dark'),
@@ -177,24 +177,24 @@ export const CommandPaletteModal: React.FC = () => {
   return (
     <div
       onClick={() => setIsCommandPaletteOpen(false)}
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-start justify-center pt-20 p-4 select-none animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-start justify-center pt-20 p-4 select-none animate-in fade-in duration-150"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col text-slate-900 dark:text-slate-100 transition-colors"
+        className="bg-[#FFFFFF] dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col text-[#1F1F1F] dark:text-[#E3E3E3] transition-colors"
       >
         {/* Search Input Bar */}
-        <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
-          <Search className="w-4 h-4 text-slate-400 shrink-0 ml-1" />
+        <div className="p-3.5 border-b border-slate-200 dark:border-[#444746]/40 flex items-center gap-3">
+          <Search className="w-4 h-4 text-slate-400 shrink-0 ml-1.5" />
           <input
             type="text"
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type a command or jump to screen..."
-            className="flex-1 bg-transparent border-none text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none"
+            className="flex-1 bg-transparent border-none text-xs sm:text-sm text-[#1F1F1F] dark:text-[#E3E3E3] placeholder:text-slate-400 focus:outline-none"
           />
-          <div className="hidden sm:flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+          <div className="hidden sm:flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#282A2C] text-[#5F6368] dark:text-[#C2C7CF]">
             <span>ESC</span>
           </div>
         </div>
@@ -202,7 +202,7 @@ export const CommandPaletteModal: React.FC = () => {
         {/* Action Results */}
         <div className="p-2 overflow-y-auto max-h-[55vh] space-y-1">
           {filteredActions.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
+            <div className="py-8 text-center text-xs text-[#5F6368] dark:text-[#C2C7CF]">
               No matching commands found.
             </div>
           ) : (
@@ -215,17 +215,17 @@ export const CommandPaletteModal: React.FC = () => {
                     action.perform();
                     setIsCommandPaletteOpen(false);
                   }}
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors group text-left"
+                  className="w-full flex items-center justify-between p-2.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-[#282A2C] transition-colors group text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-3 truncate">
-                    <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 group-hover:text-sky-500 transition-colors shrink-0">
-                      <Icon className="w-3.5 h-3.5" />
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#282A2C] flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:text-[#0B57D0] dark:group-hover:text-[#A8C7FA] transition-colors shrink-0">
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                    <span className="text-xs font-medium text-[#1F1F1F] dark:text-[#E3E3E3] truncate">
                       {action.title}
                     </span>
                   </div>
-                  <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 px-2 py-0.5 rounded bg-slate-100/60 dark:bg-slate-800/40 shrink-0">
+                  <span className="text-[10px] font-medium text-[#5F6368] dark:text-[#C2C7CF] px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-[#282A2C] shrink-0">
                     {action.category}
                   </span>
                 </button>
@@ -235,9 +235,9 @@ export const CommandPaletteModal: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-800/80 text-[10px] text-slate-400 dark:text-slate-500 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
+        <div className="px-4 py-2.5 border-t border-slate-100 dark:border-[#444746]/40 text-[10px] text-[#5F6368] dark:text-[#C2C7CF] flex items-center justify-between bg-[#F8FAFD] dark:bg-[#131314]">
           <span>Use <b>↑ ↓</b> to navigate, <b>Enter</b> to select</span>
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1 font-medium">
             <Command className="w-3 h-3" /> Framely Palette
           </span>
         </div>

@@ -1,16 +1,48 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   color-scheme: light dark;
+  
+  /* Google Photos Light Design Tokens (Spec Phase 3) */
+  --gp-app-bg: #F8FAFD;
+  --gp-surface: #FFFFFF;
+  --gp-surface-variant: #F0F4F9;
+  --gp-text-primary: #1F1F1F;
+  --gp-text-secondary: #5F6368;
+  --gp-primary-blue: #0B57D0;
+  --gp-primary-blue-hover: #0842A0;
+  --gp-nav-selected: #D3E3FD;
+  --gp-nav-selected-text: #041E49;
+  --gp-border: #DADCE0;
+  --gp-hover-bg: #F1F3F4;
+  --gp-chip-bg: #F0F4F9;
+  
+  /* Transitions.dev Motion Tokens */
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-micro: 150ms;
+  --duration-medium: 240ms;
 }
 
 html.dark {
   color-scheme: dark;
+  
+  /* Google Photos Dark Design Tokens (Spec Phase 3) */
+  --gp-app-bg: #131314;
+  --gp-surface: #1E1F20;
+  --gp-surface-variant: #282A2C;
+  --gp-text-primary: #E3E3E3;
+  --gp-text-secondary: #C2C7CF;
+  --gp-primary-blue: #A8C7FA;
+  --gp-primary-blue-hover: #8AB4F8;
+  --gp-nav-selected: #004A77;
+  --gp-nav-selected-text: #C2E7FF;
+  --gp-border: #444746;
+  --gp-hover-bg: #282A2C;
+  --gp-chip-bg: #282A2C;
 }
 
 html.light {
@@ -20,88 +52,98 @@ html.light {
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Google Sans", Helvetica, Arial, sans-serif;
+  font-family: "Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
   user-select: none;
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: var(--gp-app-bg);
+  color: var(--gp-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-html.dark body {
-  background-color: #020617;
-  color: #f8fafc;
-}
-
-html.midnight body {
-  background-color: #000000;
-  color: #f8fafc;
-}
-
-/* Apple & Material Smooth Transitions */
+/* Material / Google Photos Smooth Transitions */
 * {
   transition-timing-function: var(--ease-spring);
 }
 
-/* Glassmorphism & Frosted Acrylic */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+/* Google Photos Button Primitives */
+.gp-btn-primary {
+  background-color: var(--gp-primary-blue);
+  color: #FFFFFF;
+  border-radius: 9999px;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 8px 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color var(--duration-micro) ease, transform var(--duration-micro) var(--ease-spring), box-shadow var(--duration-micro) ease;
 }
 
-html.dark .glass-panel {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+html.dark .gp-btn-primary {
+  background-color: #A8C7FA;
+  color: #041E49;
 }
 
-/* Tactile Spring Buttons */
-.apple-btn {
-  transition: transform 0.18s var(--ease-spring), background-color 0.18s ease, box-shadow 0.18s ease;
+.gp-btn-primary:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 1px 3px 1px rgba(0,0,0,0.15);
 }
 
-.apple-btn:hover {
-  transform: translateY(-1px) scale(1.02);
+.gp-btn-primary:active {
+  transform: scale(0.98);
 }
 
-.apple-btn:active {
-  transform: translateY(1px) scale(0.97);
+.gp-btn-tonal {
+  background-color: var(--gp-surface-variant);
+  color: var(--gp-text-primary);
+  border-radius: 9999px;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 8px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color var(--duration-micro) ease, transform var(--duration-micro) var(--ease-spring);
 }
 
-/* Photo Tile Animations */
+.gp-btn-tonal:hover {
+  background-color: var(--gp-hover-bg);
+}
+
+.gp-btn-tonal:active {
+  transform: scale(0.98);
+}
+
+/* Dense Photo Grid Cards */
 .photo-card {
-  transition: transform 0.25s var(--ease-spring), box-shadow 0.25s var(--ease-spring), border-color 0.2s ease;
+  transition: transform var(--duration-micro) var(--ease-spring), filter var(--duration-micro) ease, box-shadow var(--duration-micro) ease;
 }
 
 .photo-card:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(56, 189, 248, 0.4);
+  filter: brightness(0.96);
+  transform: scale(1.008);
 }
 
-/* Subtle Shimmer for Image Loading */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+html.dark .photo-card:hover {
+  filter: brightness(1.08);
 }
 
-.shimmer-placeholder {
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+/* Hide scrollbar for clean carousels while keeping scrollability */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Custom Refined Scrollbars */
+/* Google Photos Slim Scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -109,19 +151,19 @@ html.dark .glass-panel {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.28);
+  background: rgba(120, 120, 120, 0.28);
   border-radius: 9999px;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.6);
+  background: rgba(120, 120, 120, 0.5);
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.18);
+  background: rgba(180, 180, 180, 0.2);
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.5);
+  background: rgba(180, 180, 180, 0.4);
 }
