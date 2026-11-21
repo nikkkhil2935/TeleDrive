@@ -1,0 +1,40 @@
+name: Bug Report
+description: File a bug report to help improve Lumio Photos
+title: "[Bug]: "
+labels: ["type: bug", "status: needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please ensure you are testing against the latest version.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS version, browser version (Chrome, Safari, Firefox), and Lumio build.
+      placeholder: Windows 11 / Chrome 132 / Lumio v1.0.0
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe what you observed.
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Numbered steps to reproduce the issue.
+      placeholder: |
+        1. Open Lumio
+        2. Upload a 30 MB video
+        3. Observe transfer queue error
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console Logs
+      description: Relevant browser console logs (sanitize any private API hashes or session tokens first!).

@@ -1,0 +1,31 @@
+name: Feature Request
+description: Propose a new feature, workflow improvement, or design refinement
+title: "[Feature]: "
+labels: ["type: feature", "status: needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Suggest an idea or enhancement for Lumio Photos.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Explain the user pain point or missing capability.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: Detailed description of how you envision this feature working.
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 (MVP core storage & security)
+        - P1 (User experience & organization)
+        - P2 (Future enhancements)
