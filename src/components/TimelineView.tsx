@@ -284,17 +284,18 @@ export const TimelineView: React.FC = () => {
           </div>
         </div>
 
-        {/* Floating Multi-Selection Action Bar (Google Photos Style) */}
+        {/* Floating Multi-Selection Action Bar (Apple & Google Photos Dynamic Island Pill) */}
         {isSelectionActive && (
-          <div className="sticky top-0 z-30 bg-slate-900 text-white px-3 sm:px-5 py-2.5 sm:py-3 rounded-2xl shadow-xl flex items-center justify-between animate-in slide-in-from-top-2 duration-150 border border-slate-700 gap-2">
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <div className="sticky top-2 z-30 mx-auto max-w-xl w-full bg-slate-900/95 dark:bg-slate-900/95 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-full shadow-2xl backdrop-blur-xl flex items-center justify-between animate-in slide-in-from-top-3 zoom-in-95 duration-200 border border-sky-500/30 gap-3 ring-1 ring-white/10">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <button
                 onClick={clearSelection}
-                className="p-1 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className="p-1.5 rounded-full hover:bg-white/10 active:scale-95 text-slate-400 hover:text-white transition-all"
+                title="Clear Selection"
               >
-                <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                <X className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               </button>
-              <span className="text-xs font-semibold">
+              <span className="text-xs font-bold tracking-tight bg-sky-500/20 text-sky-400 px-2.5 py-0.5 rounded-full border border-sky-500/30">
                 {selectedIds.size} <span className="hidden xs:inline">selected</span>
               </span>
             </div>
@@ -303,7 +304,7 @@ export const TimelineView: React.FC = () => {
               <button
                 onClick={bulkToggleFavorite}
                 title="Favorite Selected"
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium transition-colors"
+                className="apple-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-xs font-medium text-white transition-all"
               >
                 <Heart className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                 <span className="hidden sm:inline">Favorite</span>
@@ -312,7 +313,7 @@ export const TimelineView: React.FC = () => {
               <button
                 onClick={() => setIsNewAlbumOpen(true)}
                 title="Add to Album"
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium transition-colors"
+                className="apple-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-xs font-medium text-white transition-all"
               >
                 <FolderPlus className="w-3.5 h-3.5 text-sky-400" />
                 <span className="hidden sm:inline">Album</span>
@@ -321,16 +322,16 @@ export const TimelineView: React.FC = () => {
               <button
                 onClick={bulkDownloadZip}
                 title="Download Selected as ZIP"
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium transition-colors"
+                className="apple-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs font-medium transition-all border border-emerald-500/20"
               >
-                <Download className="w-3.5 h-3.5 text-emerald-400" />
+                <Download className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Download ZIP</span>
               </button>
 
               <button
                 onClick={bulkMoveToTrash}
                 title="Move to Trash"
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs font-medium transition-colors"
+                className="apple-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 text-xs font-medium transition-all border border-rose-500/20"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Trash</span>
@@ -482,17 +483,17 @@ export const TimelineView: React.FC = () => {
                               setSelectedMedia(item);
                             }
                           }}
-                          className={`group relative aspect-square bg-gradient-to-tr from-slate-200/70 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl overflow-hidden border cursor-pointer transition-all ${
+                          className={`group photo-card relative aspect-square bg-gradient-to-tr from-slate-200/70 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-2xl overflow-hidden border cursor-pointer ${
                             isSelected
-                              ? 'border-sky-500 ring-2 ring-sky-500 scale-[0.98]'
-                              : 'border-slate-200/80 dark:border-slate-800/80 hover:border-sky-500/50 hover:shadow-lg hover:shadow-sky-500/10'
+                              ? 'border-sky-500 ring-4 ring-sky-500/30 scale-[0.97]'
+                              : 'border-slate-200/80 dark:border-white/5 hover:border-sky-500/40'
                           }`}
                         >
                           {item.thumbnailDataUrl ? (
                             <img
                               src={item.thumbnailDataUrl}
                               alt={item.filename}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
                               loading="lazy"
                             />
                           ) : (
@@ -565,9 +566,9 @@ export const TimelineView: React.FC = () => {
                   {yr}
                 </span>
 
-                {/* Floating Year Pill on Hover/Drag */}
+                {/* Floating Year Pill on Hover/Drag with elastic pop-in */}
                 {hoveredScrubYear === yr && (
-                  <div className="absolute right-9 z-40 px-3 py-1 rounded-full bg-sky-500 text-white font-bold text-xs shadow-lg animate-in fade-in duration-150 whitespace-nowrap">
+                  <div className="absolute right-9 z-40 px-3.5 py-1.5 rounded-full bg-sky-500 text-white font-bold text-xs shadow-xl shadow-sky-500/30 animate-in fade-in zoom-in-75 slide-in-from-right-2 duration-150 whitespace-nowrap ring-2 ring-white/20">
                     {yr}
                   </div>
                 )}

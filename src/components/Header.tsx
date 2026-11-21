@@ -184,7 +184,7 @@ export const Header: React.FC = () => {
 
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-medium text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg shadow-sm shadow-sky-500/20 transition-all shrink-0"
+          className="apple-btn flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-medium text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl shadow-md shadow-sky-500/25 transition-all shrink-0 cursor-pointer"
         >
           <UploadCloud className="w-4 h-4" />
           <span className="hidden sm:inline">Upload</span>
@@ -195,7 +195,7 @@ export const Header: React.FC = () => {
           onClick={syncLibrary}
           disabled={isSyncing}
           title={isSyncing ? 'Syncing with Telegram channel...' : 'Sync newly uploaded photos from Telegram'}
-          className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="apple-btn p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-sky-500' : ''}`} />
         </button>
@@ -204,11 +204,11 @@ export const Header: React.FC = () => {
         <button
           onClick={() => setIsTransfersOpen(true)}
           title="Transfers & Queue Engine"
-          className="relative p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="apple-btn relative p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           <Activity className="w-4 h-4" />
           {activeTransferCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-sky-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-pulse">
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-sky-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-sm">
               {activeTransferCount}
             </span>
           )}
@@ -218,7 +218,7 @@ export const Header: React.FC = () => {
         <button
           onClick={() => setIsDuplicatesOpen(true)}
           title="Duplicate Finder & Clean-up"
-          className="hidden lg:flex p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="apple-btn hidden lg:flex p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           <Copy className="w-4 h-4" />
         </button>
@@ -227,7 +227,7 @@ export const Header: React.FC = () => {
         <button
           onClick={() => setIsPrivacyOpen(true)}
           title="Privacy & How Data is Stored"
-          className="hidden sm:flex p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="apple-btn hidden sm:flex p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           <ShieldCheck className="w-4 h-4 text-emerald-500" />
         </button>
@@ -236,7 +236,7 @@ export const Header: React.FC = () => {
         <button
           onClick={cycleTheme}
           title={`Theme: ${theme} (click to toggle)`}
-          className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="apple-btn p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           {getThemeIcon()}
         </button>

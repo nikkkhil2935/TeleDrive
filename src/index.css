@@ -4,6 +4,9 @@
 
 :root {
   color-scheme: light dark;
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html.dark {
@@ -17,11 +20,13 @@ html.light {
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Google Sans", Helvetica, Arial, sans-serif;
   overflow: hidden;
   user-select: none;
   background-color: #f8fafc;
   color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html.dark body {
@@ -34,10 +39,69 @@ html.midnight body {
   color: #f8fafc;
 }
 
-/* Custom Scrollbars */
+/* Apple & Material Smooth Transitions */
+* {
+  transition-timing-function: var(--ease-spring);
+}
+
+/* Glassmorphism & Frosted Acrylic */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+html.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Tactile Spring Buttons */
+.apple-btn {
+  transition: transform 0.18s var(--ease-spring), background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.apple-btn:hover {
+  transform: translateY(-1px) scale(1.02);
+}
+
+.apple-btn:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+/* Photo Tile Animations */
+.photo-card {
+  transition: transform 0.25s var(--ease-spring), box-shadow 0.25s var(--ease-spring), border-color 0.2s ease;
+}
+
+.photo-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(56, 189, 248, 0.4);
+}
+
+/* Subtle Shimmer for Image Loading */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-placeholder {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Custom Refined Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -45,18 +109,19 @@ html.midnight body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.25);
+  background: rgba(148, 163, 184, 0.28);
   border-radius: 9999px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.45);
+  background: rgba(56, 189, 248, 0.6);
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.18);
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
+  background: rgba(56, 189, 248, 0.5);
 }
