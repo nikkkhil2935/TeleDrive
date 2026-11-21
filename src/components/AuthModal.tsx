@@ -6,13 +6,13 @@ import {
   Smartphone,
   QrCode,
   Lock,
-  ExternalLink,
   Sparkles,
   AlertTriangle,
   Loader2,
-  CheckCircle2,
   RefreshCw,
-  Info
+  Eye,
+  EyeOff,
+  CheckCircle2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import {
@@ -30,6 +30,7 @@ export const AuthModal: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [phoneCodeHash, setPhoneCodeHash] = useState('');
   const [isCodeViaApp, setIsCodeViaApp] = useState(true);
   const [step, setStep] = useState<'creds' | 'code' | '2fa'>('creds');
@@ -52,6 +53,7 @@ export const AuthModal: React.FC = () => {
   const useOfficialAppKeys = () => {
     setApiId(TELEGRAM_DESKTOP_API_ID);
     setApiHash(TELEGRAM_DESKTOP_API_HASH);
+    setError(null);
   };
 
   // Reset states on modal close
@@ -60,8 +62,24 @@ export const AuthModal: React.FC = () => {
       setError(null);
       setIsLoading(false);
       setQrDataUrl(null);
+      setQrExpiresIn(0);
     }
   }, [isAuthModalOpen]);
+
+  // QR countdown timer
+  useEffect(() => {
+    if (qrExpiresIn <= 0) return;
+    const timer = setInterval(() => {
+      setQrExpiresIn((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [qrExpiresIn]);
 
   // Handle Request Code via Real GramJS
   const handleRequestCode = async (e: React.FormEvent) => {
@@ -99,6 +117,11 @@ export const AuthModal: React.FC = () => {
       return;
     }
 
+    if (step === '2fa' && !password.trim()) {
+      setError('Please enter your 2FA Cloud Password.');
+      return;
+    }
+
     const cleanApiId = parseInt(apiId.trim(), 10);
     const cleanApiHash = apiHash.trim();
 
@@ -112,7 +135,7 @@ export const AuthModal: React.FC = () => {
         phone.trim(),
         code.trim(),
         phoneCodeHash,
-        password || undefined
+        password ? password.trim() : undefined
       );
 
       setSession(session);
@@ -121,7 +144,14 @@ export const AuthModal: React.FC = () => {
       console.error('SignIn error:', err);
       if (err.message === '2FA_REQUIRED') {
         setStep('2fa');
-        setError('Your account is protected by 2FA. Please enter your Cloud Password.');
+        setError('Your Telegram account requires 2FA Cloud Password.');
+      } else if (err.message && err.message.includes('PASSWORD_HASH_INVALID')) {
+        setStep('2fa');
+        setError('Incorrect 2FA Cloud Password. Please try again.');
+      } else if (err.message && err.message.includes('PHONE_CODE_INVALID')) {
+        setError('Invalid verification code. Please check the code received in Telegram.');
+      } else if (err.message && err.message.includes('PHONE_CODE_EXPIRED')) {
+        setError('Verification code has expired. Please go back and request a new code.');
       } else {
         setError(err.message || 'Verification failed. Please check the code.');
       }
@@ -184,9 +214,11 @@ export const AuthModal: React.FC = () => {
 
   const handleQrPasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (qrPasswordResolverRef.current && qrPassword) {
-      qrPasswordResolverRef.current(qrPassword);
+    if (qrPasswordResolverRef.current && qrPassword.trim()) {
+      qrPasswordResolverRef.current(qrPassword.trim());
       setQrNeeds2fa(false);
+    } else {
+      setError('Please enter your Cloud Password.');
     }
   };
 
@@ -264,7 +296,10 @@ export const AuthModal: React.FC = () => {
           <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium">
             <button
               type="button"
-              onClick={() => setAuthMethod('credentials')}
+              onClick={() => {
+                setAuthMethod('credentials');
+                setError(null);
+              }}
               className={`flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${
                 authMethod === 'credentials'
                   ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
@@ -278,6 +313,7 @@ export const AuthModal: React.FC = () => {
               type="button"
               onClick={() => {
                 setAuthMethod('qr');
+                setError(null);
                 if (!qrDataUrl) handleStartQrLogin();
               }}
               className={`flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${
@@ -294,7 +330,7 @@ export const AuthModal: React.FC = () => {
           {error && (
             <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{error}</span>
+              <span className="leading-relaxed">{error}</span>
             </div>
           )}
 
@@ -359,7 +395,7 @@ export const AuthModal: React.FC = () => {
                   <input
                     type="text"
                     required
-                    autoFocus
+                    autoFocus={step === 'code'}
                     placeholder="Enter 5-digit code"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
@@ -368,26 +404,47 @@ export const AuthModal: React.FC = () => {
                 </div>
 
                 {step === '2fa' && (
-                  <div className="space-y-1.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-500/30">
-                    <label className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>2FA Cloud Password</span>
-                    </label>
+                  <div className="space-y-2 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-500/30 animate-in fade-in">
+                    <div className="flex items-center justify-between text-xs font-semibold text-amber-700 dark:text-amber-400">
+                      <label className="flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>2FA Cloud Password</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 font-normal text-[11px]"
+                      >
+                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        <span>{showPassword ? 'Hide' : 'Show'}</span>
+                      </button>
+                    </div>
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       required
-                      placeholder="Enter your 2FA password"
+                      autoFocus
+                      placeholder="Enter your 2FA Cloud Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-950 border border-amber-300 dark:border-amber-600/50 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
+                      className="w-full bg-white dark:bg-slate-950 border border-amber-300 dark:border-amber-600/50 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-amber-500 text-slate-900 dark:text-slate-100"
                     />
+                    <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80">
+                      This password is encrypted client-side using SRP-6A before being verified by Telegram.
+                    </p>
                   </div>
                 )}
 
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setStep('creds')}
+                    onClick={() => {
+                      if (step === '2fa') {
+                        setStep('code');
+                      } else {
+                        setStep('creds');
+                      }
+                      setError(null);
+                    }}
                     className="w-1/3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs py-2.5 rounded-lg transition-colors"
                   >
                     Back
@@ -398,7 +455,13 @@ export const AuthModal: React.FC = () => {
                     className="w-2/3 bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-white font-medium text-xs py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2"
                   >
                     {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                    <span>{isLoading ? 'Verifying with Telegram...' : 'Sign In'}</span>
+                    <span>
+                      {isLoading
+                        ? 'Verifying with Telegram...'
+                        : step === '2fa'
+                        ? 'Verify Cloud Password & Sign In'
+                        : 'Sign In'}
+                    </span>
                   </button>
                 </div>
               </form>
@@ -421,6 +484,15 @@ export const AuthModal: React.FC = () => {
                       Settings → Devices → <strong>Link Desktop Device</strong>
                     </p>
                   </div>
+                  {qrExpiresIn > 0 ? (
+                    <div className="text-[11px] text-slate-400">
+                      Code expires in <span className="font-mono font-semibold text-sky-500">{qrExpiresIn}s</span>
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-amber-500 font-medium">
+                      QR code expired. Please refresh.
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={handleStartQrLogin}
@@ -449,7 +521,7 @@ export const AuthModal: React.FC = () => {
                     placeholder="Enter Cloud Password"
                     value={qrPassword}
                     onChange={(e) => setQrPassword(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500 text-slate-900 dark:text-slate-100"
                   />
                   <button
                     type="submit"

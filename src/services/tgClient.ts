@@ -128,14 +128,18 @@ export async function verifyTelegramCodeAndSignIn(
     );
   } catch (err: any) {
     // Check if 2FA cloud password is required
-    if (err.message && err.message.includes('SESSION_PASSWORD_NEEDED')) {
-      if (!password) {
+    const is2fa =
+      (err?.message && err.message.includes('SESSION_PASSWORD_NEEDED')) ||
+      (err?.errorMessage && err.errorMessage.includes('SESSION_PASSWORD_NEEDED'));
+
+    if (is2fa) {
+      if (!password || !password.trim()) {
         throw new Error('2FA_REQUIRED');
       }
       authUser = await client.signInWithPassword(
         { apiId, apiHash },
         {
-          password: async () => password,
+          password: async () => password.trim(),
           onError: (e) => {
             throw e;
           },
@@ -192,9 +196,12 @@ export async function startTelegramQrLogin(
   await client.connect();
   clientInstance = client;
 
-  let passwordResolver: (() => Promise<string>) | undefined;
+  let passwordResolver: ((hint?: string) => Promise<string>) | undefined;
   if (onPasswordNeeded) {
-    passwordResolver = onPasswordNeeded;
+    passwordResolver = async () => {
+      const pass = await onPasswordNeeded();
+      return pass.trim();
+    };
   }
 
   const authUser = await client.signInUserWithQrCode(
@@ -202,7 +209,9 @@ export async function startTelegramQrLogin(
     {
       qrCode: async ({ token, expires }) => {
         // Construct official Telegram QR login URI: tg://login?token=<base64url>
-        const base64UrlToken = Buffer.from(token).toString('base64url');
+        // Use RFC 4648 URL-safe base64 conversion that works universally in any polyfill
+        const b64 = Buffer.from(token).toString('base64');
+        const base64UrlToken = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
         const qrUrl = `tg://login?token=${base64UrlToken}`;
         onQrToken(qrUrl, expires);
       },
