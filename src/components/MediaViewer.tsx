@@ -21,7 +21,9 @@ import {
   Sparkles,
   ShieldCheck,
   Check,
-  Share2
+  Share2,
+  Film,
+  ExternalLink
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useApp } from '../context/AppContext';
@@ -35,6 +37,7 @@ import {
 export const MediaViewer: React.FC = () => {
   const { selectedMedia, setSelectedMedia, toggleFavorite, moveToTrash } = useApp();
   const [showInfo, setShowInfo] = useState(true);
+  const [showFilmstrip, setShowFilmstrip] = useState(true);
   const [rotation, setRotation] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -45,11 +48,11 @@ export const MediaViewer: React.FC = () => {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
+  const activeThumbnailRef = useRef<HTMLButtonElement>(null);
 
-  // Fetch adjacent items for arrow navigation
+  // Fetch all active items in the timeline for navigation and the Google Photos filmstrip
   const allIds = useLiveQuery(
     async () => {
       const items = await db.media.orderBy('takenAt').reverse().toArray();
@@ -62,6 +65,17 @@ export const MediaViewer: React.FC = () => {
   const currentIndex = allIds.findIndex(m => m.messageId === selectedMedia?.messageId);
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex >= 0 && currentIndex < allIds.length - 1;
+
+  // Auto-scroll active filmstrip thumbnail into view
+  useEffect(() => {
+    if (activeThumbnailRef.current) {
+      activeThumbnailRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+    }
+  }, [selectedMedia?.messageId, showFilmstrip]);
 
   // Reset transforms and stream full-res media when selectedMedia changes
   useEffect(() => {
@@ -251,9 +265,17 @@ export const MediaViewer: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex flex-col animate-in fade-in duration-200 select-none">
+    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex flex-col animate-in fade-in duration-200 select-none overflow-hidden">
+      {/* Ambient Blurred Background (Apple Photos immersive glass effect) */}
+      <div
+        className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 blur-3xl scale-125 transition-all duration-700"
+        style={{
+          backgroundImage: `url(${selectedMedia.thumbnailDataUrl})`,
+        }}
+      />
+
       {/* Top Controls Toolbar (Emil Kowalski Apple Frosted Glass Header) */}
-      <header className="h-14 sm:h-16 border-b border-white/10 px-3 sm:px-6 flex items-center justify-between text-white shrink-0 bg-slate-950/60 backdrop-blur-xl z-30">
+      <header className="h-14 sm:h-16 border-b border-white/10 px-3 sm:px-6 flex items-center justify-between text-white shrink-0 bg-slate-950/70 backdrop-blur-xl z-30">
         {/* Left: Back / Close & Filename */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <button
@@ -273,7 +295,7 @@ export const MediaViewer: React.FC = () => {
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric'
-              })} · {megapixels} MP
+              })} · {megapixels} MP · {currentIndex + 1} of {allIds.length}
             </p>
           </div>
         </div>
@@ -311,8 +333,18 @@ export const MediaViewer: React.FC = () => {
           </button>
         </div>
 
-        {/* Right: Actions (Favorite, Fullscreen, Download, Trash, Info) */}
+        {/* Right: Actions (Filmstrip, Favorite, Fullscreen, Download, Trash, Info) */}
         <div className="flex items-center gap-1 sm:gap-2">
+          <button
+            onClick={() => setShowFilmstrip(prev => !prev)}
+            className={`p-2 rounded-full hover:bg-white/10 active:scale-95 transition-all ${
+              showFilmstrip ? 'text-sky-400 bg-sky-500/15' : 'text-white/70 hover:text-white'
+            }`}
+            title="Toggle Filmstrip Carousel"
+          >
+            <Film className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+
           <button
             onClick={() => toggleFavorite(selectedMedia)}
             className={`p-2 rounded-full hover:bg-white/10 active:scale-95 transition-all ${
@@ -370,7 +402,7 @@ export const MediaViewer: React.FC = () => {
           onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
           onDoubleClick={handleDoubleClick}
-          className={`flex-1 relative flex items-center justify-center p-2 sm:p-6 md:p-8 overflow-hidden transition-all duration-300 ${
+          className={`flex-1 relative flex items-center justify-center p-2 sm:p-6 overflow-hidden transition-all duration-300 ${
             zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
           }`}
         >
@@ -402,55 +434,77 @@ export const MediaViewer: React.FC = () => {
             </button>
           )}
 
-          {/* Render Media: Video Player or Fluid High-Res Photo */}
-          {selectedMedia.kind === 'video' ? (
-            <div className="relative w-full h-full max-w-5xl max-h-[85vh] flex items-center justify-center">
-              {fullMediaUrl ? (
-                <video
-                  src={fullMediaUrl}
-                  controls
-                  autoPlay
-                  className="w-full h-full max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
-                  style={{
-                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
-                    transition: isDragging ? 'none' : 'transform 240ms cubic-bezier(0.16, 1, 0.3, 1)',
-                  }}
-                />
-              ) : (
-                <div className="relative w-full h-full max-w-full max-h-[85vh] flex items-center justify-center">
-                  <img
-                    src={selectedMedia.thumbnailDataUrl}
-                    alt={selectedMedia.filename}
-                    className="w-full h-full max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl blur-xs"
+          {/* Render Media Viewport: Fluid Responsive Sizing (Preserves Aspect Ratio & Fills Canvas) */}
+          <div
+            className="relative w-full h-full flex items-center justify-center transition-all duration-300"
+            style={{
+              maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
+              maxHeight: showFilmstrip ? 'calc(100vh - 190px)' : 'calc(100vh - 96px)',
+            }}
+          >
+            {selectedMedia.kind === 'video' ? (
+              <div
+                className="relative flex items-center justify-center max-w-full max-h-full"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  aspectRatio: selectedMedia.width && selectedMedia.height ? `${selectedMedia.width} / ${selectedMedia.height}` : undefined,
+                }}
+              >
+                {fullMediaUrl ? (
+                  <video
+                    src={fullMediaUrl}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-contain rounded-xl shadow-2xl"
                     style={{
                       transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
                       transition: isDragging ? 'none' : 'transform 240ms cubic-bezier(0.16, 1, 0.3, 1)',
                     }}
                   />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-xs rounded-xl">
-                    <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-slate-900/90 text-white border border-white/10 shadow-2xl">
-                      <div className="w-4 h-4 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
-                      <span className="text-xs font-medium">Streaming original video from Telegram...</span>
+                ) : (
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <img
+                      src={selectedMedia.thumbnailDataUrl}
+                      alt={selectedMedia.filename}
+                      className="w-full h-full object-contain rounded-xl shadow-2xl blur-xs"
+                      style={{
+                        transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
+                        transition: isDragging ? 'none' : 'transform 240ms cubic-bezier(0.16, 1, 0.3, 1)',
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-xs rounded-xl">
+                      <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-slate-900/90 text-white border border-white/10 shadow-2xl">
+                        <div className="w-4 h-4 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+                        <span className="text-xs font-medium">Streaming original video from Telegram...</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="relative w-full h-full max-w-full max-h-[86vh] flex items-center justify-center">
-              <img
-                src={fullMediaUrl || selectedMedia.thumbnailDataUrl}
-                alt={selectedMedia.filename}
-                draggable={false}
-                className="w-full h-full max-w-full max-h-[86vh] object-contain rounded-lg drop-shadow-2xl select-none"
+                )}
+              </div>
+            ) : (
+              <div
+                className="relative flex items-center justify-center max-w-full max-h-full"
                 style={{
-                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
-                  transition: isDragging ? 'none' : 'transform 240ms cubic-bezier(0.16, 1, 0.3, 1), filter 300ms ease',
-                  filter: fullMediaUrl ? 'none' : 'blur(0.5px)',
+                  width: '100%',
+                  height: '100%',
+                  aspectRatio: selectedMedia.width && selectedMedia.height ? `${selectedMedia.width} / ${selectedMedia.height}` : undefined,
                 }}
-              />
-            </div>
-          )}
+              >
+                <img
+                  src={fullMediaUrl || selectedMedia.thumbnailDataUrl}
+                  alt={selectedMedia.filename}
+                  draggable={false}
+                  className="w-full h-full object-contain rounded-xl drop-shadow-2xl select-none"
+                  style={{
+                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
+                    transition: isDragging ? 'none' : 'transform 240ms cubic-bezier(0.16, 1, 0.3, 1), filter 300ms ease',
+                    filter: fullMediaUrl ? 'none' : 'blur(0.5px)',
+                  }}
+                />
+              </div>
+            )}
+          </div>
 
           {/* Floating Pill Badge: High-Res Streaming Status or Zoom Hint */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
@@ -525,6 +579,16 @@ export const MediaViewer: React.FC = () => {
                 </div>
               </div>
 
+              {selectedMedia.camera && (
+                <div className="flex items-start gap-3 pt-2 border-t border-white/10">
+                  <HardDrive className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-white font-medium text-xs">Camera / Device</div>
+                    <div className="text-slate-300 text-[11px] font-medium">{selectedMedia.camera}</div>
+                  </div>
+                </div>
+              )}
+
               {selectedMedia.latitude && selectedMedia.longitude && (
                 <div className="flex items-start gap-3 pt-2 border-t border-white/10">
                   <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
@@ -533,6 +597,15 @@ export const MediaViewer: React.FC = () => {
                     <div className="text-slate-300 font-mono text-[11px]">
                       {selectedMedia.latitude.toFixed(5)}°, {selectedMedia.longitude.toFixed(5)}°
                     </div>
+                    <a
+                      href={`https://www.google.com/maps?q=${selectedMedia.latitude},${selectedMedia.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[11px] font-medium transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      <span>Open in Google Maps</span>
+                    </a>
                   </div>
                 </div>
               )}
@@ -612,6 +685,44 @@ export const MediaViewer: React.FC = () => {
           </aside>
         )}
       </div>
+
+      {/* Google Photos Bottom Filmstrip Carousel */}
+      {showFilmstrip && allIds.length > 0 && (
+        <div className="h-20 sm:h-24 border-t border-white/10 bg-slate-950/80 backdrop-blur-xl px-4 flex items-center gap-2 overflow-x-auto shrink-0 z-30 select-none scrollbar-thin">
+          {allIds.map((item, idx) => {
+            const isSelected = item.messageId === selectedMedia.messageId;
+            return (
+              <button
+                key={item.messageId}
+                ref={isSelected ? activeThumbnailRef : undefined}
+                onClick={() => setSelectedMedia(item)}
+                className={`relative h-14 sm:h-16 aspect-square rounded-lg overflow-hidden shrink-0 transition-all ${
+                  isSelected
+                    ? 'ring-2 ring-sky-400 ring-offset-2 ring-offset-black scale-105 opacity-100 z-10 shadow-lg shadow-sky-500/20'
+                    : 'opacity-50 hover:opacity-90 hover:scale-100'
+                }`}
+                title={`${item.filename} (${idx + 1} of ${allIds.length})`}
+              >
+                <img
+                  src={item.thumbnailDataUrl}
+                  alt={item.filename}
+                  className="w-full h-full object-cover"
+                />
+                {item.kind === 'video' && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                    <Play className="w-3.5 h-3.5 text-white fill-white" />
+                  </div>
+                )}
+                {item.isFavorite && (
+                  <div className="absolute top-1 right-1">
+                    <Heart className="w-2.5 h-2.5 text-rose-500 fill-rose-500" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

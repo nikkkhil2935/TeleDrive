@@ -25,6 +25,7 @@ export interface MediaItem {
   width: number;
   height: number;
   durationMs?: number;
+  camera?: string;
   takenAt: string; // ISO string
   latitude?: number;
   longitude?: number;

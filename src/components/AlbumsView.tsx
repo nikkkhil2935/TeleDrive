@@ -5,12 +5,17 @@ import { db } from '../db';
 import { useApp } from '../context/AppContext';
 
 export const AlbumsView: React.FC = () => {
-  const { setSelectedAlbum, setActiveTab, isNewAlbumOpen, setIsNewAlbumOpen, bulkAddToAlbum } = useApp();
+  const { session, setSelectedAlbum, setActiveTab, isNewAlbumOpen, setIsNewAlbumOpen, bulkAddToAlbum } = useApp();
   const [newAlbumName, setNewAlbumName] = useState('');
 
   const albumsData = useLiveQuery(
     async () => {
-      const allMedia = await db.media.toArray();
+      let allMedia = await db.media.toArray();
+      if (session?.channelId) {
+        allMedia = allMedia.filter(m => m.libraryId === session.channelId || (session.userId && m.libraryId === session.userId));
+      } else if (!session) {
+        return [];
+      }
       const albumMap = new Map<string, { name: string; count: number; coverUrl?: string }>();
 
       // Populate from media items

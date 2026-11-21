@@ -11,6 +11,7 @@ import { RebuildModal } from './components/RebuildModal';
 import { StorageInsightModal } from './components/StorageInsightModal';
 import { TransferManagerModal } from './components/TransferManagerModal';
 import { SettingsModal } from './components/SettingsModal';
+import { VaultUnlockModal } from './components/VaultUnlockModal';
 import { useApp } from './context/AppContext';
 import { db } from './db';
 
@@ -54,6 +55,7 @@ export const App: React.FC = () => {
       <StorageInsightModal />
       <TransferManagerModal />
       <SettingsModal />
+      <VaultUnlockModal />
     </div>
   );
 };

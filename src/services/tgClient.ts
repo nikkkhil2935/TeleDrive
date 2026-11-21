@@ -127,8 +127,8 @@ export async function verifyTelegramCodeAndSignIn(
     authUser = await client.invoke(
       new Api.auth.SignIn({
         phoneNumber: phoneNumber.trim(),
-        phoneCodeHash,
-        phoneCode: phoneCode.trim(),
+        phoneCodeHash: String(phoneCodeHash).trim(),
+        phoneCode: String(phoneCode).trim(),
       })
     );
   } catch (err: any) {
@@ -429,9 +429,18 @@ export async function uploadMediaDocument(
     throw new Error(`File ${file.name} (${file.size} bytes) exceeds Telegram's 2,000,000,000 byte (2 GB) cap.`);
   }
 
-  // Convert File to CustomFile with in-memory Buffer for 100% reliable GramJS MTProto streaming
-  const fileBuffer = await file.arrayBuffer();
-  const customFile = new CustomFile(file.name, file.size, '', Buffer.from(fileBuffer));
+  // For files <= 10MB, using CustomFile with in-memory Buffer is instant.
+  // For files > 10MB (such as 20MB-140MB+ videos), passing the DOM File directly
+  // utilizes CustomBuffer's on-demand chunk slicing with 0 memory bloat.
+  let uploadPayload: any = file;
+  if (file.size <= 10 * 1024 * 1024) {
+    try {
+      const fileBuffer = await file.arrayBuffer();
+      uploadPayload = new CustomFile(file.name, file.size, '', Buffer.from(fileBuffer));
+    } catch (e) {
+      uploadPayload = file;
+    }
+  }
 
   let thumbCustomFile: CustomFile | undefined = undefined;
   if (thumbnailBlob && thumbnailBlob.size > 0) {
@@ -448,9 +457,10 @@ export async function uploadMediaDocument(
 
   const sendFilePayload = async (peer: any, includeThumb: boolean) => {
     const opts: any = {
-      file: customFile,
+      file: uploadPayload,
       caption: captionString,
       forceDocument: true, // Keep original bytes untouched without compression
+      workers: 4, // 4-worker multi-part chunk streaming for maximum upload throughput
       progressCallback: (percentage: number) => {
         if (onProgress) {
           onProgress(percentage, Math.round(percentage * file.size));
@@ -520,6 +530,7 @@ export async function parseAndIndexTelegramMessage(
   let takenAt = new Date((msg.date || Date.now() / 1000) * 1000).toISOString();
   let albums: string[] = [];
   let isFavorite = false;
+  let camera: string | undefined = undefined;
   let latitude: number | undefined = undefined;
   let longitude: number | undefined = undefined;
 
@@ -533,6 +544,7 @@ export async function parseAndIndexTelegramMessage(
     sha256 = meta.sha || sha256;
     albums = meta.albums || [];
     isFavorite = meta.fav === 1;
+    camera = meta.camera;
     latitude = meta.lat;
     longitude = meta.lon;
   } else if (msg.message && typeof msg.message === 'string' && msg.message.trim()) {
@@ -612,6 +624,7 @@ export async function parseAndIndexTelegramMessage(
     width,
     height,
     durationMs,
+    camera,
     takenAt,
     isFavorite,
     isArchived: false,
@@ -750,14 +763,16 @@ export async function downloadFullMedia(
   }
 
   const msg = messages[0];
-  const buffer: any = await client.downloadMedia(msg, {
+  const downloadOpts: any = {
+    workers: 4, // 4-worker parallel chunk streaming for maximum download speed
     progressCallback: (downloaded: any, total: any) => {
       if (onProgress) {
         const pct = total ? Number(downloaded) / Number(total) : 0.5;
         onProgress(pct);
       }
     },
-  });
+  };
+  const buffer: any = await client.downloadMedia(msg, downloadOpts);
 
   if (!buffer || buffer.length === 0) {
     throw new Error(`Failed to download full media buffer for message #${messageId}`);

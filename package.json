@@ -8,9 +8,10 @@
   "license": "ISC",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/patch-gramjs.cjs && vite --force",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "test": "node scripts/run-security-tests.cjs",
     "postinstall": "node scripts/patch-gramjs.cjs"
   },
   "dependencies": {

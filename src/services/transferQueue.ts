@@ -213,6 +213,31 @@ class TransferQueueService {
     }
     this.notify();
   }
+
+  async retryFailedJobs(channelId?: string) {
+    const failedJobs = await db.uploadJobs.where('status').equals('error').toArray();
+    for (const j of failedJobs) {
+      if (this.fileCache.has(j.id)) {
+        j.status = 'queued';
+        j.error = undefined;
+        j.progress = 0;
+        await db.uploadJobs.put(j);
+      } else {
+        // If file handle was lost from memory, delete stale job
+        await db.uploadJobs.delete(j.id);
+      }
+    }
+    this.notify();
+    if (channelId) {
+      this.processQueue(channelId);
+    }
+  }
+
+  async clearAll() {
+    await db.uploadJobs.clear();
+    this.fileCache.clear();
+    this.notify();
+  }
 }
 
 export const transferQueue = new TransferQueueService();

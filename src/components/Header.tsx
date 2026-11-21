@@ -17,14 +17,18 @@ import {
   Grid2X2,
   LayoutGrid,
   Activity,
-  Settings
+  Settings,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const Header: React.FC = () => {
   const {
     session,
-    setSession,
+    logout,
+    lockVault,
+    isAnotherTabActive,
     theme,
     setTheme,
     gridDensity,
@@ -179,22 +183,37 @@ export const Header: React.FC = () => {
         {/* Settings Modal */}
         <button
           onClick={() => setIsSettingsOpen(true)}
-          title="Settings"
+          title="Settings & Security"
           className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           <Settings className="w-4 h-4" />
         </button>
 
         {session ? (
-          <button
-            onClick={() => {
-              if (confirm('Log out from Telegram session?')) setSession(null);
-            }}
-            title="Log Out"
-            className="p-1.5 sm:p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => {
+                if (confirm('Lock security vault? You will need your vault passphrase to unlock.')) {
+                  lockVault();
+                }
+              }}
+              title="Lock Vault"
+              className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <Lock className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                if (confirm('Log out from Telegram and purge all local photos and session keys?')) {
+                  logout();
+                }
+              }}
+              title="Log Out & Purge Local Data"
+              className="p-1.5 sm:p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         ) : (
           <button
             onClick={() => setIsAuthModalOpen(true)}
@@ -204,6 +223,14 @@ export const Header: React.FC = () => {
           </button>
         )}
       </div>
+
+      {/* Single-Tab Conflict Warning Banner */}
+      {isAnotherTabActive && (
+        <div className="absolute top-16 inset-x-0 bg-amber-500 text-slate-950 px-4 py-2 text-xs font-semibold flex items-center justify-center gap-2 shadow-lg z-30">
+          <AlertCircle className="w-4 h-4" />
+          <span>Telegram session is currently open in another tab. Close other tabs to avoid session conflicts.</span>
+        </div>
+      )}
     </header>
   );
 };

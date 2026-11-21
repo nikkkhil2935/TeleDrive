@@ -10,13 +10,14 @@ import {
   Trash2,
   ArrowUpCircle,
   ArrowDownCircle,
-  ShieldCheck
+  ShieldCheck,
+  RefreshCw
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { transferQueue } from '../services/transferQueue';
 
 export const TransferManagerModal: React.FC = () => {
-  const { isTransfersOpen, setIsTransfersOpen, activeJobs } = useApp();
+  const { isTransfersOpen, setIsTransfersOpen, activeJobs, session } = useApp();
   const [tab, setTab] = useState<'uploads' | 'downloads'>('uploads');
   const [now, setNow] = useState(Date.now());
 
@@ -83,12 +84,22 @@ export const TransferManagerModal: React.FC = () => {
             </button>
           </div>
 
-          <button
-            onClick={() => transferQueue.clearCompleted()}
-            className="text-xs text-slate-500 dark:text-slate-400 hover:text-sky-500 flex items-center gap-1 font-medium transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" /> Clear Done
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => transferQueue.retryFailedJobs(session?.channelId || 'me')}
+              className="text-xs text-sky-500 hover:text-sky-400 flex items-center gap-1 font-medium transition-colors"
+              title="Retry all failed uploads"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Retry Failed
+            </button>
+            <button
+              onClick={() => transferQueue.clearAll()}
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-rose-400 flex items-center gap-1 font-medium transition-colors"
+              title="Clear all queue entries"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Clear All
+            </button>
+          </div>
         </div>
 
         {/* Transfers List */}

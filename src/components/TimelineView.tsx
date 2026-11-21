@@ -25,6 +25,7 @@ import type { MediaItem } from '../types';
 
 export const TimelineView: React.FC = () => {
   const {
+    session,
     activeTab,
     setSelectedMedia,
     toggleFavorite,
@@ -56,6 +57,13 @@ export const TimelineView: React.FC = () => {
     async () => {
       try {
         let items = await db.media.toArray();
+
+        // Security & Account Isolation: Scoped strictly to current authenticated Telegram channel / account
+        if (session?.channelId) {
+          items = items.filter(m => m.libraryId === session.channelId || (session.userId && m.libraryId === session.userId));
+        } else if (!session) {
+          return []; // If not logged in, show ZERO photos
+        }
 
         // Filter by Tab
         if (activeTab === 'favorites') {
@@ -112,7 +120,7 @@ export const TimelineView: React.FC = () => {
         return [];
       }
     },
-    [activeTab, mediaFilter, sortOption, selectedAlbum, searchQuery],
+    [session?.channelId, activeTab, mediaFilter, sortOption, selectedAlbum, searchQuery],
     []
   );
 

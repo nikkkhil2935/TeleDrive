@@ -29,6 +29,11 @@ html.dark body {
   color: #f8fafc;
 }
 
+html.midnight body {
+  background-color: #000000;
+  color: #f8fafc;
+}
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

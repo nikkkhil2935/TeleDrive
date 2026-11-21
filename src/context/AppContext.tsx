@@ -11,16 +11,32 @@ import {
   startChannelLiveListener,
 } from '../services/tgClient';
 import { transferQueue } from '../services/transferQueue';
+import {
+  hasEncryptedVault,
+  loadVaultSession,
+  saveVaultSession,
+  executePanicWipe,
+  executeTrueLogout,
+  setupAutoLockEngine,
+  setupSingleTabProtection,
+} from '../services/vaultService';
 import { db } from '../db';
 
-export type ThemeMode = 'dark' | 'light' | 'system';
+export type ThemeMode = 'dark' | 'light' | 'midnight' | 'system';
 export type GridDensity = 'small' | 'medium' | 'large';
 export type MediaFilter = 'all' | 'photo' | 'video';
 export type SortOption = 'date-desc' | 'date-asc' | 'size-desc' | 'size-asc' | 'name-asc';
 
 interface AppContextType {
   session: UserSession | null;
-  setSession: (s: UserSession | null) => void;
+  setSession: (s: UserSession | null, passphrase?: string) => void;
+  logout: () => Promise<void>;
+  panicWipe: () => Promise<void>;
+  isVaultLocked: boolean;
+  unlockVault: (passphrase: string) => Promise<void>;
+  lockVault: () => void;
+  isAnotherTabActive: boolean;
+
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
   activeTab: string;
@@ -80,7 +96,13 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSessionState] = useState<UserSession | null>(getActiveSession());
+  const [session, setSessionState] = useState<UserSession | null>(() => {
+    if (hasEncryptedVault()) return null;
+    return getActiveSession();
+  });
+  const [isVaultLocked, setIsVaultLocked] = useState<boolean>(() => hasEncryptedVault());
+  const [isAnotherTabActive, setIsAnotherTabActive] = useState(false);
+
   const [theme, setThemeState] = useState<ThemeMode>(() => {
     return (localStorage.getItem('tg_photos_theme') as ThemeMode) || 'dark';
   });
@@ -108,6 +130,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeJobs, setActiveJobs] = useState<UploadJob[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Lock Vault
+  const lockVault = useCallback(() => {
+    clearActiveSession();
+    setSessionState(null);
+    setIsVaultLocked(true);
+    setSelectedMedia(null);
+  }, []);
+
+  // Unlock Vault
+  const unlockVault = async (passphrase: string) => {
+    const { session: unlockedSession } = await loadVaultSession(passphrase);
+    if (!unlockedSession) {
+      throw new Error('Failed to decrypt session with provided passphrase.');
+    }
+    saveActiveSession(unlockedSession);
+    setSessionState(unlockedSession);
+    setIsVaultLocked(false);
+  };
+
+  // True Logout: server-side session revocation & complete local wipe
+  const logout = async () => {
+    try {
+      const client = await getTelegramClient();
+      await executeTrueLogout(client);
+    } catch (e) {
+      await executeTrueLogout(null);
+    }
+  };
+
+  // Instant Nuclear Panic Wipe
+  const panicWipe = async () => {
+    await executePanicWipe();
+  };
+
+  // Single-Tab Protection setup
+  useEffect(() => {
+    const cleanup = setupSingleTabProtection(() => {
+      setIsAnotherTabActive(true);
+    });
+    return cleanup;
+  }, []);
+
+  // Inactivity & Background tab Auto-Lock
+  useEffect(() => {
+    if (!session) return;
+    const cleanup = setupAutoLockEngine(() => {
+      lockVault();
+    }, 15);
+    return cleanup;
+  }, [session, lockVault]);
+
   // Sync recent Telegram channel media into local Dexie database
   const syncLibrary = useCallback(async () => {
     if (!session) return;
@@ -123,7 +196,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [session]);
 
-  // Handle auto-sync & real-time message listener on session connect
+  // Auto-sync on connect
   useEffect(() => {
     if (!session) return;
 
@@ -139,7 +212,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     })();
 
-    // Periodic poll every 30s to pick up any photos uploaded from phone/desktop Telegram
     const interval = setInterval(() => {
       syncLibrary();
     }, 30000);
@@ -150,27 +222,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, [session, syncLibrary]);
 
-  // Handle Theme switching
+  // Theme Switching (Light, Dark, Midnight OLED)
   useEffect(() => {
     const root = document.documentElement;
-    const applyTheme = (isDark: boolean) => {
-      if (isDark) {
+    const applyTheme = (t: ThemeMode) => {
+      root.classList.remove('dark', 'light', 'midnight');
+      if (t === 'midnight') {
+        root.classList.add('dark', 'midnight');
+      } else if (t === 'dark') {
         root.classList.add('dark');
-        root.classList.remove('light');
-      } else {
-        root.classList.remove('dark');
+      } else if (t === 'light') {
         root.classList.add('light');
+      } else {
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.classList.add(isDark ? 'dark' : 'light');
       }
     };
 
     if (theme === 'system') {
       const mql = window.matchMedia('(prefers-color-scheme: dark)');
-      applyTheme(mql.matches);
-      const handler = (e: MediaQueryListEvent) => applyTheme(e.matches);
+      applyTheme('system');
+      const handler = () => applyTheme('system');
       mql.addEventListener('change', handler);
       return () => mql.removeEventListener('change', handler);
     } else {
-      applyTheme(theme === 'dark');
+      applyTheme(theme);
     }
   }, [theme]);
 
@@ -180,10 +256,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   useEffect(() => {
-    if (!session) {
+    if (!session && !isVaultLocked) {
       setIsAuthModalOpen(true);
     }
-  }, [session]);
+  }, [session, isVaultLocked]);
 
   useEffect(() => {
     const unsubscribe = transferQueue.subscribe((jobs) => {
@@ -192,9 +268,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return unsubscribe;
   }, []);
 
-  const setSession = (s: UserSession | null) => {
+  const setSession = (s: UserSession | null, passphrase?: string) => {
     if (s) {
-      saveActiveSession(s);
+      if (passphrase) {
+        saveVaultSession(s, passphrase);
+      } else {
+        saveActiveSession(s);
+      }
+      setIsVaultLocked(false);
     } else {
       clearActiveSession();
     }
@@ -319,7 +400,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
 
-    // Ensure album exists in album table
     const existing = await db.albums.where('name').equals(albumName).first();
     if (!existing) {
       await db.albums.add({
@@ -336,6 +416,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         session,
         setSession,
+        logout,
+        panicWipe,
+        isVaultLocked,
+        unlockVault,
+        lockVault,
+        isAnotherTabActive,
         theme,
         setTheme,
         activeTab,
