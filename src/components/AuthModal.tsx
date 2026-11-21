@@ -222,19 +222,6 @@ export const AuthModal: React.FC = () => {
     }
   };
 
-  const handleUseDemoAccount = () => {
-    const demoSession = {
-      apiId: 2040,
-      apiHash: 'b18441a1ff607e10a989891a5462e627',
-      sessionString: '1BVtsDemoSessionKey983712398127391823...',
-      channelId: '2093810291',
-      channelTitle: 'Demo Cloud Library',
-      phone: '+1 555-0199',
-    };
-    setSession(demoSession);
-    setIsAuthModalOpen(false);
-  };
-
   if (!isAuthModalOpen) return null;
 
   return (
@@ -533,18 +520,6 @@ export const AuthModal: React.FC = () => {
               )}
             </div>
           )}
-
-          {/* Demo Fallback Option */}
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>Want to test the UI offline?</span>
-            <button
-              type="button"
-              onClick={handleUseDemoAccount}
-              className="text-sky-500 hover:underline font-medium"
-            >
-              Launch Demo Mode
-            </button>
-          </div>
         </div>
       </div>
     </div>

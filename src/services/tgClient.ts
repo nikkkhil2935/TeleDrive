@@ -18,6 +18,11 @@ export function getActiveSession(): UserSession | null {
     const raw = localStorage.getItem(SESSION_STORAGE_KEY);
     if (raw) {
       activeSession = JSON.parse(raw);
+      if (activeSession?.channelId === '2093810291' || activeSession?.sessionString?.includes('DemoSessionKey')) {
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+        activeSession = null;
+        return null;
+      }
       return activeSession;
     }
   } catch (e) {
@@ -424,53 +429,63 @@ export async function uploadMediaDocument(
     throw new Error(`File ${file.name} (${file.size} bytes) exceeds Telegram's 2,000,000,000 byte (2 GB) cap.`);
   }
 
-  const fileBuffer = await file.arrayBuffer();
-  const customFile = new CustomFile(file.name, file.size, '', Buffer.from(fileBuffer));
-
-  const thumbBuffer = await thumbnailBlob.arrayBuffer();
-  const thumbCustomFile = new CustomFile('thumb.jpg', thumbnailBlob.size, '', Buffer.from(thumbBuffer));
+  // Use standard browser File instance for thumbnail
+  let thumbFile: File | undefined = undefined;
+  if (thumbnailBlob && thumbnailBlob.size > 0) {
+    try {
+      thumbFile = new File([thumbnailBlob], 'thumb.jpg', { type: 'image/jpeg' });
+    } catch (e) {
+      console.warn('Could not construct File for thumbnail, continuing without thumb:', e);
+    }
+  }
 
   const captionString = serializeCaptionJson(caption);
-
   const targetPeer = await resolveTargetPeer(client, channelId);
 
-  let message: any;
-  try {
-    message = await client.sendFile(targetPeer, {
-      file: customFile,
-      thumb: thumbCustomFile,
+  const sendFilePayload = async (peer: any, includeThumb: boolean) => {
+    const opts: any = {
+      file: file, // Standard Web File
       caption: captionString,
-      forceDocument: true, // Keep original bytes untouched
+      forceDocument: true, // Keep original bytes untouched without compression
       progressCallback: (percentage: number) => {
         if (onProgress) {
           onProgress(percentage, Math.round(percentage * file.size));
         }
       },
-    });
-  } catch (err: any) {
-    // If entity resolution fails for channel, gracefully fall back to Saved Messages (InputPeerSelf)
-    const isEntityError =
-      err?.message &&
-      (err.message.includes('Could not find the input entity') ||
-        err.message.includes('CHANNEL_INVALID') ||
-        err.message.includes('CHAT_WRITE_FORBIDDEN'));
+    };
+    if (includeThumb && thumbFile) {
+      opts.thumb = thumbFile;
+    }
+    return await client.sendFile(peer, opts);
+  };
 
-    if (isEntityError) {
-      console.warn('[Telegram] Channel upload failed with entity/access error, falling back to Saved Messages:', err.message);
-      const selfPeer = new Api.InputPeerSelf();
-      message = await client.sendFile(selfPeer, {
-        file: customFile,
-        thumb: thumbCustomFile,
-        caption: captionString,
-        forceDocument: true,
-        progressCallback: (percentage: number) => {
-          if (onProgress) {
-            onProgress(percentage, Math.round(percentage * file.size));
-          }
-        },
-      });
+  let message: any;
+  try {
+    message = await sendFilePayload(targetPeer, !!thumbFile);
+  } catch (err: any) {
+    // If thumbnail caused "Could not create file from", retry immediately without thumbnail
+    if (err?.message && err.message.includes('Could not create file from') && thumbFile) {
+      console.warn('[Telegram] Upload with thumbnail failed, retrying without thumbnail:', err.message);
+      try {
+        message = await sendFilePayload(targetPeer, false);
+      } catch (retryErr: any) {
+        throw retryErr;
+      }
     } else {
-      throw err;
+      // If entity resolution fails for channel, gracefully fall back to Saved Messages (InputPeerSelf)
+      const isEntityError =
+        err?.message &&
+        (err.message.includes('Could not find the input entity') ||
+          err.message.includes('CHANNEL_INVALID') ||
+          err.message.includes('CHAT_WRITE_FORBIDDEN'));
+
+      if (isEntityError) {
+        console.warn('[Telegram] Channel upload failed with entity/access error, falling back to Saved Messages:', err.message);
+        const selfPeer = new Api.InputPeerSelf();
+        message = await sendFilePayload(selfPeer, !!thumbFile);
+      } else {
+        throw err;
+      }
     }
   }
 

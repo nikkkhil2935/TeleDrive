@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
+// 1. Patch generationHelpers.js for 2FA Buffer serialization
 const targetFile = path.resolve(__dirname, '../node_modules/telegram/tl/generationHelpers.js');
 if (fs.existsSync(targetFile)) {
   let content = fs.readFileSync(targetFile, 'utf8');
@@ -17,5 +18,19 @@ if (fs.existsSync(targetFile)) {
     content = content.slice(0, startIdx) + replacement + content.slice(endIdx);
     fs.writeFileSync(targetFile, content, 'utf8');
     console.log('[patch-gramjs] Successfully patched generationHelpers.js');
+  }
+}
+
+// 2. Patch uploads.js for thumb CustomFile support
+const uploadsFile = path.resolve(__dirname, '../node_modules/telegram/client/uploads.js');
+if (fs.existsSync(uploadsFile)) {
+  let uploadsContent = fs.readFileSync(uploadsFile, 'utf8');
+  if (uploadsContent.includes('else if (typeof File !== "undefined" && thumb instanceof File)') && !uploadsContent.includes('thumb instanceof CustomFile')) {
+    uploadsContent = uploadsContent.replace(
+      'else if (typeof File !== "undefined" && thumb instanceof File)',
+      'else if ((typeof File !== "undefined" && thumb instanceof File) || (typeof CustomFile !== "undefined" && thumb instanceof CustomFile))'
+    );
+    fs.writeFileSync(uploadsFile, uploadsContent, 'utf8');
+    console.log('[patch-gramjs] Successfully patched uploads.js for thumbnail CustomFile');
   }
 }

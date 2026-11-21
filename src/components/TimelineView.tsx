@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   Play,
@@ -11,7 +11,13 @@ import {
   FolderPlus,
   X,
   Filter,
-  ArrowUpDown
+  ArrowUpDown,
+  UploadCloud,
+  RefreshCw,
+  HardDrive,
+  ShieldCheck,
+  Sparkles,
+  Image as ImageIcon
 } from 'lucide-react';
 import { db } from '../db';
 import { useApp } from '../context/AppContext';
@@ -38,7 +44,11 @@ export const TimelineView: React.FC = () => {
     bulkMoveToTrash,
     bulkDownloadZip,
     setIsNewAlbumOpen,
+    uploadFiles,
+    setIsRebuildModalOpen,
   } = useApp();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const allMedia = useLiveQuery(
     async () => {
@@ -279,19 +289,102 @@ export const TimelineView: React.FC = () => {
         </div>
       )}
 
-      {/* Media Grid or Empty State */}
+      {/* Media Grid or Clean Start Screen */}
       {allMedia.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-12 text-center select-none">
-          <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 mb-4 shadow-sm">
-            <ImageOff className="w-8 h-8" />
+        activeTab === 'photos' ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-12 text-center select-none max-w-xl mx-auto my-auto animate-in fade-in duration-200">
+            <input
+              type="file"
+              ref={fileInputRef}
+              multiple
+              accept="image/*,video/*"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  uploadFiles(Array.from(e.target.files));
+                  e.target.value = '';
+                }
+              }}
+            />
+
+            <div className="relative mb-6">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-sky-500/20 via-indigo-500/15 to-purple-500/20 border border-sky-500/30 flex items-center justify-center text-sky-500 dark:text-sky-400 shadow-xl shadow-sky-500/10">
+                <ImageIcon className="w-10 h-10 sm:w-12 sm:h-12" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-gradient-to-r from-sky-500 to-indigo-600 text-white flex items-center justify-center shadow-lg">
+                <Sparkles className="w-4 h-4" />
+              </div>
+            </div>
+
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+              Your Photos & Videos Live Here
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md leading-relaxed">
+              Back up unlimited photos and videos directly to your Telegram cloud. Saved in original resolution with zero compression.
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-medium text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md shadow-sky-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <UploadCloud className="w-4 h-4" />
+                <span>Upload Photos & Videos</span>
+              </button>
+
+              <button
+                onClick={() => setIsRebuildModalOpen(true)}
+                className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Sync from Telegram</span>
+              </button>
+            </div>
+
+            {/* Feature Highlights */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-10 w-full text-left">
+              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+                <div className="flex items-center gap-2 text-sky-500 font-semibold text-xs mb-1">
+                  <HardDrive className="w-3.5 h-3.5" />
+                  <span>Original Quality</span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
+                  Files up to 2 GB with pixel-perfect byte fidelity.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+                <div className="flex items-center gap-2 text-indigo-500 font-semibold text-xs mb-1">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Direct MTProto</span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
+                  Direct client-to-Telegram WebSocket connection.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+                <div className="flex items-center gap-2 text-emerald-500 font-semibold text-xs mb-1">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Smart EXIF</span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
+                  Auto-extracted capture dates, specs & GPS tags.
+                </p>
+              </div>
+            </div>
           </div>
-          <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">No media found</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">
-            {activeTab === 'photos'
-              ? 'Upload photos or videos using the button above to build your Telegram library.'
-              : `No items matching current filter in ${activeTab}.`}
-          </p>
-        </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center p-12 text-center select-none">
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 mb-4 shadow-sm">
+              <ImageOff className="w-8 h-8" />
+            </div>
+            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">No media found</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">
+              No items matching current filter in {activeTab}.
+            </p>
+          </div>
+        )
       ) : (
         <div className="space-y-8">
           {groupedMedia.map((group) => (
