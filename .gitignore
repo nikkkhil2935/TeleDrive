@@ -4,3 +4,4 @@ temp_rea/
 reference_telegram_drive/
 .DS_Store
 *.log
+.vercel
