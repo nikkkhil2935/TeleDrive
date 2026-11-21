@@ -27,6 +27,16 @@ function patchGramJsPlugin(): Plugin {
       }
 
       if (id.includes('uploads') || code.includes('Could not create file from')) {
+        const search1 = '!(file instanceof CustomFile)';
+        const search2 = '!("read" in file)';
+        const idx1 = modified.indexOf(search1);
+        const idx2 = modified.indexOf(search2, idx1);
+        if (idx1 !== -1 && idx2 !== -1 && !modified.slice(idx1, idx2 + 30).includes('file instanceof File')) {
+          const replacement = '!(file instanceof CustomFile) && !(typeof File !== "undefined" && file instanceof File) && ';
+          modified = modified.slice(0, idx1) + replacement + modified.slice(idx2);
+          hasChange = true;
+        }
+
         if (modified.includes('else if (typeof File !== "undefined" && thumb instanceof File)') && !modified.includes('thumb instanceof CustomFile')) {
           modified = modified.replace(
             'else if (typeof File !== "undefined" && thumb instanceof File)',

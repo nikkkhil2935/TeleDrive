@@ -37,7 +37,9 @@ export const Header: React.FC = () => {
     activeJobs,
     uploadFiles,
     searchQuery,
-    setSearchQuery
+    setSearchQuery,
+    isSyncing,
+    syncLibrary,
   } = useApp();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -139,6 +141,16 @@ export const Header: React.FC = () => {
         >
           <UploadCloud className="w-4 h-4" />
           <span className="hidden sm:inline">Upload</span>
+        </button>
+
+        {/* Sync from Telegram Button */}
+        <button
+          onClick={syncLibrary}
+          disabled={isSyncing}
+          title={isSyncing ? 'Syncing with Telegram channel...' : 'Sync newly uploaded photos from Telegram'}
+          className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-sky-500' : ''}`} />
         </button>
 
         {/* Transfer Manager Button */}

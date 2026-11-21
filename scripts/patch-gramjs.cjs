@@ -21,16 +21,35 @@ if (fs.existsSync(targetFile)) {
   }
 }
 
-// 2. Patch uploads.js for thumb CustomFile support
+// 2. Patch uploads.js for DOM File and thumb CustomFile support
 const uploadsFile = path.resolve(__dirname, '../node_modules/telegram/client/uploads.js');
 if (fs.existsSync(uploadsFile)) {
   let uploadsContent = fs.readFileSync(uploadsFile, 'utf8');
+  let changed = false;
+
+  // Patch line 174: avoid misclassifying DOM File as un-uploadable TL object
+  const search1 = '!(file instanceof CustomFile)';
+  const search2 = '!("read" in file)';
+  const idx1 = uploadsContent.indexOf(search1);
+  const idx2 = uploadsContent.indexOf(search2, idx1);
+  if (idx1 !== -1 && idx2 !== -1 && !uploadsContent.slice(idx1, idx2 + 30).includes('file instanceof File')) {
+    const replacement = '!(file instanceof CustomFile) && !(typeof File !== "undefined" && file instanceof File) && ';
+    uploadsContent = uploadsContent.slice(0, idx1) + replacement + uploadsContent.slice(idx2);
+    changed = true;
+    console.log('[patch-gramjs] Successfully patched uploads.js for DOM File upload');
+  }
+
+  // Patch line 286: support CustomFile for thumb
   if (uploadsContent.includes('else if (typeof File !== "undefined" && thumb instanceof File)') && !uploadsContent.includes('thumb instanceof CustomFile')) {
     uploadsContent = uploadsContent.replace(
       'else if (typeof File !== "undefined" && thumb instanceof File)',
       'else if ((typeof File !== "undefined" && thumb instanceof File) || (typeof CustomFile !== "undefined" && thumb instanceof CustomFile))'
     );
-    fs.writeFileSync(uploadsFile, uploadsContent, 'utf8');
+    changed = true;
     console.log('[patch-gramjs] Successfully patched uploads.js for thumbnail CustomFile');
+  }
+
+  if (changed) {
+    fs.writeFileSync(uploadsFile, uploadsContent, 'utf8');
   }
 }

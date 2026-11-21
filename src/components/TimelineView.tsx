@@ -46,6 +46,8 @@ export const TimelineView: React.FC = () => {
     setIsNewAlbumOpen,
     uploadFiles,
     setIsRebuildModalOpen,
+    syncLibrary,
+    isSyncing,
   } = useApp();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -333,11 +335,12 @@ export const TimelineView: React.FC = () => {
               </button>
 
               <button
-                onClick={() => setIsRebuildModalOpen(true)}
+                onClick={syncLibrary}
+                disabled={isSyncing}
                 className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors"
               >
-                <RefreshCw className="w-4 h-4" />
-                <span>Sync from Telegram</span>
+                <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-sky-500' : ''}`} />
+                <span>{isSyncing ? 'Syncing...' : 'Sync from Telegram'}</span>
               </button>
             </div>
 

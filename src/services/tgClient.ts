@@ -429,13 +429,17 @@ export async function uploadMediaDocument(
     throw new Error(`File ${file.name} (${file.size} bytes) exceeds Telegram's 2,000,000,000 byte (2 GB) cap.`);
   }
 
-  // Use standard browser File instance for thumbnail
-  let thumbFile: File | undefined = undefined;
+  // Convert File to CustomFile with in-memory Buffer for 100% reliable GramJS MTProto streaming
+  const fileBuffer = await file.arrayBuffer();
+  const customFile = new CustomFile(file.name, file.size, '', Buffer.from(fileBuffer));
+
+  let thumbCustomFile: CustomFile | undefined = undefined;
   if (thumbnailBlob && thumbnailBlob.size > 0) {
     try {
-      thumbFile = new File([thumbnailBlob], 'thumb.jpg', { type: 'image/jpeg' });
+      const thumbBuffer = await thumbnailBlob.arrayBuffer();
+      thumbCustomFile = new CustomFile('thumb.jpg', thumbnailBlob.size, '', Buffer.from(thumbBuffer));
     } catch (e) {
-      console.warn('Could not construct File for thumbnail, continuing without thumb:', e);
+      console.warn('Could not construct CustomFile for thumbnail, continuing without thumb:', e);
     }
   }
 
@@ -444,7 +448,7 @@ export async function uploadMediaDocument(
 
   const sendFilePayload = async (peer: any, includeThumb: boolean) => {
     const opts: any = {
-      file: file, // Standard Web File
+      file: customFile,
       caption: captionString,
       forceDocument: true, // Keep original bytes untouched without compression
       progressCallback: (percentage: number) => {
@@ -453,24 +457,20 @@ export async function uploadMediaDocument(
         }
       },
     };
-    if (includeThumb && thumbFile) {
-      opts.thumb = thumbFile;
+    if (includeThumb && thumbCustomFile) {
+      opts.thumb = thumbCustomFile;
     }
     return await client.sendFile(peer, opts);
   };
 
   let message: any;
   try {
-    message = await sendFilePayload(targetPeer, !!thumbFile);
+    message = await sendFilePayload(targetPeer, !!thumbCustomFile);
   } catch (err: any) {
-    // If thumbnail caused "Could not create file from", retry immediately without thumbnail
-    if (err?.message && err.message.includes('Could not create file from') && thumbFile) {
+    // If thumbnail caused any error, retry immediately without thumbnail
+    if (err?.message && (err.message.includes('Could not create file from') || err.message.includes('Cannot use')) && thumbCustomFile) {
       console.warn('[Telegram] Upload with thumbnail failed, retrying without thumbnail:', err.message);
-      try {
-        message = await sendFilePayload(targetPeer, false);
-      } catch (retryErr: any) {
-        throw retryErr;
-      }
+      message = await sendFilePayload(targetPeer, false);
     } else {
       // If entity resolution fails for channel, gracefully fall back to Saved Messages (InputPeerSelf)
       const isEntityError =
@@ -482,7 +482,7 @@ export async function uploadMediaDocument(
       if (isEntityError) {
         console.warn('[Telegram] Channel upload failed with entity/access error, falling back to Saved Messages:', err.message);
         const selfPeer = new Api.InputPeerSelf();
-        message = await sendFilePayload(selfPeer, !!thumbFile);
+        message = await sendFilePayload(selfPeer, !!thumbCustomFile);
       } else {
         throw err;
       }
@@ -490,6 +490,191 @@ export async function uploadMediaDocument(
   }
 
   return { messageId: message.id };
+}
+
+/**
+ * Parses and indexes any Telegram message (manual upload or app upload) into local Dexie database.
+ */
+export async function parseAndIndexTelegramMessage(
+  client: TelegramClient,
+  channelId: string,
+  msg: any
+): Promise<boolean> {
+  if (!msg || !msg.media) return false;
+
+  const msgId = msg.id;
+  const isDoc = msg.media.className === 'MessageMediaDocument' || !!msg.media.document;
+  const isPhoto = msg.media.className === 'MessageMediaPhoto' || !!msg.media.photo;
+
+  if (!isDoc && !isPhoto) return false;
+
+  let filename = `media_${msgId}.jpg`;
+  let kind: 'photo' | 'video' = 'photo';
+  let mimeType = 'image/jpeg';
+  let sizeBytes = 0;
+  let width = 1920;
+  let height = 1080;
+  let durationMs: number | undefined = undefined;
+  let thumbnailDataUrl: string | undefined = undefined;
+  let sha256 = `tg_${msgId}`;
+  let takenAt = new Date((msg.date || Date.now() / 1000) * 1000).toISOString();
+  let albums: string[] = [];
+  let isFavorite = false;
+  let latitude: number | undefined = undefined;
+  let longitude: number | undefined = undefined;
+
+  // Try parsing JSON caption if created by Telegram Photos app
+  const meta = parseCaptionJson(msg.message);
+  if (meta) {
+    filename = meta.name || filename;
+    takenAt = meta.taken || takenAt;
+    width = meta.w || width;
+    height = meta.h || height;
+    sha256 = meta.sha || sha256;
+    albums = meta.albums || [];
+    isFavorite = meta.fav === 1;
+    latitude = meta.lat;
+    longitude = meta.lon;
+  } else if (msg.message && typeof msg.message === 'string' && msg.message.trim()) {
+    // If user provided a normal text caption in Telegram app
+    filename = msg.message.trim().slice(0, 60);
+  }
+
+  if (isPhoto) {
+    const photo = msg.media.photo;
+    if (photo && photo.className !== 'PhotoEmpty') {
+      filename = filename.endsWith('.jpg') || filename.endsWith('.png') ? filename : `${filename}.jpg`;
+      kind = 'photo';
+      mimeType = 'image/jpeg';
+
+      if (Array.isArray(photo.sizes)) {
+        for (const s of photo.sizes) {
+          if (s.w && s.h && s.w * s.h > width * height) {
+            width = s.w;
+            height = s.h;
+          }
+          if (s.size && s.size > sizeBytes) {
+            sizeBytes = s.size;
+          }
+        }
+      }
+    }
+  } else if (isDoc) {
+    const doc = msg.media.document;
+    if (doc) {
+      sizeBytes = Number(doc.size || 0);
+      mimeType = doc.mimeType || 'application/octet-stream';
+      kind = mimeType.startsWith('video/') ? 'video' : 'photo';
+
+      if (Array.isArray(doc.attributes)) {
+        for (const attr of doc.attributes) {
+          if (attr.className === 'DocumentAttributeFilename' && attr.fileName) {
+            filename = attr.fileName;
+          } else if (attr.className === 'DocumentAttributeImageSize') {
+            width = attr.w || width;
+            height = attr.h || height;
+          } else if (attr.className === 'DocumentAttributeVideo') {
+            kind = 'video';
+            durationMs = Math.round((attr.duration || 0) * 1000);
+            if (attr.w) width = attr.w;
+            if (attr.h) height = attr.h;
+          }
+        }
+      }
+    }
+  }
+
+  // Attempt to download a fast thumbnail if not already present
+  try {
+    const thumbBuffer = await client.downloadMedia(msg, { thumb: 1 });
+    if (thumbBuffer && thumbBuffer.length > 0) {
+      thumbnailDataUrl = 'data:image/jpeg;base64,' + Buffer.from(thumbBuffer).toString('base64');
+    }
+  } catch (e) {
+    // If network thumbnail download fails, generate a clean SVG gradient thumbnail
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0284c7"/><stop offset="100%" stop-color="#4f46e5"/></linearGradient></defs>
+      <rect width="400" height="400" fill="url(#g)"/>
+      <circle cx="200" cy="180" r="60" fill="white" opacity="0.9"/>
+      <text x="200" y="310" font-family="sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">${filename.slice(0, 24)}</text>
+    </svg>`;
+    thumbnailDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  }
+
+  const mediaRow: MediaItem = {
+    messageId: msgId,
+    libraryId: channelId,
+    kind,
+    filename,
+    mimeType,
+    sizeBytes,
+    sha256,
+    width,
+    height,
+    durationMs,
+    takenAt,
+    isFavorite,
+    isArchived: false,
+    uploadedAt: new Date((msg.date || Date.now() / 1000) * 1000).toISOString(),
+    albums,
+    latitude,
+    longitude,
+    thumbnailDataUrl,
+  };
+
+  await db.media.put(mediaRow);
+  return true;
+}
+
+/**
+ * Scans the newest messages from the Telegram channel and indexes any newly added media.
+ */
+export async function syncRecentChannelMessages(
+  client: TelegramClient,
+  channelId: string,
+  limit = 50
+): Promise<number> {
+  const targetPeer = await resolveTargetPeer(client, channelId);
+  const messages: any[] = await client.getMessages(targetPeer, { limit });
+  if (!messages || messages.length === 0) return 0;
+
+  let addedCount = 0;
+  for (const msg of messages) {
+    if (msg.media) {
+      const indexed = await parseAndIndexTelegramMessage(client, channelId, msg);
+      if (indexed) addedCount++;
+    }
+  }
+  return addedCount;
+}
+
+let activeLiveListenerCleanup: (() => void) | null = null;
+
+/**
+ * Real-time event listener: detects whenever photos or documents are posted to the channel (e.g. from Telegram app).
+ */
+export function startChannelLiveListener(client: TelegramClient, channelId: string) {
+  if (activeLiveListenerCleanup) return;
+
+  const eventHandler = async (update: any) => {
+    try {
+      const msg = update?.message || (update?.className === 'UpdateNewChannelMessage' ? update.message : null);
+      if (msg && (msg.media || msg.photo || msg.document)) {
+        console.info('[Telegram Live] Received new channel message, indexing:', msg.id);
+        await parseAndIndexTelegramMessage(client, channelId, msg);
+      }
+    } catch (e) {
+      console.warn('[Telegram Live] Error processing incoming update:', e);
+    }
+  };
+
+  client.addEventHandler(eventHandler);
+  activeLiveListenerCleanup = () => {
+    try {
+      client.removeEventHandler(eventHandler, undefined as any);
+    } catch (e) {}
+    activeLiveListenerCleanup = null;
+  };
 }
 
 /**
@@ -519,37 +704,10 @@ export async function rebuildIndexFromChannel(
       scannedCount++;
       offsetId = msg.id;
 
-      if (!msg.media || msg.media.className !== 'MessageMediaDocument') {
-        continue;
+      if (msg.media) {
+        const indexed = await parseAndIndexTelegramMessage(client, channelId, msg);
+        if (indexed) indexedCount++;
       }
-
-      const doc = msg.media.document;
-      if (!doc) continue;
-
-      const meta = parseCaptionJson(msg.message);
-      const isVideo = doc.mimeType?.startsWith('video/') || false;
-
-      const mediaRow: MediaItem = {
-        messageId: msg.id,
-        libraryId: channelId,
-        kind: isVideo ? 'video' : 'photo',
-        filename: meta?.name || 'media_' + msg.id,
-        mimeType: doc.mimeType || (isVideo ? 'video/mp4' : 'image/jpeg'),
-        sizeBytes: Number(doc.size || 0),
-        sha256: meta?.sha || '',
-        width: meta?.w || 1920,
-        height: meta?.h || 1080,
-        takenAt: meta?.taken || new Date(msg.date * 1000).toISOString(),
-        isFavorite: meta?.fav === 1,
-        isArchived: false,
-        uploadedAt: new Date(msg.date * 1000).toISOString(),
-        albums: meta?.albums || [],
-        latitude: meta?.lat,
-        longitude: meta?.lon,
-      };
-
-      await db.media.put(mediaRow);
-      indexedCount++;
     }
 
     if (onProgress) {

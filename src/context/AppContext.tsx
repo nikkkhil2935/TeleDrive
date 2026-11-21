@@ -1,7 +1,15 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import JSZip from 'jszip';
 import type { MediaItem, UserSession, UploadJob } from '../types';
-import { getActiveSession, saveActiveSession, clearActiveSession, ensureLibraryChannel, getTelegramClient } from '../services/tgClient';
+import {
+  getActiveSession,
+  saveActiveSession,
+  clearActiveSession,
+  ensureLibraryChannel,
+  getTelegramClient,
+  syncRecentChannelMessages,
+  startChannelLiveListener,
+} from '../services/tgClient';
 import { transferQueue } from '../services/transferQueue';
 import { db } from '../db';
 
@@ -50,6 +58,10 @@ interface AppContextType {
   isNewAlbumOpen: boolean;
   setIsNewAlbumOpen: (open: boolean) => void;
 
+  // Telegram Cloud Sync
+  isSyncing: boolean;
+  syncLibrary: () => Promise<void>;
+
   // Transfers & Operations
   activeJobs: UploadJob[];
   uploadFiles: (files: File[]) => Promise<void>;
@@ -91,9 +103,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isTransfersOpen, setIsTransfersOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNewAlbumOpen, setIsNewAlbumOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [activeJobs, setActiveJobs] = useState<UploadJob[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Sync recent Telegram channel media into local Dexie database
+  const syncLibrary = useCallback(async () => {
+    if (!session) return;
+    setIsSyncing(true);
+    try {
+      const client = await getTelegramClient();
+      const count = await syncRecentChannelMessages(client, session.channelId || 'me');
+      console.info(`[Telegram Sync] Synced ${count} messages from channel.`);
+    } catch (e) {
+      console.warn('[Telegram Sync] Sync attempt skipped or failed:', e);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [session]);
+
+  // Handle auto-sync & real-time message listener on session connect
+  useEffect(() => {
+    if (!session) return;
+
+    let isMounted = true;
+    (async () => {
+      try {
+        const client = await getTelegramClient();
+        if (!isMounted) return;
+        startChannelLiveListener(client, session.channelId || 'me');
+        await syncRecentChannelMessages(client, session.channelId || 'me');
+      } catch (e) {
+        console.warn('[Telegram Auto-Sync] Initial channel sync deferred:', e);
+      }
+    })();
+
+    // Periodic poll every 30s to pick up any photos uploaded from phone/desktop Telegram
+    const interval = setInterval(() => {
+      syncLibrary();
+    }, 30000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [session, syncLibrary]);
 
   // Handle Theme switching
   useEffect(() => {
@@ -311,6 +366,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsSettingsOpen,
         isNewAlbumOpen,
         setIsNewAlbumOpen,
+        isSyncing,
+        syncLibrary,
         activeJobs,
         uploadFiles,
         toggleFavorite,
