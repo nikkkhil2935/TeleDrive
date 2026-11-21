@@ -65,7 +65,7 @@ export const AlbumsView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+    <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">

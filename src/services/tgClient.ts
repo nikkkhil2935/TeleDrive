@@ -154,7 +154,7 @@ export async function verifyTelegramCodeAndSignIn(
   const sessionString = client.session.save() as unknown as string;
 
   // Auto-discover or provision library channel
-  const { channelId, channelTitle } = await ensureLibraryChannel(client);
+  const { channelId, channelTitle, channelAccessHash } = await ensureLibraryChannel(client);
 
   const userObj = authUser.user || authUser;
   const session: UserSession = {
@@ -163,6 +163,7 @@ export async function verifyTelegramCodeAndSignIn(
     sessionString,
     channelId,
     channelTitle,
+    channelAccessHash,
     phone: phoneNumber,
     userId: userObj?.id?.toString(),
     userName: [userObj?.firstName, userObj?.lastName].filter(Boolean).join(' ') || phoneNumber,
@@ -223,7 +224,7 @@ export async function startTelegramQrLogin(
   );
 
   const sessionString = client.session.save() as unknown as string;
-  const { channelId, channelTitle } = await ensureLibraryChannel(client);
+  const { channelId, channelTitle, channelAccessHash } = await ensureLibraryChannel(client);
 
   const userObj = authUser as any;
   const session: UserSession = {
@@ -232,6 +233,7 @@ export async function startTelegramQrLogin(
     sessionString,
     channelId,
     channelTitle,
+    channelAccessHash,
     userId: userObj?.id?.toString(),
     userName: [userObj?.firstName, userObj?.lastName].filter(Boolean).join(' ') || 'Telegram User',
   };
@@ -246,25 +248,31 @@ export async function startTelegramQrLogin(
 export async function ensureLibraryChannel(
   client: TelegramClient,
   title = 'Telegram Photos Library'
-): Promise<{ channelId: string; channelTitle: string }> {
+): Promise<{ channelId: string; channelTitle: string; channelAccessHash?: string }> {
   const session = getActiveSession();
-  if (session?.channelId) {
-    return { channelId: session.channelId, channelTitle: session.channelTitle || title };
+  if (session?.channelId && session?.channelAccessHash) {
+    return {
+      channelId: session.channelId,
+      channelTitle: session.channelTitle || title,
+      channelAccessHash: session.channelAccessHash,
+    };
   }
 
   try {
     // Check existing dialogs first to reuse existing Photos Library channel
-    const dialogs: any[] = await client.getDialogs({ limit: 40 });
+    const dialogs: any[] = await client.getDialogs({ limit: 100 });
     const existing = dialogs.find(d => (d.isChannel || d.isGroup) && d.title?.toLowerCase().includes('photos library'));
     if (existing && existing.entity) {
       const channelId = existing.entity.id.toString();
       const channelTitle = existing.title || title;
+      const channelAccessHash = existing.entity.accessHash ? existing.entity.accessHash.toString() : undefined;
       if (session) {
         session.channelId = channelId;
         session.channelTitle = channelTitle;
+        session.channelAccessHash = channelAccessHash;
         saveActiveSession(session);
       }
-      return { channelId, channelTitle };
+      return { channelId, channelTitle, channelAccessHash };
     }
   } catch (e) {
     console.warn('Could not inspect dialogs for existing channel:', e);
@@ -287,13 +295,94 @@ export async function ensureLibraryChannel(
   }
 
   const channelId = createdChannel.id.toString();
+  const channelAccessHash = createdChannel.accessHash ? createdChannel.accessHash.toString() : undefined;
   if (session) {
     session.channelId = channelId;
     session.channelTitle = title;
+    session.channelAccessHash = channelAccessHash;
     saveActiveSession(session);
   }
 
-  return { channelId, channelTitle: title };
+  return { channelId, channelTitle: title, channelAccessHash };
+}
+
+/**
+ * Robustly resolves the target destination peer for uploads or indexing.
+ * Resolves private channel entities with their accessHash or falls back to 'me' (Saved Messages).
+ */
+export async function resolveTargetPeer(client: TelegramClient, targetChannelId?: string): Promise<any> {
+  const session = getActiveSession();
+  const chId = targetChannelId || session?.channelId;
+
+  // 1. Saved Messages ('me' / 'self')
+  if (!chId || chId === 'me' || chId === 'self') {
+    return new Api.InputPeerSelf();
+  }
+
+  // Clean numeric ID without '-100' or '+'
+  const cleanId = chId.replace(/^-100/, '').trim();
+
+  // 2. Direct InputPeerChannel if we have accessHash saved in session
+  if (session?.channelAccessHash && (session.channelId === chId || session.channelId?.replace(/^-100/, '') === cleanId)) {
+    try {
+      return new Api.InputPeerChannel({
+        channelId: BigInt(cleanId) as any,
+        accessHash: BigInt(session.channelAccessHash) as any,
+      });
+    } catch (e) {
+      console.warn('Direct InputPeerChannel construction failed, falling back:', e);
+    }
+  }
+
+  // 3. Search active dialogs cache
+  try {
+    const dialogs: any[] = await client.getDialogs({ limit: 100 });
+    const match = dialogs.find(d => {
+      if (!d.entity) return false;
+      const entId = d.entity.id ? d.entity.id.toString() : '';
+      const dialId = d.id ? d.id.toString() : '';
+      return (
+        entId === cleanId ||
+        entId === chId ||
+        dialId === chId ||
+        dialId === `-100${cleanId}` ||
+        chId === `-100${entId}`
+      );
+    });
+
+    if (match && match.entity) {
+      if (match.entity.accessHash && session) {
+        session.channelAccessHash = match.entity.accessHash.toString();
+        session.channelId = match.entity.id.toString();
+        saveActiveSession(session);
+      }
+      return match.inputEntity || match.entity;
+    }
+
+    const libraryMatch = dialogs.find(d => (d.isChannel || d.isGroup) && d.title?.toLowerCase().includes('photos library'));
+    if (libraryMatch && libraryMatch.entity) {
+      if (session) {
+        session.channelId = libraryMatch.entity.id.toString();
+        session.channelTitle = libraryMatch.title;
+        if (libraryMatch.entity.accessHash) {
+          session.channelAccessHash = libraryMatch.entity.accessHash.toString();
+        }
+        saveActiveSession(session);
+      }
+      return libraryMatch.inputEntity || libraryMatch.entity;
+    }
+  } catch (e) {
+    console.warn('Could not inspect dialogs for peer resolution:', e);
+  }
+
+  // 4. Try client.getInputEntity with marked ID
+  try {
+    return await client.getInputEntity(`-100${cleanId}`);
+  } catch (e) {}
+
+  // 5. Fallback: Saved Messages so uploads always succeed
+  console.info('[Telegram] Using Saved Messages (InputPeerSelf) as cloud storage destination.');
+  return new Api.InputPeerSelf();
 }
 
 /**
@@ -343,17 +432,47 @@ export async function uploadMediaDocument(
 
   const captionString = serializeCaptionJson(caption);
 
-  const message: any = await client.sendFile(channelId, {
-    file: customFile,
-    thumb: thumbCustomFile,
-    caption: captionString,
-    forceDocument: true, // Keep original bytes untouched
-    progressCallback: (percentage: number) => {
-      if (onProgress) {
-        onProgress(percentage, Math.round(percentage * file.size));
-      }
-    },
-  });
+  const targetPeer = await resolveTargetPeer(client, channelId);
+
+  let message: any;
+  try {
+    message = await client.sendFile(targetPeer, {
+      file: customFile,
+      thumb: thumbCustomFile,
+      caption: captionString,
+      forceDocument: true, // Keep original bytes untouched
+      progressCallback: (percentage: number) => {
+        if (onProgress) {
+          onProgress(percentage, Math.round(percentage * file.size));
+        }
+      },
+    });
+  } catch (err: any) {
+    // If entity resolution fails for channel, gracefully fall back to Saved Messages (InputPeerSelf)
+    const isEntityError =
+      err?.message &&
+      (err.message.includes('Could not find the input entity') ||
+        err.message.includes('CHANNEL_INVALID') ||
+        err.message.includes('CHAT_WRITE_FORBIDDEN'));
+
+    if (isEntityError) {
+      console.warn('[Telegram] Channel upload failed with entity/access error, falling back to Saved Messages:', err.message);
+      const selfPeer = new Api.InputPeerSelf();
+      message = await client.sendFile(selfPeer, {
+        file: customFile,
+        thumb: thumbCustomFile,
+        caption: captionString,
+        forceDocument: true,
+        progressCallback: (percentage: number) => {
+          if (onProgress) {
+            onProgress(percentage, Math.round(percentage * file.size));
+          }
+        },
+      });
+    } else {
+      throw err;
+    }
+  }
 
   return { messageId: message.id };
 }
@@ -371,8 +490,10 @@ export async function rebuildIndexFromChannel(
   let offsetId = 0;
   const BATCH_SIZE = 100;
 
+  const targetPeer = await resolveTargetPeer(client, channelId);
+
   while (true) {
-    const messages: any[] = await client.getMessages(channelId, {
+    const messages: any[] = await client.getMessages(targetPeer, {
       limit: BATCH_SIZE,
       offsetId,
     });

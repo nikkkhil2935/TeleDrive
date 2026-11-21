@@ -20,7 +20,7 @@ export const UploadBanner: React.FC = () => {
   const cooldownRemainingSec = isCooldown ? Math.round((currentJob.cooldownUntil! - now) / 1000) : 0;
 
   return (
-    <div className="fixed bottom-6 right-6 z-30 max-w-md w-full bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl backdrop-blur-lg overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200">
+    <div className="fixed bottom-20 md:bottom-6 right-3 left-3 sm:left-auto sm:right-6 z-30 max-w-md bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl backdrop-blur-lg overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200">
       <div className="p-4 flex items-center justify-between gap-3 border-b border-slate-800/80">
         <div className="flex items-center gap-3 overflow-hidden">
           {isCooldown ? (

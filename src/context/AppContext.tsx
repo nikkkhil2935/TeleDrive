@@ -170,18 +170,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
     let channelId = session.channelId;
-    if (!channelId) {
+    if (!channelId || !session.channelAccessHash) {
       try {
         const client = await getTelegramClient();
         const info = await ensureLibraryChannel(client);
         channelId = info.channelId;
       } catch (e) {
-        console.error('Failed to ensure library channel:', e);
-        alert('Could not verify library channel: ' + e);
-        return;
+        console.warn('Could not auto-verify library channel, proceeding with session/Saved Messages:', e);
       }
     }
-    await transferQueue.enqueueFiles(files, channelId);
+    await transferQueue.enqueueFiles(files, channelId || 'me');
   };
 
   const toggleFavorite = async (item: MediaItem) => {

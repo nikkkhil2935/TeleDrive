@@ -18,7 +18,7 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-60 border-r border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4 flex flex-col justify-between select-none transition-colors">
+    <aside className="hidden md:flex w-60 border-r border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 p-4 flex-col justify-between select-none transition-colors shrink-0">
       <div className="space-y-6">
         {/* Core Nav */}
         <nav className="space-y-1">

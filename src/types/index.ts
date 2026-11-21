@@ -68,6 +68,7 @@ export interface UserSession {
   sessionString: string;
   channelId?: string;
   channelTitle?: string;
+  channelAccessHash?: string;
   userId?: string;
   userName?: string;
   phone?: string;

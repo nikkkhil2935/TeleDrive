@@ -88,16 +88,16 @@ export const MediaViewer: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-200 select-none">
       {/* Top Controls Toolbar */}
-      <div className="h-14 border-b border-white/10 px-6 flex items-center justify-between text-white">
-        <div className="flex items-center gap-3">
+      <div className="h-14 border-b border-white/10 px-3 sm:px-6 flex items-center justify-between text-white shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => setSelectedMedia(null)}
-            className="p-2 rounded-full hover:bg-white/10 transition-colors"
+            className="p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-colors"
             title="Close (Esc)"
           >
             <X className="w-5 h-5" />
           </button>
-          <div className="text-xs text-white/80 font-medium truncate max-w-xs sm:max-w-md">
+          <div className="text-xs text-white/80 font-medium truncate max-w-[140px] xs:max-w-xs sm:max-w-md">
             {selectedMedia.filename}
           </div>
         </div>
@@ -130,10 +130,10 @@ export const MediaViewer: React.FC = () => {
         </div>
 
         {/* Right Action Tools */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <button
             onClick={() => toggleFavorite(selectedMedia)}
-            className={`p-2 rounded-full hover:bg-white/10 transition-colors ${selectedMedia.isFavorite ? 'text-rose-500' : 'text-white'}`}
+            className={`p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-colors ${selectedMedia.isFavorite ? 'text-rose-500' : 'text-white'}`}
             title="Favorite"
           >
             <Heart className={`w-5 h-5 ${selectedMedia.isFavorite ? 'fill-current' : ''}`} />
@@ -141,7 +141,7 @@ export const MediaViewer: React.FC = () => {
 
           <button
             onClick={handleDownload}
-            className="p-2 rounded-full hover:bg-white/10 text-white/80 hover:text-white transition-colors"
+            className="p-1.5 sm:p-2 rounded-full hover:bg-white/10 text-white/80 hover:text-white transition-colors"
             title="Download Media"
           >
             <Download className="w-5 h-5" />
@@ -149,7 +149,7 @@ export const MediaViewer: React.FC = () => {
 
           <button
             onClick={() => moveToTrash(selectedMedia)}
-            className="p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-rose-400 transition-colors"
+            className="p-1.5 sm:p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-rose-400 transition-colors"
             title="Move to Trash"
           >
             <Trash2 className="w-5 h-5" />
@@ -157,7 +157,7 @@ export const MediaViewer: React.FC = () => {
 
           <button
             onClick={() => setShowInfo(!showInfo)}
-            className={`p-2 rounded-full hover:bg-white/10 transition-colors ${showInfo ? 'text-sky-400' : 'text-white/70'}`}
+            className={`p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-colors ${showInfo ? 'text-sky-400' : 'text-white/70'}`}
             title="Info / EXIF"
           >
             <Info className="w-5 h-5" />
@@ -171,9 +171,9 @@ export const MediaViewer: React.FC = () => {
         {hasPrev && (
           <button
             onClick={goToPrev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-md border border-white/10 shadow-xl transition-all"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-md border border-white/10 shadow-xl transition-all"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         )}
 
@@ -181,15 +181,15 @@ export const MediaViewer: React.FC = () => {
         {hasNext && (
           <button
             onClick={goToNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-md border border-white/10 shadow-xl transition-all"
-            style={{ right: showInfo ? '336px' : '16px' }}
+            className="absolute right-2 sm:right-4 md:right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-md border border-white/10 shadow-xl transition-all md:transition-none"
+            style={{ right: showInfo && window.innerWidth >= 768 ? '336px' : '16px' }}
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         )}
 
         {/* Media Canvas Stage */}
-        <div className="flex-1 relative flex items-center justify-center p-8 overflow-hidden">
+        <div className="flex-1 relative flex items-center justify-center p-2 sm:p-6 md:p-8 overflow-hidden">
           {selectedMedia.kind === 'video' ? (
             <div className="relative max-w-4xl max-h-full rounded-2xl overflow-hidden shadow-2xl bg-black border border-white/10 flex flex-col items-center">
               {selectedMedia.thumbnailDataUrl && (
@@ -204,18 +204,18 @@ export const MediaViewer: React.FC = () => {
                 />
               )}
               {/* Video Player Controls Overlay */}
-              <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-center justify-between text-white text-xs">
-                <div className="flex items-center gap-3">
+              <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-center justify-between text-white text-xs">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <button
                     onClick={() => setIsPlaying(!isPlaying)}
-                    className="w-8 h-8 rounded-full bg-sky-500 hover:bg-sky-400 flex items-center justify-center text-white"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-sky-500 hover:bg-sky-400 flex items-center justify-center text-white"
                   >
-                    {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
+                    {isPlaying ? <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" /> : <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />}
                   </button>
                   <span>{selectedMedia.durationMs ? `${Math.round(selectedMedia.durationMs / 1000)}s` : '0:42'}</span>
                 </div>
-                <div className="text-[11px] text-sky-400 font-mono">
-                  Telegram Document Stream (Message #{selectedMedia.messageId})
+                <div className="text-[10px] sm:text-[11px] text-sky-400 font-mono truncate ml-2">
+                  Telegram Document Stream #{selectedMedia.messageId}
                 </div>
               </div>
             </div>
@@ -232,12 +232,20 @@ export const MediaViewer: React.FC = () => {
           )}
         </div>
 
-        {/* EXIF & Telegram Metadata Panel */}
+        {/* EXIF & Telegram Metadata Panel (Responsive Drawer on Mobile, Sidebar on Desktop) */}
         {showInfo && (
-          <aside className="w-80 border-l border-white/10 bg-slate-900/90 backdrop-blur-xl p-5 overflow-y-auto space-y-6 text-slate-300 text-xs shrink-0">
-            <div>
-              <h3 className="text-sm font-semibold text-white mb-1">Details</h3>
-              <p className="text-slate-400 break-all">{selectedMedia.filename}</p>
+          <aside className="absolute inset-y-0 right-0 z-30 w-full sm:w-80 md:relative md:w-80 border-l border-white/10 bg-slate-900/95 md:bg-slate-900/90 backdrop-blur-xl p-5 overflow-y-auto space-y-6 text-slate-300 text-xs shrink-0 shadow-2xl md:shadow-none animate-in slide-in-from-right-4 duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-white mb-0.5">Details</h3>
+                <p className="text-slate-400 break-all">{selectedMedia.filename}</p>
+              </div>
+              <button
+                onClick={() => setShowInfo(false)}
+                className="md:hidden text-slate-400 hover:text-white p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             {/* Date & Dimensions */}

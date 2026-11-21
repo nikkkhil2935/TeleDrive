@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
+import { BottomNav } from './components/BottomNav';
 import { TimelineView } from './components/TimelineView';
 import { AlbumsView } from './components/AlbumsView';
 import { MediaViewer } from './components/MediaViewer';
@@ -135,10 +136,13 @@ export const App: React.FC = () => {
       <Header />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
-        <main className="flex-1 flex flex-col overflow-hidden bg-slate-50/50 dark:bg-slate-950/40">
+        <main className="flex-1 flex flex-col overflow-hidden bg-slate-50/50 dark:bg-slate-950/40 pb-16 md:pb-0">
           {activeTab === 'albums' ? <AlbumsView /> : <TimelineView />}
         </main>
       </div>
+
+      {/* Google Photos Style Mobile Bottom Navigation */}
+      <BottomNav />
 
       <MediaViewer />
       <UploadBanner />

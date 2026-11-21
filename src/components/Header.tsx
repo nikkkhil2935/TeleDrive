@@ -64,18 +64,19 @@ export const Header: React.FC = () => {
   const activeTransferCount = activeJobs.filter(j => j.status === 'uploading' || j.status === 'processing' || j.status === 'queued').length;
 
   return (
-    <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-20 transition-colors">
+    <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between sticky top-0 z-20 transition-colors">
       {/* Brand & Library Badge */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2.5 text-sky-600 dark:text-sky-400 font-semibold text-lg tracking-tight select-none">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20">
-            <ImageIcon className="w-5 h-5" />
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 text-sky-600 dark:text-sky-400 font-semibold text-base sm:text-lg tracking-tight select-none">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20 shrink-0">
+            <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <span className="font-bold tracking-tight">Telegram Photos</span>
+          <span className="font-bold tracking-tight hidden sm:inline">Telegram Photos</span>
+          <span className="font-bold tracking-tight sm:hidden text-sm">Photos</span>
         </div>
 
         {session?.channelId && (
-          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-medium">
+          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-medium">
             <ShieldCheck className="w-3.5 h-3.5 text-sky-500" />
             <span>Target: Channel #{session.channelId}</span>
           </div>
@@ -83,23 +84,23 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Global Search Bar */}
-      <div className="flex-1 max-w-xl mx-6">
+      <div className="flex-1 max-w-xs sm:max-w-xl mx-2 sm:mx-6">
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 sm:left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search dates, albums, or filenames (e.g. Goa, HDR, 2026)..."
+            placeholder="Search dates, albums, or filenames..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-full pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all"
+            className="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all"
           />
         </div>
       </div>
 
       {/* Action Controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {/* Grid Density Switcher (Google Photos Pinch/Zoom Equivalent) */}
-        <div className="hidden sm:flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700/80 text-slate-500 dark:text-slate-400">
+        <div className="hidden md:flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700/80 text-slate-500 dark:text-slate-400">
           <button
             onClick={() => setGridDensity('small')}
             title="Dense Grid"
@@ -134,17 +135,17 @@ export const Header: React.FC = () => {
 
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-medium text-xs px-3.5 py-2 rounded-lg shadow-sm shadow-sky-500/20 transition-all"
+          className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-medium text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg shadow-sm shadow-sky-500/20 transition-all shrink-0"
         >
           <UploadCloud className="w-4 h-4" />
-          <span className="hidden md:inline">Upload</span>
+          <span className="hidden sm:inline">Upload</span>
         </button>
 
         {/* Transfer Manager Button */}
         <button
           onClick={() => setIsTransfersOpen(true)}
           title="Transfers & Queue Engine"
-          className="relative p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="relative p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           <Activity className="w-4 h-4" />
           {activeTransferCount > 0 && (
@@ -158,7 +159,7 @@ export const Header: React.FC = () => {
         <button
           onClick={cycleTheme}
           title={`Theme: ${theme} (click to toggle)`}
-          className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           {getThemeIcon()}
         </button>
@@ -167,7 +168,7 @@ export const Header: React.FC = () => {
         <button
           onClick={() => setIsSettingsOpen(true)}
           title="Settings"
-          className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           <Settings className="w-4 h-4" />
         </button>
@@ -178,14 +179,14 @@ export const Header: React.FC = () => {
               if (confirm('Log out from Telegram session?')) setSession(null);
             }}
             title="Log Out"
-            className="p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors ml-1"
+            className="p-1.5 sm:p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
           >
             <LogOut className="w-4 h-4" />
           </button>
         ) : (
           <button
             onClick={() => setIsAuthModalOpen(true)}
-            className="text-xs bg-sky-50 dark:bg-slate-800 hover:bg-sky-100 dark:hover:bg-slate-700 text-sky-600 dark:text-sky-400 border border-sky-300 dark:border-sky-500/30 font-medium px-3 py-1.5 rounded-lg transition-colors"
+            className="text-xs bg-sky-50 dark:bg-slate-800 hover:bg-sky-100 dark:hover:bg-slate-700 text-sky-600 dark:text-sky-400 border border-sky-300 dark:border-sky-500/30 font-medium px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors shrink-0"
           >
             Sign in
           </button>
