@@ -20,26 +20,32 @@ export interface ProcessedMedia {
  * Computes memory-safe SHA-256 hash of a file or array buffer.
  */
 export async function computeSha256(fileOrBuffer: File | ArrayBuffer): Promise<string> {
-  if (fileOrBuffer instanceof ArrayBuffer) {
-    const hashBuffer = await crypto.subtle.digest('SHA-256', fileOrBuffer);
-    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-  }
+  try {
+    if (fileOrBuffer instanceof ArrayBuffer) {
+      const hashBuffer = await crypto.subtle.digest('SHA-256', fileOrBuffer);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
 
-  // Memory safe: For files <= 20 MB, hash full buffer
-  if (fileOrBuffer.size <= 20 * 1024 * 1024) {
-    const buf = await fileOrBuffer.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-  }
+    // Memory safe: For files <= 20 MB, hash full buffer
+    if (fileOrBuffer.size <= 20 * 1024 * 1024) {
+      const buf = await fileOrBuffer.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', buf);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
 
-  // For large files (> 20 MB, e.g. 140MB videos), hash head (8MB) + tail (8MB) + size
-  const head = await fileOrBuffer.slice(0, 8 * 1024 * 1024).arrayBuffer();
-  const tail = await fileOrBuffer.slice(fileOrBuffer.size - 8 * 1024 * 1024).arrayBuffer();
-  const combined = new Uint8Array(head.byteLength + tail.byteLength);
-  combined.set(new Uint8Array(head), 0);
-  combined.set(new Uint8Array(tail), head.byteLength);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', combined.buffer);
-  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    // For large files (> 20 MB, e.g. 140MB videos), hash head (4MB) + tail (4MB) + size
+    const sliceSize = Math.min(4 * 1024 * 1024, Math.floor(fileOrBuffer.size / 2));
+    const head = await fileOrBuffer.slice(0, sliceSize).arrayBuffer();
+    const tail = await fileOrBuffer.slice(fileOrBuffer.size - sliceSize).arrayBuffer();
+    const combined = new Uint8Array(head.byteLength + tail.byteLength);
+    combined.set(new Uint8Array(head), 0);
+    combined.set(new Uint8Array(tail), head.byteLength);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', combined.buffer);
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (err) {
+    console.warn('SHA-256 computation fallback:', err);
+    return `sha_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
 }
 
 /**

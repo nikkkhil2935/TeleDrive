@@ -140,6 +140,7 @@ class TransferQueueService {
 
       const startTime = Date.now();
       let lastUploadedBytes = 0;
+      let lastProgressNotify = 0;
 
       const { messageId } = await uploadMediaDocument(client, channelId, {
         file,
@@ -152,8 +153,12 @@ class TransferQueueService {
           if (elapsedSec > 0) {
             job.currentSpeedBytesSec = Math.round(uploadedBytes / elapsedSec);
           }
-          db.uploadJobs.put(job);
-          this.notify();
+          const now = Date.now();
+          if (now - lastProgressNotify > 120 || progress >= 1.0) {
+            lastProgressNotify = now;
+            db.uploadJobs.put(job);
+            this.notify();
+          }
         },
       });
 

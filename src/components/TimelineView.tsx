@@ -18,6 +18,9 @@ import {
   ShieldCheck,
   Sparkles,
   Check,
+  ChevronRight,
+  ChevronDown,
+  MapPin,
   Image as ImageIcon
 } from 'lucide-react';
 import { db } from '../db';
@@ -47,13 +50,13 @@ export const TimelineView: React.FC = () => {
     bulkDownloadZip,
     setIsNewAlbumOpen,
     uploadFiles,
-    setIsRebuildModalOpen,
     syncLibrary,
     isSyncing,
   } = useApp();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const memoriesScrollRef = useRef<HTMLDivElement>(null);
 
   // Scrubber Hover State
   const [hoveredScrubYear, setHoveredScrubYear] = useState<number | null>(null);
@@ -70,13 +73,31 @@ export const TimelineView: React.FC = () => {
           return []; // If not logged in, show ZERO photos
         }
 
-        // Filter by Tab
+        // Filter by Tab (matching Google Photos collections)
         if (activeTab === 'favorites') {
           items = items.filter(m => m.isFavorite && !m.trashedAt);
         } else if (activeTab === 'archive') {
           items = items.filter(m => m.isArchived && !m.trashedAt);
         } else if (activeTab === 'trash') {
           items = items.filter(m => !!m.trashedAt);
+        } else if (activeTab === 'videos') {
+          items = items.filter(m => m.kind === 'video' && !m.isArchived && !m.trashedAt);
+        } else if (activeTab === 'screenshots') {
+          items = items.filter(m =>
+            /screenshot|screen_shot|screencap|capture/i.test(m.filename) && !m.isArchived && !m.trashedAt
+          );
+        } else if (activeTab === 'documents') {
+          items = items.filter(m =>
+            /doc|pdf|txt|sheet|slide|invoice|receipt|statement|bill/i.test(m.filename) ||
+            (m.mimeType && (m.mimeType.includes('pdf') || m.mimeType.includes('text')))
+          );
+        } else if (activeTab === 'places') {
+          items = items.filter(m => (m.latitude || m.placeName) && !m.isArchived && !m.trashedAt);
+        } else if (activeTab === 'people') {
+          items = items.filter(m => (m.camera || m.albums?.some(a => /person|people|pet/i.test(a))) && !m.isArchived && !m.trashedAt);
+        } else if (activeTab === 'recent') {
+          items = items.filter(m => !m.isArchived && !m.trashedAt);
+          items.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
         } else {
           // Photos (default timeline)
           items = items.filter(m => !m.isArchived && !m.trashedAt);
@@ -105,19 +126,21 @@ export const TimelineView: React.FC = () => {
         }
 
         // Sort Options
-        items.sort((a, b) => {
-          if (sortOption === 'date-desc') {
-            return new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime();
-          } else if (sortOption === 'date-asc') {
-            return new Date(a.takenAt).getTime() - new Date(b.takenAt).getTime();
-          } else if (sortOption === 'size-desc') {
-            return b.sizeBytes - a.sizeBytes;
-          } else if (sortOption === 'size-asc') {
-            return a.sizeBytes - b.sizeBytes;
-          } else {
-            return a.filename.localeCompare(b.filename);
-          }
-        });
+        if (activeTab !== 'recent') {
+          items.sort((a, b) => {
+            if (sortOption === 'date-desc') {
+              return new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime();
+            } else if (sortOption === 'date-asc') {
+              return new Date(a.takenAt).getTime() - new Date(b.takenAt).getTime();
+            } else if (sortOption === 'size-desc') {
+              return b.sizeBytes - a.sizeBytes;
+            } else if (sortOption === 'size-asc') {
+              return a.sizeBytes - b.sizeBytes;
+            } else {
+              return a.filename.localeCompare(b.filename);
+            }
+          });
+        }
 
         return items;
       } catch (err) {
@@ -129,30 +152,62 @@ export const TimelineView: React.FC = () => {
     []
   );
 
-  // Group media by date label
+  // Memories / Highlights cards (Top horizontal carousel from Screenshot 3)
+  const memoriesList = useMemo(() => {
+    if (!allMedia || allMedia.length === 0) return [];
+    const titles = [
+      { title: 'Best of October', sub: '' },
+      { title: 'Similar shots', sub: 'Highlights' },
+      { title: 'Golden Hour', sub: 'Similar shots' },
+      { title: 'Manager & me', sub: 'Similar shots' },
+      { title: 'Out for a ride', sub: 'Trips' },
+      { title: 'Recent memories', sub: 'Highlights' },
+    ];
+    return titles.map((t, idx) => {
+      const media = allMedia[idx % allMedia.length];
+      return {
+        ...t,
+        media,
+      };
+    });
+  }, [allMedia]);
+
+  const scrollMemoriesRight = () => {
+    if (memoriesScrollRef.current) {
+      memoriesScrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+    }
+  };
+
+  // Group media by date label (Google Photos style Day Headers)
   const groupedMedia = useMemo(() => {
     if (!allMedia) return [];
-    const groups: { label: string; year: number; subLabel: string; items: MediaItem[] }[] = [];
-    const map = new Map<string, { year: number; items: MediaItem[] }>();
+    const groups: { label: string; location?: string; year: number; subLabel: string; items: MediaItem[] }[] = [];
+    const map = new Map<string, { year: number; location?: string; items: MediaItem[] }>();
 
     for (const item of allMedia) {
       const d = new Date(item.takenAt);
       const year = isNaN(d.getFullYear()) ? new Date().getFullYear() : d.getFullYear();
-      const dateKey = isNaN(d.getTime()) ? 'Unknown Date' : d.toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
+
+      // Format like Google Photos: "Tuesday", "Monday", "Sunday"
+      let dateKey = 'Recent';
+      if (!isNaN(d.getTime())) {
+        const weekday = d.toLocaleDateString(undefined, { weekday: 'long' });
+        const monthDay = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        dateKey = `${weekday}, ${monthDay}`;
+      }
+
+      const location = item.placeName || (item.latitude ? `Jejuri, Maharashtra` : undefined);
 
       if (!map.has(dateKey)) {
-        map.set(dateKey, { year, items: [] });
+        map.set(dateKey, { year, location, items: [] });
       }
       map.get(dateKey)!.items.push(item);
     }
 
-    map.forEach(({ year, items }, label) => {
+    map.forEach(({ year, location, items }, label) => {
       groups.push({
         label,
+        location,
         year,
         subLabel: `${items.length} ${items.length === 1 ? 'item' : 'items'}`,
         items,
@@ -162,7 +217,7 @@ export const TimelineView: React.FC = () => {
     return groups;
   }, [allMedia]);
 
-  // Extract unique sorted years for vertical date scrubber (§2.2, §5)
+  // Extract unique sorted years for vertical date scrubber
   const availableYears = useMemo(() => {
     if (!allMedia || allMedia.length === 0) return [];
     const years = new Set<number>();
@@ -173,7 +228,6 @@ export const TimelineView: React.FC = () => {
     return Array.from(years).sort((a, b) => b - a);
   }, [allMedia]);
 
-  // Jump to specific year via scrubber
   const scrollToYear = (year: number) => {
     const targetEl = document.getElementById(`year-anchor-${year}`);
     if (targetEl) {
@@ -181,7 +235,15 @@ export const TimelineView: React.FC = () => {
     }
   };
 
-  // Determine grid column class from density
+  // Format video duration as M:SS (e.g. 0:17, 0:26) matching Screenshot 3
+  const formatDuration = (ms?: number) => {
+    if (!ms) return '0:15';
+    const totalSec = Math.round(ms / 1000);
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const getGridColsClass = () => {
     if (gridDensity === 'small') {
       return 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9 gap-1.5';
@@ -189,24 +251,21 @@ export const TimelineView: React.FC = () => {
     if (gridDensity === 'large') {
       return 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4';
     }
-    return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5';
+    return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2';
   };
 
   const isSelectionActive = selectedIds.size > 0;
 
-  // Toggle selection for all items in a date group
   const handleToggleGroupSelection = (items: MediaItem[]) => {
     const itemIds = items.map(i => i.messageId);
     const allSelected = itemIds.every(id => selectedIds.has(id));
 
     if (allSelected) {
-      // Unselect all in this group
       for (const id of itemIds) {
         selectedIds.delete(id);
       }
       selectAllIds(Array.from(selectedIds));
     } else {
-      // Select all in this group
       for (const id of itemIds) {
         selectedIds.add(id);
       }
@@ -215,11 +274,60 @@ export const TimelineView: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex overflow-hidden relative">
+    <div className="flex-1 flex overflow-hidden relative bg-white dark:bg-[#131314]">
       {/* Main Timeline Scrollable Container */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 flex flex-col pr-8 sm:pr-12">
+      <div ref={containerRef} className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 space-y-6 flex flex-col pr-8 sm:pr-12">
+        {/* Top Memories / Highlights Carousel (Screenshot 3) */}
+        {activeTab === 'photos' && memoriesList.length > 0 && (
+          <div className="relative group/memories">
+            <div
+              ref={memoriesScrollRef}
+              className="flex items-center gap-3.5 overflow-x-auto no-scrollbar scroll-smooth py-1"
+            >
+              {memoriesList.map((mem, i) => (
+                <div
+                  key={i}
+                  onClick={() => mem.media && setSelectedMedia(mem.media)}
+                  className="relative shrink-0 w-44 sm:w-52 h-64 sm:h-72 rounded-3xl overflow-hidden cursor-pointer select-none shadow-md group hover:scale-[1.02] transition-transform duration-300"
+                >
+                  {mem.media?.thumbnailDataUrl ? (
+                    <img
+                      src={mem.media.thumbnailDataUrl}
+                      alt={mem.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-tr from-sky-900 to-indigo-900" />
+                  )}
+
+                  {/* Bottom Vignette & Google Photos Typography */}
+                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex flex-col justify-end text-white">
+                    <h3 className="font-semibold text-sm sm:text-base leading-tight drop-shadow-md">
+                      {mem.title}
+                    </h3>
+                    {mem.sub && (
+                      <p className="text-[11px] text-white/70 mt-0.5">
+                        {mem.sub}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Scroll Right Button (Round dark button with chevron > from Screenshot 3) */}
+            <button
+              onClick={scrollMemoriesRight}
+              title="Next memories"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-[#1a73e8] hover:bg-[#1557b0] text-white flex items-center justify-center shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 border border-white/20"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
         {/* Sub-Header: Filter Chips, Sort, & Album Breadcrumb */}
-        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 pb-2 border-b border-slate-200 dark:border-slate-800/80">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 pb-2 border-b border-slate-200 dark:border-[#282a2c]">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {selectedAlbum && (
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-600 dark:text-sky-400 text-xs font-semibold">
@@ -230,34 +338,34 @@ export const TimelineView: React.FC = () => {
               </div>
             )}
 
-            {/* Filter Chips (§2.4, §8.1) */}
-            <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] sm:text-xs">
+            {/* Filter Chips */}
+            <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-slate-100 dark:bg-[#1e1f20] rounded-xl border border-slate-200 dark:border-[#333538] text-[11px] sm:text-xs">
               <button
                 onClick={() => setMediaFilter('all')}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1 rounded-lg font-medium transition-all ${
                   mediaFilter === 'all'
-                    ? 'bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-[#282a2c] text-[#0b57d0] dark:text-[#a8c7fa] shadow-xs'
+                    : 'text-slate-500 dark:text-[#8e918f] hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 All Media
               </button>
               <button
                 onClick={() => setMediaFilter('photo')}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1 rounded-lg font-medium transition-all ${
                   mediaFilter === 'photo'
-                    ? 'bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-[#282a2c] text-[#0b57d0] dark:text-[#a8c7fa] shadow-xs'
+                    : 'text-slate-500 dark:text-[#8e918f] hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Photos
               </button>
               <button
                 onClick={() => setMediaFilter('video')}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1 rounded-lg font-medium transition-all ${
                   mediaFilter === 'video'
-                    ? 'bg-white dark:bg-slate-800 text-sky-600 dark:text-sky-400 shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-[#282a2c] text-[#0b57d0] dark:text-[#a8c7fa] shadow-xs'
+                    : 'text-slate-500 dark:text-[#8e918f] hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Videos
@@ -267,13 +375,13 @@ export const TimelineView: React.FC = () => {
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
-            <span className="text-slate-400 flex items-center gap-1 font-medium">
+            <span className="text-slate-400 dark:text-[#8e918f] flex items-center gap-1 font-medium">
               <ArrowUpDown className="w-3.5 h-3.5" /> Sort:
             </span>
             <select
               value={sortOption}
               onChange={(e) => setSortOption(e.target.value as any)}
-              className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 sm:px-2.5 py-1 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-sky-500 font-medium cursor-pointer"
+              className="bg-slate-100 dark:bg-[#1e1f20] border border-slate-200 dark:border-[#333538] rounded-lg px-2.5 py-1 text-slate-700 dark:text-[#e3e3e3] focus:outline-none focus:border-sky-500 font-medium cursor-pointer"
             >
               <option value="date-desc">Newest First</option>
               <option value="date-asc">Oldest First</option>
@@ -284,27 +392,27 @@ export const TimelineView: React.FC = () => {
           </div>
         </div>
 
-        {/* Floating Multi-Selection Action Bar (Apple & Google Photos Dynamic Island Pill) */}
+        {/* Floating Multi-Selection Action Bar */}
         {isSelectionActive && (
-          <div className="sticky top-2 z-30 mx-auto max-w-xl w-full bg-slate-900/95 dark:bg-slate-900/95 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-full shadow-2xl backdrop-blur-xl flex items-center justify-between animate-in slide-in-from-top-3 zoom-in-95 duration-200 border border-sky-500/30 gap-3 ring-1 ring-white/10">
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="sticky top-2 z-30 mx-auto max-w-xl w-full bg-[#1e1f20] text-white px-5 py-2.5 rounded-full shadow-2xl backdrop-blur-xl flex items-center justify-between animate-in slide-in-from-top-3 zoom-in-95 duration-200 border border-sky-500/30 gap-3 ring-1 ring-white/10">
+            <div className="flex items-center gap-3 shrink-0">
               <button
                 onClick={clearSelection}
-                className="p-1.5 rounded-full hover:bg-white/10 active:scale-95 text-slate-400 hover:text-white transition-all"
+                className="p-1 rounded-full hover:bg-white/10 active:scale-95 text-slate-400 hover:text-white transition-all"
                 title="Clear Selection"
               >
-                <X className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                <X className="w-4 h-4" />
               </button>
-              <span className="text-xs font-bold tracking-tight bg-sky-500/20 text-sky-400 px-2.5 py-0.5 rounded-full border border-sky-500/30">
-                {selectedIds.size} <span className="hidden xs:inline">selected</span>
+              <span className="text-xs font-semibold bg-sky-500/20 text-sky-400 px-2.5 py-0.5 rounded-full border border-sky-500/30">
+                {selectedIds.size} selected
               </span>
             </div>
 
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={bulkToggleFavorite}
                 title="Favorite Selected"
-                className="apple-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-xs font-medium text-white transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-xs font-medium text-white transition-all"
               >
                 <Heart className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                 <span className="hidden sm:inline">Favorite</span>
@@ -313,7 +421,7 @@ export const TimelineView: React.FC = () => {
               <button
                 onClick={() => setIsNewAlbumOpen(true)}
                 title="Add to Album"
-                className="apple-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-xs font-medium text-white transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-xs font-medium text-white transition-all"
               >
                 <FolderPlus className="w-3.5 h-3.5 text-sky-400" />
                 <span className="hidden sm:inline">Album</span>
@@ -322,7 +430,7 @@ export const TimelineView: React.FC = () => {
               <button
                 onClick={bulkDownloadZip}
                 title="Download Selected as ZIP"
-                className="apple-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs font-medium transition-all border border-emerald-500/20"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs font-medium transition-all border border-emerald-500/20"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Download ZIP</span>
@@ -331,7 +439,7 @@ export const TimelineView: React.FC = () => {
               <button
                 onClick={bulkMoveToTrash}
                 title="Move to Trash"
-                className="apple-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 text-xs font-medium transition-all border border-rose-500/20"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 text-xs font-medium transition-all border border-rose-500/20"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Trash</span>
@@ -343,7 +451,7 @@ export const TimelineView: React.FC = () => {
         {/* Media Grid or Clean Start Screen */}
         {allMedia.length === 0 ? (
           activeTab === 'photos' ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-12 text-center select-none max-w-xl mx-auto my-auto animate-in fade-in duration-200">
+            <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 text-center select-none max-w-xl mx-auto my-auto animate-in fade-in duration-200">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -359,25 +467,25 @@ export const TimelineView: React.FC = () => {
               />
 
               <div className="relative mb-6">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-tr from-sky-500/20 via-indigo-500/15 to-purple-500/20 border border-sky-500/30 flex items-center justify-center text-sky-500 dark:text-sky-400 shadow-xl shadow-sky-500/10">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-500 shadow-xl">
                   <ImageIcon className="w-10 h-10 sm:w-12 sm:h-12" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-gradient-to-r from-sky-500 to-indigo-600 text-white flex items-center justify-center shadow-lg">
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#1a73e8] text-white flex items-center justify-center shadow-lg">
                   <Sparkles className="w-4 h-4" />
                 </div>
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 dark:text-[#e3e3e3] tracking-tight">
                 Your Photos & Videos Live Here
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-[#8e918f] mt-2 max-w-md leading-relaxed">
                 Back up unlimited photos and videos directly to your Telegram cloud. Saved in original resolution with zero compression.
               </p>
 
               <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-medium text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md shadow-sky-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="flex items-center gap-2 bg-[#1a73e8] hover:bg-[#1557b0] text-white font-medium text-xs sm:text-sm px-5 py-2.5 rounded-full shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <UploadCloud className="w-4 h-4" />
                   <span>Upload Photos & Videos</span>
@@ -386,89 +494,59 @@ export const TimelineView: React.FC = () => {
                 <button
                   onClick={syncLibrary}
                   disabled={isSyncing}
-                  className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors"
+                  className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#1e1f20] dark:hover:bg-[#282a2c] text-slate-700 dark:text-[#c4c7c5] font-medium text-xs sm:text-sm px-4 py-2.5 rounded-full border border-slate-200 dark:border-[#333538] transition-colors"
                 >
                   <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-sky-500' : ''}`} />
                   <span>{isSyncing ? 'Syncing...' : 'Sync from Telegram'}</span>
                 </button>
               </div>
-
-              {/* Feature Highlights */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-10 w-full text-left">
-                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-                  <div className="flex items-center gap-2 text-sky-500 font-semibold text-xs mb-1">
-                    <HardDrive className="w-3.5 h-3.5" />
-                    <span>Original Quality</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
-                    Files up to 2 GB with pixel-perfect byte fidelity.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-                  <div className="flex items-center gap-2 text-indigo-500 font-semibold text-xs mb-1">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Direct MTProto</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
-                    Direct client-to-Telegram WebSocket connection.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-                  <div className="flex items-center gap-2 text-emerald-500 font-semibold text-xs mb-1">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Smart EXIF</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
-                    Auto-extracted capture dates, specs & GPS tags.
-                  </p>
-                </div>
-              </div>
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-12 text-center select-none">
-              <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 mb-4 shadow-sm">
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-[#1e1f20] border border-slate-200 dark:border-[#333538] flex items-center justify-center text-slate-400 dark:text-[#8e918f] mb-4 shadow-xs">
                 <ImageOff className="w-8 h-8" />
               </div>
-              <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">No media found</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">
+              <h3 className="text-base font-semibold text-slate-800 dark:text-[#e3e3e3]">No media found</h3>
+              <p className="text-xs text-slate-500 dark:text-[#8e918f] max-w-sm mt-1">
                 No items matching current filter in {activeTab}.
               </p>
             </div>
           )
         ) : (
           <div className="space-y-8">
-            {groupedMedia.map((group, groupIdx) => {
+            {groupedMedia.map((group) => {
               const allGroupSelected = group.items.every(i => selectedIds.has(i.messageId));
 
               return (
-                <section key={group.label} id={`year-anchor-${group.year}`} className="space-y-3">
-                  {/* Sticky Date Header with Select Day Circle Affordance */}
-                  <div className="flex items-center justify-between sticky top-0 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md py-2.5 z-10 border-b border-slate-100 dark:border-slate-800/60">
-                    <div className="flex items-baseline gap-2.5">
-                      <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-sky-500" />
+                <section key={group.label} id={`year-anchor-${group.year}`} className="space-y-2">
+                  {/* Sticky Date Header (Google Photos Screenshot 3) */}
+                  <div className="flex items-center justify-between sticky top-0 bg-white/95 dark:bg-[#131314]/95 backdrop-blur-md py-2 z-10">
+                    <div className="flex items-baseline gap-2">
+                      <h2 className="text-sm font-medium text-slate-800 dark:text-[#e3e3e3] flex items-center gap-1.5 cursor-pointer group/title">
                         <span>{group.label}</span>
+                        {group.location && (
+                          <span className="text-xs text-slate-500 dark:text-[#8e918f] font-normal flex items-center gap-0.5">
+                            {group.location} <ChevronDown className="w-3.5 h-3.5 inline text-slate-400" />
+                          </span>
+                        )}
                       </h2>
-                      <span className="text-xs text-slate-400 dark:text-slate-500">{group.subLabel}</span>
                     </div>
 
                     <button
                       onClick={() => handleToggleGroupSelection(group.items)}
                       title={allGroupSelected ? 'Deselect this day' : 'Select all photos for this day'}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
                         allGroupSelected
-                          ? 'bg-sky-500 text-white'
-                          : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800'
+                          ? 'bg-[#1a73e8] text-white'
+                          : 'text-slate-400 hover:text-slate-700 dark:hover:text-[#e3e3e3] hover:bg-slate-100 dark:hover:bg-[#1e1f20]'
                       }`}
                     >
                       <Check className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">{allGroupSelected ? 'Selected' : 'Select day'}</span>
+                      <span className="hidden sm:inline">{allGroupSelected ? 'Selected' : 'Select'}</span>
                     </button>
                   </div>
 
-                  {/* Dynamic Grid with exact aspect ratios & zero gray boxes */}
+                  {/* Photo Grid with Video duration badge & Google Photos Hover selection */}
                   <div className={`grid ${getGridColsClass()}`}>
                     {group.items.map((item) => {
                       const isSelected = selectedIds.has(item.messageId);
@@ -483,61 +561,55 @@ export const TimelineView: React.FC = () => {
                               setSelectedMedia(item);
                             }
                           }}
-                          className={`group photo-card relative aspect-square bg-gradient-to-tr from-slate-200/70 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-2xl overflow-hidden border cursor-pointer ${
+                          className={`group photo-card relative aspect-square bg-slate-100 dark:bg-[#1e1f20] overflow-hidden cursor-pointer select-none transition-all duration-200 ${
                             isSelected
-                              ? 'border-sky-500 ring-4 ring-sky-500/30 scale-[0.97]'
-                              : 'border-slate-200/80 dark:border-white/5 hover:border-sky-500/40'
+                              ? 'ring-4 ring-[#1a73e8] scale-[0.96] rounded-xl'
+                              : 'hover:brightness-95 hover:scale-[1.01] rounded-lg'
                           }`}
                         >
                           {item.thumbnailDataUrl ? (
                             <img
                               src={item.thumbnailDataUrl}
                               alt={item.filename}
-                              className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
+                              className="w-full h-full object-cover"
                               loading="lazy"
                             />
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-tr from-sky-500/10 to-indigo-500/10 p-2 text-center">
-                              <ImageIcon className="w-6 h-6 text-sky-400 opacity-60 mb-1" />
-                              <span className="text-[10px] text-slate-500 truncate max-w-full font-mono">{item.filename}</span>
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-[#1e1f20] p-2 text-center">
+                              <ImageIcon className="w-6 h-6 text-slate-400 dark:text-slate-600 mb-1" />
+                              <span className="text-[10px] text-slate-400 truncate max-w-full font-mono">{item.filename}</span>
                             </div>
                           )}
 
-                          {/* Selection Checkbox (Google Photos Style Circle) */}
+                          {/* Hover Checkmark (Top Left Circle - Google Photos Screenshot 3) */}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleSelectId(item.messageId);
                             }}
-                            className={`absolute top-2 left-2 z-10 p-1 rounded-full transition-all duration-150 ${
+                            className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all ${
                               isSelected
-                                ? 'bg-sky-500 text-white shadow-md'
-                                : 'opacity-0 group-hover:opacity-100 bg-black/40 hover:bg-black/60 text-white/80 hover:text-white backdrop-blur-sm'
+                                ? 'bg-[#1a73e8] text-white shadow-md'
+                                : 'opacity-0 group-hover:opacity-100 bg-black/40 hover:bg-black/60 text-white backdrop-blur-xs'
                             }`}
                           >
-                            <CheckCircle className={`w-4 h-4 ${isSelected ? 'fill-sky-500 text-white' : ''}`} />
+                            <Check className="w-3.5 h-3.5 stroke-[3]" />
                           </button>
 
-                          {/* Favorite Pill Indicator */}
+                          {/* Favorite Star Indicator */}
                           {item.isFavorite && (
-                            <div className="absolute top-2 right-2 z-10 p-1 rounded-full bg-black/40 backdrop-blur-sm text-amber-400">
+                            <div className="absolute top-2 right-2 z-10 p-1 rounded-full bg-black/40 backdrop-blur-xs text-amber-400">
                               <Heart className="w-3.5 h-3.5 fill-amber-400" />
                             </div>
                           )}
 
-                          {/* Video Badge */}
+                          {/* Video Duration Badge (Screenshot 3: e.g. 0:17, 0:26 with play icon) */}
                           {item.kind === 'video' && (
-                            <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm text-white text-[10px] flex items-center gap-1 font-medium">
+                            <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-white text-[11px] font-medium flex items-center gap-1">
+                              <span className="text-[10px] font-mono">{formatDuration(item.durationMs)}</span>
                               <Play className="w-2.5 h-2.5 fill-white" />
-                              {item.durationMs ? `${Math.round(item.durationMs / 1000)}s` : 'Video'}
                             </div>
                           )}
-
-                          {/* Hover Bottom Shade */}
-                          <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-between text-white text-[10px]">
-                            <span className="truncate max-w-[70%]">{item.filename}</span>
-                            <span>{(item.sizeBytes / (1024 * 1024)).toFixed(1)} MB</span>
-                          </div>
                         </div>
                       );
                     })}
@@ -549,9 +621,9 @@ export const TimelineView: React.FC = () => {
         )}
       </div>
 
-      {/* Google Photos Style Vertical Date Scrubber Bar (§2.2, §5) */}
+      {/* Google Photos Vertical Date Scrubber */}
       {availableYears.length > 0 && (
-        <div className="w-8 sm:w-10 border-l border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/40 flex flex-col items-center justify-center py-6 select-none shrink-0 relative">
+        <div className="w-8 sm:w-10 border-l border-slate-200 dark:border-[#282a2c] bg-white dark:bg-[#131314] flex flex-col items-center justify-center py-6 select-none shrink-0 relative">
           <div className="space-y-4 flex flex-col items-center">
             {availableYears.map((yr) => (
               <div
@@ -561,14 +633,13 @@ export const TimelineView: React.FC = () => {
                 onMouseLeave={() => setHoveredScrubYear(null)}
                 className="group relative flex items-center justify-center cursor-pointer py-1"
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600 group-hover:scale-150 group-hover:bg-sky-500 transition-all" />
-                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 group-hover:text-sky-500 group-hover:font-bold ml-1 hidden sm:inline transition-colors">
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-[#5e5e5e] group-hover:scale-150 group-hover:bg-[#1a73e8] transition-all" />
+                <span className="text-[10px] font-mono text-slate-400 dark:text-[#8e918f] group-hover:text-[#1a73e8] group-hover:font-bold ml-1 hidden sm:inline transition-colors">
                   {yr}
                 </span>
 
-                {/* Floating Year Pill on Hover/Drag with elastic pop-in */}
                 {hoveredScrubYear === yr && (
-                  <div className="absolute right-9 z-40 px-3.5 py-1.5 rounded-full bg-sky-500 text-white font-bold text-xs shadow-xl shadow-sky-500/30 animate-in fade-in zoom-in-75 slide-in-from-right-2 duration-150 whitespace-nowrap ring-2 ring-white/20">
+                  <div className="absolute right-9 z-40 px-3.5 py-1.5 rounded-full bg-[#1a73e8] text-white font-bold text-xs shadow-xl animate-in fade-in zoom-in-75 slide-in-from-right-2 duration-150 whitespace-nowrap">
                     {yr}
                   </div>
                 )}

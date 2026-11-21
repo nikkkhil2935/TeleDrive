@@ -434,75 +434,64 @@ export const MediaViewer: React.FC = () => {
             </button>
           )}
 
-          {/* Render Media Viewport: Fluid Responsive Sizing (Preserves Aspect Ratio & Fills Canvas) */}
-          <div
-            className="relative w-full h-full flex items-center justify-center transition-all duration-300"
-            style={{
-              maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
-              maxHeight: showFilmstrip ? 'calc(100vh - 190px)' : 'calc(100vh - 96px)',
-            }}
-          >
+          {/* Render Media Viewport: Fluid Responsive Sizing (Preserves Aspect Ratio & Fills Full Canvas) */}
+          <div className="relative w-full h-full flex items-center justify-center select-none overflow-hidden">
             {selectedMedia.kind === 'video' ? (
-              <div
-                className="relative flex items-center justify-center max-w-full max-h-full"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  aspectRatio: selectedMedia.width && selectedMedia.height ? `${selectedMedia.width} / ${selectedMedia.height}` : undefined,
-                }}
-              >
-                {fullMediaUrl ? (
-                  <video
-                    src={fullMediaUrl}
-                    controls
-                    autoPlay
-                    className="w-full h-full object-contain rounded-xl shadow-2xl"
-                    style={{
-                      transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
-                      transition: isDragging ? 'none' : 'transform 240ms cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
-                  />
-                ) : (
-                  <div className="relative w-full h-full flex items-center justify-center">
-                    <img
-                      src={selectedMedia.thumbnailDataUrl}
-                      alt={selectedMedia.filename}
-                      className="w-full h-full object-contain rounded-xl shadow-2xl blur-xs"
-                      style={{
-                        transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
-                        transition: isDragging ? 'none' : 'transform 240ms cubic-bezier(0.16, 1, 0.3, 1)',
-                      }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-xs rounded-xl">
-                      <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-slate-900/90 text-white border border-white/10 shadow-2xl">
-                        <div className="w-4 h-4 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
-                        <span className="text-xs font-medium">Streaming original video from Telegram...</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div
-                className="relative flex items-center justify-center max-w-full max-h-full"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  aspectRatio: selectedMedia.width && selectedMedia.height ? `${selectedMedia.width} / ${selectedMedia.height}` : undefined,
-                }}
-              >
-                <img
-                  src={fullMediaUrl || selectedMedia.thumbnailDataUrl}
-                  alt={selectedMedia.filename}
-                  draggable={false}
-                  className="w-full h-full object-contain rounded-xl drop-shadow-2xl select-none"
+              fullMediaUrl ? (
+                <video
+                  src={fullMediaUrl}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-2xl"
                   style={{
+                    maxHeight: showFilmstrip ? 'calc(100vh - 170px)' : 'calc(100vh - 84px)',
+                    maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
                     transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
-                    transition: isDragging ? 'none' : 'transform 240ms cubic-bezier(0.16, 1, 0.3, 1), filter 300ms ease',
-                    filter: fullMediaUrl ? 'none' : 'blur(0.5px)',
+                    transition: isDragging ? 'none' : 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
                   }}
                 />
-              </div>
+              ) : (
+                <div
+                  className="relative flex items-center justify-center max-w-full max-h-full"
+                  style={{
+                    maxHeight: showFilmstrip ? 'calc(100vh - 170px)' : 'calc(100vh - 84px)',
+                    maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
+                  }}
+                >
+                  <img
+                    src={selectedMedia.thumbnailDataUrl}
+                    alt={selectedMedia.filename}
+                    className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-2xl"
+                    style={{
+                      maxHeight: showFilmstrip ? 'calc(100vh - 170px)' : 'calc(100vh - 84px)',
+                      maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
+                      transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
+                      transition: isDragging ? 'none' : 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-xs rounded-xl">
+                    <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-slate-900/90 text-white border border-white/10 shadow-2xl">
+                      <div className="w-4 h-4 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs font-medium">Streaming original video from Telegram...</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            ) : (
+              <img
+                src={fullMediaUrl || selectedMedia.thumbnailDataUrl}
+                alt={selectedMedia.filename}
+                draggable={false}
+                className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl drop-shadow-2xl select-none"
+                style={{
+                  maxHeight: showFilmstrip ? 'calc(100vh - 170px)' : 'calc(100vh - 84px)',
+                  maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
+                  transition: isDragging ? 'none' : 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1), filter 300ms ease',
+                  filter: fullMediaUrl ? 'none' : 'blur(0.4px)',
+                }}
+              />
             )}
           </div>
 

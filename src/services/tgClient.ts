@@ -429,18 +429,9 @@ export async function uploadMediaDocument(
     throw new Error(`File ${file.name} (${file.size} bytes) exceeds Telegram's 2,000,000,000 byte (2 GB) cap.`);
   }
 
-  // For files <= 10MB, using CustomFile with in-memory Buffer is instant.
-  // For files > 10MB (such as 20MB-140MB+ videos), passing the DOM File directly
+  // For files of any size, passing the DOM File directly
   // utilizes CustomBuffer's on-demand chunk slicing with 0 memory bloat.
   let uploadPayload: any = file;
-  if (file.size <= 10 * 1024 * 1024) {
-    try {
-      const fileBuffer = await file.arrayBuffer();
-      uploadPayload = new CustomFile(file.name, file.size, '', Buffer.from(fileBuffer));
-    } catch (e) {
-      uploadPayload = file;
-    }
-  }
 
   let thumbCustomFile: CustomFile | undefined = undefined;
   if (thumbnailBlob && thumbnailBlob.size > 0) {
@@ -460,7 +451,7 @@ export async function uploadMediaDocument(
       file: uploadPayload,
       caption: captionString,
       forceDocument: true, // Keep original bytes untouched without compression
-      workers: 4, // 4-worker multi-part chunk streaming for maximum upload throughput
+      workers: 2, // 2-worker chunk streaming for reliable high throughput without WebSocket congestion
       progressCallback: (percentage: number) => {
         if (onProgress) {
           onProgress(percentage, Math.round(percentage * file.size));
@@ -596,21 +587,27 @@ export async function parseAndIndexTelegramMessage(
     }
   }
 
-  // Attempt to download a fast thumbnail if not already present
-  try {
-    const thumbBuffer = await client.downloadMedia(msg, { thumb: 1 });
-    if (thumbBuffer && thumbBuffer.length > 0) {
-      thumbnailDataUrl = 'data:image/jpeg;base64,' + Buffer.from(thumbBuffer).toString('base64');
+  // Check if item is already indexed in local database to avoid redundant network calls
+  const existing = await db.media.get(msgId);
+  if (existing?.thumbnailDataUrl) {
+    thumbnailDataUrl = existing.thumbnailDataUrl;
+  } else {
+    // Attempt to download a fast thumbnail if not already present
+    try {
+      const thumbBuffer = await client.downloadMedia(msg, { thumb: 1 });
+      if (thumbBuffer && thumbBuffer.length > 0) {
+        thumbnailDataUrl = 'data:image/jpeg;base64,' + Buffer.from(thumbBuffer).toString('base64');
+      }
+    } catch (e) {
+      // If network thumbnail download fails, generate a clean SVG gradient thumbnail
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0284c7"/><stop offset="100%" stop-color="#4f46e5"/></linearGradient></defs>
+        <rect width="400" height="400" fill="url(#g)"/>
+        <circle cx="200" cy="180" r="60" fill="white" opacity="0.9"/>
+        <text x="200" y="310" font-family="sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">${filename.slice(0, 24)}</text>
+      </svg>`;
+      thumbnailDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
     }
-  } catch (e) {
-    // If network thumbnail download fails, generate a clean SVG gradient thumbnail
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
-      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0284c7"/><stop offset="100%" stop-color="#4f46e5"/></linearGradient></defs>
-      <rect width="400" height="400" fill="url(#g)"/>
-      <circle cx="200" cy="180" r="60" fill="white" opacity="0.9"/>
-      <text x="200" y="310" font-family="sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">${filename.slice(0, 24)}</text>
-    </svg>`;
-    thumbnailDataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
   }
 
   const mediaRow: MediaItem = {

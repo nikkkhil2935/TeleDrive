@@ -93,24 +93,24 @@ if (fs.existsSync(uploadsFile)) {
     }
 }`;
 
-  if (uploadsContent.includes('!options.buffer && !options.filePath') && !uploadsContent.includes('options.file')) {
-    uploadsContent = uploadsContent.replace(oldCustomBuffer, newCustomBuffer);
-    changed = true;
-    console.log('[patch-gramjs] Successfully patched CustomBuffer for browser File streaming');
+  if (!uploadsContent.includes('blobSlice')) {
+    if (uploadsContent.includes(oldCustomBuffer)) {
+      uploadsContent = uploadsContent.replace(oldCustomBuffer, newCustomBuffer);
+      changed = true;
+      console.log('[patch-gramjs] Successfully patched CustomBuffer for browser File streaming');
+    } else {
+      // Find class CustomBuffer and replace block
+      const startClass = uploadsContent.indexOf('class CustomBuffer {');
+      const endClass = uploadsContent.indexOf('const KB_TO_BYTES', startClass);
+      if (startClass !== -1 && endClass !== -1) {
+        uploadsContent = uploadsContent.slice(0, startClass) + newCustomBuffer + '\n' + uploadsContent.slice(endClass);
+        changed = true;
+        console.log('[patch-gramjs] Successfully replaced CustomBuffer block');
+      }
+    }
   }
 
   // Patch getFileBuffer to support DOM File streaming and CustomFile.buffer
-  const oldGetFileBuffer = `async function getFileBuffer(file, fileSize, maxBufferSize) {
-    const options = {};
-    if (fileSize > maxBufferSize && file instanceof CustomFile) {
-        options.filePath = file.path;
-    }
-    else {
-        options.buffer = Buffer.from(await fileToBuffer(file));
-    }
-    return new CustomBuffer(options);
-}`;
-
   const newGetFileBuffer = `async function getFileBuffer(file, fileSize, maxBufferSize) {
     const options = {};
     if (file && typeof file.slice === "function" && !(file instanceof CustomFile && file.buffer)) {
@@ -128,20 +128,22 @@ if (fs.existsSync(uploadsFile)) {
     return new CustomBuffer(options);
 }`;
 
-  if (uploadsContent.includes('fileSize > maxBufferSize && file instanceof CustomFile') && !uploadsContent.includes('options.file = file')) {
-    uploadsContent = uploadsContent.replace(oldGetFileBuffer, newGetFileBuffer);
+  const startGfb = uploadsContent.indexOf('async function getFileBuffer(');
+  const endGfb = uploadsContent.indexOf('async function uploadFile(', startGfb);
+  if (startGfb !== -1 && endGfb !== -1 && !uploadsContent.includes('options.file = file')) {
+    uploadsContent = uploadsContent.slice(0, startGfb) + newGetFileBuffer + '\n/** @hidden */\n' + uploadsContent.slice(endGfb);
     changed = true;
     console.log('[patch-gramjs] Successfully patched getFileBuffer for high-speed chunk streaming');
   }
 
-  // Patch default workers to 4 for high-speed uploads
+  // Patch default workers to 2 for reliable socket transmission without dropped frames
   if (uploadsContent.includes('if (!workers || !size) {\n        workers = 1;') || uploadsContent.includes('if (!workers || !size) {\r\n        workers = 1;')) {
     uploadsContent = uploadsContent.replace(
       /if \(!workers \|\| !size\) \{\r?\n\s+workers = 1;/g,
-      'if (!workers || !size) {\n        workers = 4;'
+      'if (!workers || !size) {\n        workers = 2;'
     );
     changed = true;
-    console.log('[patch-gramjs] Successfully boosted upload workers to 4');
+    console.log('[patch-gramjs] Successfully boosted upload workers to 2');
   }
 
   // Patch line 174: avoid misclassifying DOM File as un-uploadable TL object
@@ -168,5 +170,6 @@ if (fs.existsSync(uploadsFile)) {
 
   if (changed) {
     fs.writeFileSync(uploadsFile, uploadsContent, 'utf8');
+    console.log('[patch-gramjs] Saved patched uploads.js');
   }
 }
