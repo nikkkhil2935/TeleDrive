@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "skills": {
+    "rea-analysis-optimization": {
+      "source": "morluto/rea",
+      "commit": "7b3457cdfeaf6a8722f6406c02d4e5bbf15b8796",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/rea-analysis-optimization/SKILL.md",
+      "computedHash": "004e2b58886fa3dab0bd63ee68abed95f3f91f79fcf04322ff7f17960b05c061"
+    },
+    "rea-changelog-update": {
+      "source": "morluto/rea",
+      "commit": "7b3457cdfeaf6a8722f6406c02d4e5bbf15b8796",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/rea-changelog-update/SKILL.md",
+      "computedHash": "8344df64c88dd94b1d94a64b3ec96dde9b0efc936784c4872204c975a478b764"
+    },
+    "rea-ci-tests-audit": {
+      "source": "morluto/rea",
+      "commit": "7b3457cdfeaf6a8722f6406c02d4e5bbf15b8796",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/rea-ci-tests-audit/SKILL.md",
+      "computedHash": "031cc6b15b1344a2c038ea801274ffd79498c05c3394aab70eb4da3326e61858"
+    },
+    "rea-tool-design": {
+      "source": "morluto/rea",
+      "commit": "7b3457cdfeaf6a8722f6406c02d4e5bbf15b8796",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/rea-tool-design/SKILL.md",
+      "computedHash": "b255e74628f72427a86cbe1789fae701151bd79fb3470cd9846fb985cb98a8e3"
+    },
+    "reverse-engineer-anything": {
+      "source": "morluto/rea",
+      "commit": "7b3457cdfeaf6a8722f6406c02d4e5bbf15b8796",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/reverse-engineer-anything/SKILL.md",
+      "computedHash": "2312bcf1db8915f29155b211d0a0b2932e7c8da2ec1c9f24cad6e11efa7c3b5e"
+    },
+    "stageshow": {
+      "source": "benjitaylor/skills",
+      "commit": "299140fafd08df55a9c234e610c3f64af3f45531",
+      "sourceType": "github",
+      "skillPath": "stageshow/SKILL.md",
+      "computedHash": "faaf72b41c206b98da5788093eb07fcdceb80dee90b5dc6dd921048196279474"
+    }
+  }
+}

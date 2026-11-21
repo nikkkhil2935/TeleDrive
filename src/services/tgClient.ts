@@ -1,0 +1,418 @@
+import { TelegramClient } from 'telegram';
+import { StringSession } from 'telegram/sessions';
+import { CustomFile } from 'telegram/client/uploads';
+import { Api } from 'telegram/tl';
+import { Buffer } from 'buffer';
+import type { CaptionMetadataV1, MediaItem, UserSession } from '../types';
+import { db } from '../db';
+
+let clientInstance: TelegramClient | null = null;
+let activeSession: UserSession | null = null;
+let qrAbortController: AbortController | null = null;
+
+const SESSION_STORAGE_KEY = 'tg_photos_session_v1';
+
+export function getActiveSession(): UserSession | null {
+  if (activeSession) return activeSession;
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (raw) {
+      activeSession = JSON.parse(raw);
+      return activeSession;
+    }
+  } catch (e) {
+    console.error('Failed to parse saved session:', e);
+  }
+  return null;
+}
+
+export function saveActiveSession(session: UserSession) {
+  activeSession = session;
+  localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+}
+
+export function clearActiveSession() {
+  activeSession = null;
+  localStorage.removeItem(SESSION_STORAGE_KEY);
+  if (clientInstance) {
+    try {
+      clientInstance.disconnect();
+    } catch (e) {}
+    clientInstance = null;
+  }
+}
+
+/**
+ * Initializes or returns existing connected TelegramClient.
+ */
+export async function getTelegramClient(creds?: { apiId: number; apiHash: string; sessionString?: string }): Promise<TelegramClient> {
+  if (clientInstance && clientInstance.connected) {
+    return clientInstance;
+  }
+
+  const sessionData = creds || getActiveSession();
+  if (!sessionData) {
+    throw new Error('No Telegram credentials or session found. Please sign in.');
+  }
+
+  const stringSession = new StringSession(sessionData.sessionString || '');
+  const client = new TelegramClient(stringSession, sessionData.apiId, sessionData.apiHash, {
+    connectionRetries: 5,
+    useWSS: true, // Connect over WebSocket in browser environments
+  });
+
+  await client.connect();
+  clientInstance = client;
+  return client;
+}
+
+/**
+ * Step 1 of Phone Login: Requests Telegram to send verification code.
+ */
+export async function sendTelegramPhoneCode(
+  apiId: number,
+  apiHash: string,
+  phoneNumber: string
+): Promise<{ phoneCodeHash: string; isCodeViaApp: boolean }> {
+  // Reset previous client if any
+  if (clientInstance) {
+    try {
+      await clientInstance.disconnect();
+    } catch (e) {}
+    clientInstance = null;
+  }
+
+  const client = new TelegramClient(new StringSession(''), apiId, apiHash, {
+    connectionRetries: 5,
+    useWSS: true,
+  });
+
+  await client.connect();
+  clientInstance = client;
+
+  const result = await client.sendCode(
+    { apiId, apiHash },
+    phoneNumber.trim()
+  );
+
+  return {
+    phoneCodeHash: result.phoneCodeHash,
+    isCodeViaApp: result.isCodeViaApp,
+  };
+}
+
+/**
+ * Step 2 of Phone Login: Submits code (and optional 2FA password).
+ */
+export async function verifyTelegramCodeAndSignIn(
+  apiId: number,
+  apiHash: string,
+  phoneNumber: string,
+  phoneCode: string,
+  phoneCodeHash: string,
+  password?: string
+): Promise<UserSession> {
+  if (!clientInstance || !clientInstance.connected) {
+    await getTelegramClient({ apiId, apiHash, sessionString: '' });
+  }
+  const client = clientInstance!;
+
+  let authUser: any = null;
+  try {
+    authUser = await client.invoke(
+      new Api.auth.SignIn({
+        phoneNumber: phoneNumber.trim(),
+        phoneCodeHash,
+        phoneCode: phoneCode.trim(),
+      })
+    );
+  } catch (err: any) {
+    // Check if 2FA cloud password is required
+    if (err.message && err.message.includes('SESSION_PASSWORD_NEEDED')) {
+      if (!password) {
+        throw new Error('2FA_REQUIRED');
+      }
+      authUser = await client.signInWithPassword(
+        { apiId, apiHash },
+        {
+          password: async () => password,
+          onError: (e) => {
+            throw e;
+          },
+        }
+      );
+    } else {
+      throw err;
+    }
+  }
+
+  // Save session string
+  const sessionString = client.session.save() as unknown as string;
+
+  // Auto-discover or provision library channel
+  const { channelId, channelTitle } = await ensureLibraryChannel(client);
+
+  const userObj = authUser.user || authUser;
+  const session: UserSession = {
+    apiId,
+    apiHash,
+    sessionString,
+    channelId,
+    channelTitle,
+    phone: phoneNumber,
+    userId: userObj?.id?.toString(),
+    userName: [userObj?.firstName, userObj?.lastName].filter(Boolean).join(' ') || phoneNumber,
+  };
+
+  saveActiveSession(session);
+  return session;
+}
+
+/**
+ * QR Code Login flow using GramJS signInUserWithQrCode.
+ */
+export async function startTelegramQrLogin(
+  apiId: number,
+  apiHash: string,
+  onQrToken: (qrAuthUrl: string, expires: number) => void,
+  onPasswordNeeded?: () => Promise<string>
+): Promise<UserSession> {
+  if (clientInstance) {
+    try {
+      await clientInstance.disconnect();
+    } catch (e) {}
+    clientInstance = null;
+  }
+
+  const client = new TelegramClient(new StringSession(''), apiId, apiHash, {
+    connectionRetries: 5,
+    useWSS: true,
+  });
+
+  await client.connect();
+  clientInstance = client;
+
+  let passwordResolver: (() => Promise<string>) | undefined;
+  if (onPasswordNeeded) {
+    passwordResolver = onPasswordNeeded;
+  }
+
+  const authUser = await client.signInUserWithQrCode(
+    { apiId, apiHash },
+    {
+      qrCode: async ({ token, expires }) => {
+        // Construct official Telegram QR login URI: tg://login?token=<base64url>
+        const base64UrlToken = Buffer.from(token).toString('base64url');
+        const qrUrl = `tg://login?token=${base64UrlToken}`;
+        onQrToken(qrUrl, expires);
+      },
+      password: passwordResolver,
+      onError: (err) => {
+        console.error('QR Login error callback:', err);
+      },
+    }
+  );
+
+  const sessionString = client.session.save() as unknown as string;
+  const { channelId, channelTitle } = await ensureLibraryChannel(client);
+
+  const userObj = authUser as any;
+  const session: UserSession = {
+    apiId,
+    apiHash,
+    sessionString,
+    channelId,
+    channelTitle,
+    userId: userObj?.id?.toString(),
+    userName: [userObj?.firstName, userObj?.lastName].filter(Boolean).join(' ') || 'Telegram User',
+  };
+
+  saveActiveSession(session);
+  return session;
+}
+
+/**
+ * Ensures or creates the private library channel for storing media.
+ */
+export async function ensureLibraryChannel(
+  client: TelegramClient,
+  title = 'Telegram Photos Library'
+): Promise<{ channelId: string; channelTitle: string }> {
+  const session = getActiveSession();
+  if (session?.channelId) {
+    return { channelId: session.channelId, channelTitle: session.channelTitle || title };
+  }
+
+  try {
+    // Check existing dialogs first to reuse existing Photos Library channel
+    const dialogs: any[] = await client.getDialogs({ limit: 40 });
+    const existing = dialogs.find(d => (d.isChannel || d.isGroup) && d.title?.toLowerCase().includes('photos library'));
+    if (existing && existing.entity) {
+      const channelId = existing.entity.id.toString();
+      const channelTitle = existing.title || title;
+      if (session) {
+        session.channelId = channelId;
+        session.channelTitle = channelTitle;
+        saveActiveSession(session);
+      }
+      return { channelId, channelTitle };
+    }
+  } catch (e) {
+    console.warn('Could not inspect dialogs for existing channel:', e);
+  }
+
+  // Create new private channel
+  const result: any = await client.invoke(
+    new Api.channels.CreateChannel({
+      title,
+      about: 'Private photo and video storage created by Telegram Photos App. Messages represent original media documents with metadata captions.',
+      broadcast: true,
+      megagroup: false,
+    })
+  );
+
+  const updates = result.chats || [];
+  const createdChannel = updates[0];
+  if (!createdChannel) {
+    throw new Error('Failed to create private library channel');
+  }
+
+  const channelId = createdChannel.id.toString();
+  if (session) {
+    session.channelId = channelId;
+    session.channelTitle = title;
+    saveActiveSession(session);
+  }
+
+  return { channelId, channelTitle: title };
+}
+
+/**
+ * Parses caption JSON from a message.
+ */
+export function parseCaptionJson(captionText?: string): CaptionMetadataV1 | null {
+  if (!captionText) return null;
+  try {
+    const parsed = JSON.parse(captionText);
+    if (parsed.v === 1 && parsed.name && parsed.taken) {
+      return parsed as CaptionMetadataV1;
+    }
+  } catch (e) {
+    // Not a valid JSON caption
+  }
+  return null;
+}
+
+export function serializeCaptionJson(meta: CaptionMetadataV1): string {
+  return JSON.stringify(meta);
+}
+
+/**
+ * Uploads a media document with custom thumbnail and caption JSON.
+ */
+export async function uploadMediaDocument(
+  client: TelegramClient,
+  channelId: string,
+  options: {
+    file: File;
+    thumbnailBlob: Blob;
+    caption: CaptionMetadataV1;
+    onProgress?: (progress: number, uploadedBytes: number) => void;
+  }
+): Promise<{ messageId: number }> {
+  const { file, thumbnailBlob, caption, onProgress } = options;
+
+  if (file.size > 2_000_000_000) {
+    throw new Error(`File ${file.name} (${file.size} bytes) exceeds Telegram's 2,000,000,000 byte (2 GB) cap.`);
+  }
+
+  const fileBuffer = await file.arrayBuffer();
+  const customFile = new CustomFile(file.name, file.size, '', Buffer.from(fileBuffer));
+
+  const thumbBuffer = await thumbnailBlob.arrayBuffer();
+  const thumbCustomFile = new CustomFile('thumb.jpg', thumbnailBlob.size, '', Buffer.from(thumbBuffer));
+
+  const captionString = serializeCaptionJson(caption);
+
+  const message: any = await client.sendFile(channelId, {
+    file: customFile,
+    thumb: thumbCustomFile,
+    caption: captionString,
+    forceDocument: true, // Keep original bytes untouched
+    progressCallback: (percentage: number) => {
+      if (onProgress) {
+        onProgress(percentage, Math.round(percentage * file.size));
+      }
+    },
+  });
+
+  return { messageId: message.id };
+}
+
+/**
+ * Scans the Telegram channel history and rebuilds the local Dexie index.
+ */
+export async function rebuildIndexFromChannel(
+  client: TelegramClient,
+  channelId: string,
+  onProgress?: (scannedCount: number, indexedCount: number) => void
+): Promise<{ totalScanned: number; totalIndexed: number }> {
+  let scannedCount = 0;
+  let indexedCount = 0;
+  let offsetId = 0;
+  const BATCH_SIZE = 100;
+
+  while (true) {
+    const messages: any[] = await client.getMessages(channelId, {
+      limit: BATCH_SIZE,
+      offsetId,
+    });
+
+    if (!messages || messages.length === 0) break;
+
+    for (const msg of messages) {
+      scannedCount++;
+      offsetId = msg.id;
+
+      if (!msg.media || msg.media.className !== 'MessageMediaDocument') {
+        continue;
+      }
+
+      const doc = msg.media.document;
+      if (!doc) continue;
+
+      const meta = parseCaptionJson(msg.message);
+      const isVideo = doc.mimeType?.startsWith('video/') || false;
+
+      const mediaRow: MediaItem = {
+        messageId: msg.id,
+        libraryId: channelId,
+        kind: isVideo ? 'video' : 'photo',
+        filename: meta?.name || 'media_' + msg.id,
+        mimeType: doc.mimeType || (isVideo ? 'video/mp4' : 'image/jpeg'),
+        sizeBytes: Number(doc.size || 0),
+        sha256: meta?.sha || '',
+        width: meta?.w || 1920,
+        height: meta?.h || 1080,
+        takenAt: meta?.taken || new Date(msg.date * 1000).toISOString(),
+        isFavorite: meta?.fav === 1,
+        isArchived: false,
+        uploadedAt: new Date(msg.date * 1000).toISOString(),
+        albums: meta?.albums || [],
+        latitude: meta?.lat,
+        longitude: meta?.lon,
+      };
+
+      await db.media.put(mediaRow);
+      indexedCount++;
+    }
+
+    if (onProgress) {
+      onProgress(scannedCount, indexedCount);
+    }
+
+    if (messages.length < BATCH_SIZE) break;
+  }
+
+  return { totalScanned: scannedCount, totalIndexed: indexedCount };
+}
