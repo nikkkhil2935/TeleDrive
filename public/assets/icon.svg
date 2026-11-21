@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <defs>
+    <linearGradient id="framelyGrad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A73E8"/>
+      <stop offset="1" stop-color="#4285F4"/>
+    </linearGradient>
+    <linearGradient id="sparkGrad" x1="30" y1="8" x2="40" y2="18" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FDD663"/>
+      <stop offset="1" stop-color="#F9AB00"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="2" width="48" height="46" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.25" flood-color="#1A73E8"/>
+    </filter>
+  </defs>
+  <rect x="4" y="4" width="40" height="40" rx="12" fill="url(#framelyGrad)" filter="url(#shadow)"/>
+  <!-- Inner Photo Frame -->
+  <rect x="11" y="11" width="26" height="26" rx="6" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity="0.95"/>
+  <!-- Mountain contours -->
+  <path d="M12 32L19 23C19.5 22.3 20.5 22.3 21 23L25 28L28.5 24C29 23.4 30 23.4 30.5 24L36 32" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Spark Sun in corner -->
+  <circle cx="31" cy="17" r="3.5" fill="url(#sparkGrad)"/>
+</svg>

@@ -7,6 +7,11 @@ import { AlbumsView } from './components/AlbumsView';
 import { MediaViewer } from './components/MediaViewer';
 import { UploadBanner } from './components/UploadBanner';
 import { AuthModal } from './components/AuthModal';
+import { OnboardingModal } from './components/OnboardingModal';
+import { DuplicatesModal } from './components/DuplicatesModal';
+import { CommandPaletteModal } from './components/CommandPaletteModal';
+import { PrivacyModal } from './components/PrivacyModal';
+import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { RebuildModal } from './components/RebuildModal';
 import { StorageInsightModal } from './components/StorageInsightModal';
 import { TransferManagerModal } from './components/TransferManagerModal';
@@ -45,12 +50,17 @@ export const App: React.FC = () => {
         </main>
       </div>
 
-      {/* Google Photos Style Mobile Bottom Navigation */}
+      {/* Google Photos Style Mobile Bottom Navigation with FAB */}
       <BottomNav />
 
       <MediaViewer />
       <UploadBanner />
       <AuthModal />
+      <OnboardingModal />
+      <DuplicatesModal />
+      <CommandPaletteModal />
+      <PrivacyModal />
+      <KeyboardShortcutsModal />
       <RebuildModal />
       <StorageInsightModal />
       <TransferManagerModal />

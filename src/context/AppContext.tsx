@@ -23,6 +23,7 @@ import {
 import { db } from '../db';
 
 export type ThemeMode = 'dark' | 'light' | 'midnight' | 'system';
+export type BrandAccent = 'blue' | 'indigo' | 'teal' | 'coral';
 export type GridDensity = 'small' | 'medium' | 'large';
 export type MediaFilter = 'all' | 'photo' | 'video';
 export type SortOption = 'date-desc' | 'date-asc' | 'size-desc' | 'size-asc' | 'name-asc';
@@ -39,6 +40,8 @@ interface AppContextType {
 
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
+  brandAccent: BrandAccent;
+  setBrandAccent: (a: BrandAccent) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   selectedMedia: MediaItem | null;
@@ -63,6 +66,16 @@ interface AppContextType {
   // Modals
   isAuthModalOpen: boolean;
   setIsAuthModalOpen: (open: boolean) => void;
+  isOnboardingOpen: boolean;
+  setIsOnboardingOpen: (open: boolean) => void;
+  isDuplicatesOpen: boolean;
+  setIsDuplicatesOpen: (open: boolean) => void;
+  isCommandPaletteOpen: boolean;
+  setIsCommandPaletteOpen: (open: boolean) => void;
+  isPrivacyOpen: boolean;
+  setIsPrivacyOpen: (open: boolean) => void;
+  isShortcutsOpen: boolean;
+  setIsShortcutsOpen: (open: boolean) => void;
   isRebuildModalOpen: boolean;
   setIsRebuildModalOpen: (open: boolean) => void;
   isStorageModalOpen: boolean;
@@ -120,12 +133,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Modals
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [isDuplicatesOpen, setIsDuplicatesOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isRebuildModalOpen, setIsRebuildModalOpen] = useState(false);
   const [isStorageModalOpen, setIsStorageModalOpen] = useState(false);
   const [isTransfersOpen, setIsTransfersOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isNewAlbumOpen, setIsNewAlbumOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+
+  const [brandAccent, setBrandAccentState] = useState<BrandAccent>(() => {
+    return (localStorage.getItem('framely_brand_accent') as BrandAccent) || 'blue';
+  });
+
+  const setBrandAccent = (accent: BrandAccent) => {
+    localStorage.setItem('framely_brand_accent', accent);
+    setBrandAccentState(accent);
+  };
 
   const [activeJobs, setActiveJobs] = useState<UploadJob[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -137,6 +164,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsVaultLocked(true);
     setSelectedMedia(null);
   }, []);
+
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'l') {
+        e.preventDefault();
+        lockVault();
+      } else if (e.key === '?' && !isInput) {
+        e.preventDefault();
+        setIsShortcutsOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lockVault]);
 
   // Unlock Vault
   const unlockVault = async (passphrase: string) => {
@@ -257,7 +305,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     if (!session && !isVaultLocked) {
-      setIsAuthModalOpen(true);
+      const hasOnboarded = localStorage.getItem('framely_onboarding_completed');
+      if (!hasOnboarded) {
+        setIsOnboardingOpen(true);
+      } else {
+        setIsAuthModalOpen(true);
+      }
     }
   }, [session, isVaultLocked]);
 
@@ -424,6 +477,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isAnotherTabActive,
         theme,
         setTheme,
+        brandAccent,
+        setBrandAccent,
         activeTab,
         setActiveTab,
         selectedMedia,
@@ -442,6 +497,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSelectedAlbum,
         isAuthModalOpen,
         setIsAuthModalOpen,
+        isOnboardingOpen,
+        setIsOnboardingOpen,
+        isDuplicatesOpen,
+        setIsDuplicatesOpen,
+        isCommandPaletteOpen,
+        setIsCommandPaletteOpen,
+        isPrivacyOpen,
+        setIsPrivacyOpen,
+        isShortcutsOpen,
+        setIsShortcutsOpen,
         isRebuildModalOpen,
         setIsRebuildModalOpen,
         isStorageModalOpen,
