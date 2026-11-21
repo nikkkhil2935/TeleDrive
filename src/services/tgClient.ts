@@ -719,3 +719,61 @@ export async function rebuildIndexFromChannel(
 
   return { totalScanned: scannedCount, totalIndexed: indexedCount };
 }
+
+/**
+ * In-memory cache for downloaded full media Object URLs to make switching instant and avoid repeated MTProto downloads.
+ */
+const fullMediaUrlCache = new Map<number, string>();
+
+export function getCachedFullMediaUrl(messageId: number): string | undefined {
+  return fullMediaUrlCache.get(messageId);
+}
+
+/**
+ * Downloads the original full-resolution media from Telegram for a given message ID.
+ * Returns an Object URL (blob:...) that can be rendered directly by <img> or <video>.
+ */
+export async function downloadFullMedia(
+  client: TelegramClient,
+  channelId: string,
+  messageId: number,
+  onProgress?: (progress: number) => void
+): Promise<string> {
+  if (fullMediaUrlCache.has(messageId)) {
+    return fullMediaUrlCache.get(messageId)!;
+  }
+
+  const targetPeer = await resolveTargetPeer(client, channelId);
+  const messages: any[] = await client.getMessages(targetPeer, { ids: [messageId] });
+  if (!messages || messages.length === 0 || !messages[0]?.media) {
+    throw new Error(`Message #${messageId} has no downloadable media on Telegram.`);
+  }
+
+  const msg = messages[0];
+  const buffer: any = await client.downloadMedia(msg, {
+    progressCallback: (downloaded: any, total: any) => {
+      if (onProgress) {
+        const pct = total ? Number(downloaded) / Number(total) : 0.5;
+        onProgress(pct);
+      }
+    },
+  });
+
+  if (!buffer || buffer.length === 0) {
+    throw new Error(`Failed to download full media buffer for message #${messageId}`);
+  }
+
+  let mimeType = 'image/jpeg';
+  if (msg.media.document && msg.media.document.mimeType) {
+    mimeType = msg.media.document.mimeType;
+  }
+
+  const rawBytes = typeof buffer === 'string' ? Buffer.from(buffer) : Buffer.from(buffer);
+  const uint8 = new Uint8Array(rawBytes.buffer, rawBytes.byteOffset, rawBytes.byteLength);
+  const blob = new Blob([uint8], { type: mimeType });
+  const objectUrl = URL.createObjectURL(blob);
+  fullMediaUrlCache.set(messageId, objectUrl);
+
+  return objectUrl;
+}
+

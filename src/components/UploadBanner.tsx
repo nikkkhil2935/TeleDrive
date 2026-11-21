@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import { transferQueue } from '../services/transferQueue';
 
 export const UploadBanner: React.FC = () => {
-  const { activeJobs } = useApp();
+  const { activeJobs, selectedMedia } = useApp();
   const [isExpanded, setIsExpanded] = useState(false);
   const [now, setNow] = useState(Date.now());
 
@@ -13,7 +13,7 @@ export const UploadBanner: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  if (activeJobs.length === 0) return null;
+  if (activeJobs.length === 0 || selectedMedia) return null;
 
   const currentJob = activeJobs[0];
   const isCooldown = currentJob.status === 'cooldown' && currentJob.cooldownUntil && currentJob.cooldownUntil > now;
