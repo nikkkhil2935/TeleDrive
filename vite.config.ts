@@ -1,10 +1,37 @@
-import { defineConfig } from 'vite';
+import { defineConfig, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import path from 'path';
 
+function patchGramJsPlugin(): Plugin {
+  return {
+    name: 'patch-gramjs',
+    transform(code: string, id: string) {
+      if (id.includes('generationHelpers') || code.includes('Bytes or str expected')) {
+        const startIdx = code.indexOf('function serializeBytes(data) {');
+        const endIdx = code.indexOf('const r = [];', startIdx);
+        if (startIdx !== -1 && endIdx !== -1) {
+          const replacement = `function serializeBytes(data) {
+    if (typeof data === "string" || Buffer.isBuffer(data) || (data && (data._isBuffer || data.constructor?.name === "Buffer" || data instanceof Uint8Array))) {
+        if (!(data instanceof Buffer)) data = Buffer.from(data);
+    } else {
+        throw Error("Bytes or str expected, not " + (data?.constructor?.name || typeof data));
+    }
+    `;
+          return {
+            code: code.slice(0, startIdx) + replacement + code.slice(endIdx),
+            map: null,
+          };
+        }
+      }
+      return null;
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
+    patchGramJsPlugin(),
     react(),
     nodePolyfills({
       globals: {
