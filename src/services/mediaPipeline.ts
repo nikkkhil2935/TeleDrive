@@ -126,6 +126,76 @@ export async function processMediaFile(file: File): Promise<ProcessedMedia> {
 }
 
 /**
+ * Creates a valid JPEG fallback blob and DataURL on an HTML Canvas.
+ * Telegram MTProto strictly requires JPEG (image/jpeg) thumbnails; SVG blobs cause MTProto RPC errors.
+ */
+function createFallbackJpegBlob(
+  width: number,
+  height: number,
+  label: string,
+  isVideo = false
+): Promise<{ width: number; height: number; thumbnailBlob: Blob; thumbnailDataUrl: string }> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.min(width || 1280, 640);
+    canvas.height = Math.min(height || 720, 360);
+    const ctx = canvas.getContext('2d');
+
+    if (ctx) {
+      // Dark slate background gradient
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grad.addColorStop(0, '#0f172a');
+      grad.addColorStop(1, '#1e293b');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (isVideo) {
+        // Play circle
+        ctx.fillStyle = '#0284c7';
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2 - 14, 28, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Play triangle
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2 - 8, canvas.height / 2 - 26);
+        ctx.lineTo(canvas.width / 2 + 14, canvas.height / 2 - 14);
+        ctx.lineTo(canvas.width / 2 - 8, canvas.height / 2 - 2);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        // Photo icon circle
+        ctx.fillStyle = '#334155';
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2 - 14, 28, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Filename label
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(label.slice(0, 30), canvas.width / 2, canvas.height / 2 + 36);
+    }
+
+    const thumbnailDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    canvas.toBlob(
+      (blob) => {
+        resolve({
+          width: width || 1920,
+          height: height || 1080,
+          thumbnailBlob: blob || new Blob([], { type: 'image/jpeg' }),
+          thumbnailDataUrl,
+        });
+      },
+      'image/jpeg',
+      0.85
+    );
+  });
+}
+
+/**
  * Resizes image to thumbnail and returns JPEG blob + dimensions.
  */
 async function generateImageThumbnail(file: File): Promise<{ width: number; height: number; thumbnailBlob: Blob; thumbnailDataUrl: string }> {
@@ -133,18 +203,10 @@ async function generateImageThumbnail(file: File): Promise<{ width: number; heig
     const img = new Image();
     const url = URL.createObjectURL(file);
 
-    const fallback = () => {
+    const fallback = async () => {
       URL.revokeObjectURL(url);
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
-        <rect width="300" height="300" fill="#1e293b"/>
-        <text x="150" y="160" font-family="sans-serif" font-size="14" fill="#94a3b8" text-anchor="middle">${file.name.slice(0, 24)}</text>
-      </svg>`;
-      resolve({
-        width: 1920,
-        height: 1080,
-        thumbnailBlob: new Blob([svg], { type: 'image/svg+xml' }),
-        thumbnailDataUrl: 'data:image/svg+xml;utf8,' + encodeURIComponent(svg),
-      });
+      const res = await createFallbackJpegBlob(1920, 1080, file.name, false);
+      resolve(res);
     };
 
     img.onload = () => {
@@ -205,24 +267,18 @@ async function extractVideoPoster(file: File): Promise<{ width: number; height: 
   return new Promise((resolve) => {
     let settled = false;
 
-    const fallback = () => {
+    const fallback = async () => {
       if (settled) return;
       settled = true;
       try { URL.revokeObjectURL(url); } catch (e) {}
 
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="225" viewBox="0 0 400 225">
-        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs>
-        <rect width="400" height="225" fill="url(#g)"/>
-        <circle cx="200" cy="112" r="32" fill="#0284c7" opacity="0.9"/>
-        <polygon points="192,98 216,112 192,126" fill="white"/>
-        <text x="200" y="175" font-family="sans-serif" font-size="13" font-weight="600" fill="#94a3b8" text-anchor="middle">${file.name.slice(0, 28)}</text>
-      </svg>`;
+      const res = await createFallbackJpegBlob(1920, 1080, file.name, true);
       resolve({
-        width: 1920,
-        height: 1080,
+        width: res.width,
+        height: res.height,
         durationMs: 0,
-        thumbnailBlob: new Blob([svg], { type: 'image/svg+xml' }),
-        thumbnailDataUrl: 'data:image/svg+xml;utf8,' + encodeURIComponent(svg),
+        thumbnailBlob: res.thumbnailBlob,
+        thumbnailDataUrl: res.thumbnailDataUrl,
       });
     };
 

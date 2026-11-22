@@ -468,25 +468,23 @@ export async function uploadMediaDocument(
   try {
     message = await sendFilePayload(targetPeer, !!thumbCustomFile);
   } catch (err: any) {
-    // If thumbnail caused any error, retry immediately without thumbnail
-    if (err?.message && (err.message.includes('Could not create file from') || err.message.includes('Cannot use')) && thumbCustomFile) {
-      console.warn('[Telegram] Upload with thumbnail failed, retrying without thumbnail:', err.message);
-      message = await sendFilePayload(targetPeer, false);
-    } else {
-      // If entity resolution fails for channel, gracefully fall back to Saved Messages (InputPeerSelf)
-      const isEntityError =
-        err?.message &&
-        (err.message.includes('Could not find the input entity') ||
-          err.message.includes('CHANNEL_INVALID') ||
-          err.message.includes('CHAT_WRITE_FORBIDDEN'));
+    console.warn('[Telegram] First upload attempt failed:', err?.message);
 
-      if (isEntityError) {
-        console.warn('[Telegram] Channel upload failed with entity/access error, falling back to Saved Messages:', err.message);
+    // If thumbnail was included, retry immediately without thumbnail
+    if (thumbCustomFile) {
+      try {
+        console.warn('[Telegram] Retrying upload without thumbnail payload...');
+        message = await sendFilePayload(targetPeer, false);
+      } catch (err2: any) {
+        console.warn('[Telegram] Target peer upload failed, falling back to Saved Messages (InputPeerSelf):', err2?.message);
         const selfPeer = new Api.InputPeerSelf();
-        message = await sendFilePayload(selfPeer, !!thumbCustomFile);
-      } else {
-        throw err;
+        message = await sendFilePayload(selfPeer, false);
       }
+    } else {
+      // If channel failed without thumbnail, fall back to Saved Messages
+      console.warn('[Telegram] Target peer upload failed, falling back to Saved Messages (InputPeerSelf):', err?.message);
+      const selfPeer = new Api.InputPeerSelf();
+      message = await sendFilePayload(selfPeer, false);
     }
   }
 

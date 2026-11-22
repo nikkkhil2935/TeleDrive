@@ -240,6 +240,7 @@ export const AuthModal: React.FC = () => {
           </div>
           <button
             onClick={() => setIsAuthModalOpen(false)}
+            aria-label="Close"
             className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -341,6 +342,8 @@ export const AuthModal: React.FC = () => {
                     <input
                       type="text"
                       required
+                      autoComplete="off"
+                      spellCheck={false}
                       placeholder="e.g. b18441..."
                       value={apiHash}
                       onChange={(e) => setApiHash(e.target.value)}
@@ -357,6 +360,7 @@ export const AuthModal: React.FC = () => {
                   <input
                     type="tel"
                     required
+                    autoComplete="tel"
                     placeholder="+1 555 123 4567"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
@@ -383,6 +387,9 @@ export const AuthModal: React.FC = () => {
                     type="text"
                     required
                     autoFocus={step === 'code'}
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
+                    spellCheck={false}
                     placeholder="Enter 5-digit code"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
@@ -400,6 +407,7 @@ export const AuthModal: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
                         className="text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 font-normal text-[11px]"
                       >
                         {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -410,6 +418,7 @@ export const AuthModal: React.FC = () => {
                       type={showPassword ? 'text' : 'password'}
                       required
                       autoFocus
+                      autoComplete="current-password"
                       placeholder="Enter your 2FA Cloud Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}

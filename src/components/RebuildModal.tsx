@@ -15,10 +15,12 @@ export const RebuildModal: React.FC = () => {
   if (!isRebuildModalOpen) return null;
 
   const handleStartRebuild = async () => {
-    if (!session?.channelId) {
-      setError('No active library channel linked to session.');
+    if (!session) {
+      setError('Please sign in with Telegram first to scan and rebuild your library.');
       return;
     }
+
+    const targetChannel = session.channelId || session.userId || 'me';
 
     setIsScanning(true);
     setError(null);
@@ -28,7 +30,7 @@ export const RebuildModal: React.FC = () => {
 
     try {
       const client = await getTelegramClient();
-      const res = await rebuildIndexFromChannel(client, session.channelId, (s, idx) => {
+      const res = await rebuildIndexFromChannel(client, targetChannel, (s, idx) => {
         setScanned(s);
         setIndexed(idx);
       });

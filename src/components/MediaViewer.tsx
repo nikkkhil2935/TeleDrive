@@ -401,7 +401,7 @@ export const MediaViewer: React.FC = () => {
       </header>
 
       {/* Main Stage & Inspector Layout */}
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 h-full min-h-0 min-w-0 flex overflow-hidden relative">
         {/* Media Canvas Stage (Fills available space responsively) */}
         <div
           ref={stageRef}
@@ -411,7 +411,7 @@ export const MediaViewer: React.FC = () => {
           onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
           onDoubleClick={handleDoubleClick}
-          className={`flex-1 relative flex items-center justify-center p-2 sm:p-6 overflow-hidden transition-all duration-300 ${
+          className={`flex-1 h-full min-h-0 min-w-0 relative flex items-center justify-center p-2 sm:p-6 overflow-hidden transition-all duration-300 ${
             zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
           }`}
         >
@@ -543,7 +543,7 @@ export const MediaViewer: React.FC = () => {
 
         {/* EXIF & Telegram Cloud Metadata Panel (Responsive Drawer on Mobile, Sidebar on Desktop) */}
         {showInfo && (
-          <aside className="absolute inset-y-0 right-0 z-30 w-full sm:w-88 md:relative md:w-88 border-l border-white/10 bg-slate-950/95 md:bg-slate-950/80 backdrop-blur-2xl p-5 overflow-y-auto space-y-6 text-slate-300 text-xs shrink-0 shadow-2xl md:shadow-none animate-in slide-in-from-right-4 duration-200">
+          <aside className="absolute inset-y-0 right-0 z-30 w-full sm:w-80 md:relative md:w-[360px] border-l border-white/10 bg-slate-950/95 md:bg-slate-950/80 backdrop-blur-2xl p-5 overflow-y-auto space-y-6 text-slate-300 text-xs shrink-0 shadow-2xl md:shadow-none animate-in slide-in-from-right-4 duration-200">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div>
@@ -552,6 +552,7 @@ export const MediaViewer: React.FC = () => {
               </div>
               <button
                 onClick={() => setShowInfo(false)}
+                aria-label="Close details"
                 className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
               >
                 <X className="w-5 h-5" />

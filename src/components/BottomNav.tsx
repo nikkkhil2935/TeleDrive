@@ -46,7 +46,8 @@ export const BottomNav: React.FC = () => {
       <button
         onClick={() => fileInputRef.current?.click()}
         title="Upload photos or videos"
-        className="md:hidden fixed bottom-18 right-4 z-40 w-14 h-14 rounded-2xl bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-[#A8C7FA] dark:hover:bg-[#8AB4F8] text-white dark:text-[#041E49] shadow-xl flex items-center justify-center transition-transform active:scale-95"
+        aria-label="Upload photos or videos"
+        className="md:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-[#A8C7FA] dark:hover:bg-[#8AB4F8] text-white dark:text-[#041E49] shadow-xl flex items-center justify-center transition-transform active:scale-95"
       >
         <Plus className="w-7 h-7 stroke-[2.5]" />
       </button>

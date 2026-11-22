@@ -239,6 +239,11 @@ class TransferQueueService {
       if (channelId) {
         this.processQueue(channelId);
       }
+    } else {
+      job.status = 'error';
+      job.error = 'File handle expired on refresh. Click + to re-upload.';
+      await db.uploadJobs.put(job);
+      this.notify();
     }
   }
 

@@ -155,6 +155,12 @@ export const Header: React.FC = () => {
             placeholder="Search your photos, dates, or places"
             value={searchQuery}
             onFocus={() => setShowSearchSuggestions(true)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setShowSearchSuggestions(false);
+                searchInputRef.current?.blur();
+              }
+            }}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-[#F0F4F9] dark:bg-[#1E1F20] hover:bg-[#E9EEF6] dark:hover:bg-[#282A2C] focus:bg-white dark:focus:bg-[#1E1F20] border border-transparent focus:border-slate-300 dark:focus:border-[#444746] rounded-full pl-12 pr-18 py-2.5 text-sm text-[#1F1F1F] dark:text-[#E3E3E3] placeholder:text-[#5F6368] dark:placeholder:text-[#C2C7CF] focus:outline-none shadow-xs transition-all"
           />
@@ -165,6 +171,7 @@ export const Header: React.FC = () => {
                 onClick={() => setSearchQuery('')}
                 className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-[#282A2C] text-slate-500 hover:text-slate-900 dark:hover:text-white"
                 title="Clear Search"
+                aria-label="Clear Search"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -172,6 +179,7 @@ export const Header: React.FC = () => {
             <button
               onClick={() => setIsCommandPaletteOpen(true)}
               title="Command Palette (Ctrl+K or ⌘K)"
+              aria-label="Open Command Palette"
               className="hidden sm:flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-[#2E3133] hover:bg-slate-300 text-slate-600 dark:text-[#C2C7CF] text-[11px] font-mono transition-colors"
             >
               <Command className="w-2.5 h-2.5" />
@@ -215,6 +223,7 @@ export const Header: React.FC = () => {
           <button
             onClick={() => setShowCreateMenu(!showCreateMenu)}
             title="Create & Upload (+)"
+            aria-label="Create or upload photos and albums"
             className="p-2 sm:p-2.5 rounded-full hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#1F1F1F] dark:text-[#E3E3E3] transition-colors"
           >
             <Plus className="w-5 h-5" />
@@ -251,6 +260,7 @@ export const Header: React.FC = () => {
           onClick={syncLibrary}
           disabled={isSyncing}
           title={isSyncing ? 'Syncing with Telegram channel...' : 'Sync newly uploaded photos from Telegram'}
+          aria-label="Sync photos from Telegram"
           className="p-2 sm:p-2.5 rounded-full hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-[#E3E3E3] transition-colors"
         >
           <RefreshCw className={`w-5 h-5 ${isSyncing ? 'animate-spin text-[#0B57D0]' : ''}`} />
@@ -260,6 +270,7 @@ export const Header: React.FC = () => {
         <button
           onClick={() => setIsTransfersOpen(true)}
           title="Transfer Engine & Queue"
+          aria-label={`Transfer Engine Queue (${activeTransferCount} active)`}
           className="relative p-2 sm:p-2.5 rounded-full hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-[#E3E3E3] transition-colors"
         >
           <Activity className="w-5 h-5" />
@@ -274,6 +285,7 @@ export const Header: React.FC = () => {
         <button
           onClick={() => setIsShortcutsOpen(true)}
           title="Help & Shortcuts (?)"
+          aria-label="Help and keyboard shortcuts"
           className="p-2 sm:p-2.5 rounded-full hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-[#E3E3E3] transition-colors"
         >
           <HelpCircle className="w-5 h-5" />
@@ -283,6 +295,7 @@ export const Header: React.FC = () => {
         <button
           onClick={() => setIsSettingsOpen(true)}
           title="Settings"
+          aria-label="Settings and preferences"
           className="p-2 sm:p-2.5 rounded-full hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-[#E3E3E3] transition-colors"
         >
           <Settings className="w-5 h-5" />
@@ -292,6 +305,7 @@ export const Header: React.FC = () => {
         <button
           onClick={cycleTheme}
           title={`Theme: ${theme}`}
+          aria-label={`Toggle color theme (currently ${theme})`}
           className="p-2 sm:p-2.5 rounded-full hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-[#E3E3E3] transition-colors"
         >
           {getThemeIcon()}
@@ -303,6 +317,7 @@ export const Header: React.FC = () => {
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               title={`Logged in as ${session.userName || session.phone || 'User'}`}
+              aria-label="Open user profile menu"
               className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#0B57D0] to-indigo-600 text-white font-medium text-xs flex items-center justify-center shadow-xs cursor-pointer hover:ring-2 hover:ring-[#0B57D0]/40 transition-all"
             >
               {userInitial}

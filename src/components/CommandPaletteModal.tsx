@@ -40,10 +40,18 @@ export const CommandPaletteModal: React.FC = () => {
   } = useApp();
 
   const [query, setQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
-    if (!isCommandPaletteOpen) setQuery('');
+    if (!isCommandPaletteOpen) {
+      setQuery('');
+      setSelectedIndex(0);
+    }
   }, [isCommandPaletteOpen]);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
 
   if (!isCommandPaletteOpen) return null;
 
@@ -191,6 +199,21 @@ export const CommandPaletteModal: React.FC = () => {
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSelectedIndex((prev) => (prev + 1) % (filteredActions.length || 1));
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSelectedIndex((prev) => (prev - 1 + (filteredActions.length || 1)) % (filteredActions.length || 1));
+              } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (filteredActions[selectedIndex]) {
+                  filteredActions[selectedIndex].perform();
+                  setIsCommandPaletteOpen(false);
+                }
+              }
+            }}
             placeholder="Type a command or jump to screen..."
             className="flex-1 bg-transparent border-none text-xs sm:text-sm text-[#1F1F1F] dark:text-[#E3E3E3] placeholder:text-slate-400 focus:outline-none"
           />
@@ -206,8 +229,10 @@ export const CommandPaletteModal: React.FC = () => {
               No matching commands found.
             </div>
           ) : (
-            filteredActions.map((action) => {
+            filteredActions.map((action, idx) => {
               const Icon = action.icon;
+              const isSelected = selectedIndex === idx;
+
               return (
                 <button
                   key={action.id}
@@ -215,7 +240,12 @@ export const CommandPaletteModal: React.FC = () => {
                     action.perform();
                     setIsCommandPaletteOpen(false);
                   }}
-                  className="w-full flex items-center justify-between p-2.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-[#282A2C] transition-colors group text-left cursor-pointer"
+                  onMouseEnter={() => setSelectedIndex(idx)}
+                  className={`w-full flex items-center justify-between p-2.5 rounded-2xl transition-all group text-left cursor-pointer ${
+                    isSelected
+                      ? 'bg-slate-100 dark:bg-[#282A2C] ring-1 ring-[#0B57D0]/40 dark:ring-[#A8C7FA]/40 shadow-xs'
+                      : 'hover:bg-slate-50 dark:hover:bg-[#282A2C]/60'
+                  }`}
                 >
                   <div className="flex items-center gap-3 truncate">
                     <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#282A2C] flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:text-[#0B57D0] dark:group-hover:text-[#A8C7FA] transition-colors shrink-0">

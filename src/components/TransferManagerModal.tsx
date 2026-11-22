@@ -161,10 +161,10 @@ export const TransferManagerModal: React.FC = () => {
                             </>
                           )}
                         </div>
-                        {isError && job.error && (
-                          <div className="text-[11px] text-rose-500 dark:text-rose-400 mt-1 flex items-center gap-1 truncate">
+                        {isError && (
+                          <div className="text-[11px] text-rose-500 dark:text-rose-400 mt-1 flex items-center gap-1">
                             <AlertCircle className="w-3 h-3 shrink-0" />
-                            <span className="truncate">{job.error}</span>
+                            <span className="truncate">{job.error || 'Upload error. Click retry or re-upload file.'}</span>
                           </div>
                         )}
                       </div>

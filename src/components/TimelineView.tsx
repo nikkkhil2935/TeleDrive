@@ -136,7 +136,7 @@ export const TimelineView: React.FC = () => {
           items = items.filter(m =>
             m.filename.toLowerCase().includes(q) ||
             m.takenAt.toLowerCase().includes(q) ||
-            m.albums.some(a => a.toLowerCase().includes(q))
+            (m.albums || []).some(a => a.toLowerCase().includes(q))
           );
         }
 
@@ -163,7 +163,7 @@ export const TimelineView: React.FC = () => {
         return [];
       }
     },
-    [session?.channelId, activeTab, mediaFilter, sortOption, selectedAlbum, searchQuery],
+    [session?.channelId, session?.userId, activeTab, mediaFilter, sortOption, selectedAlbum, searchQuery],
     []
   );
 
@@ -596,11 +596,16 @@ export const TimelineView: React.FC = () => {
           )
         ) : (
           <div className="space-y-6">
-            {groupedMedia.map((group) => {
+            {groupedMedia.map((group, groupIdx) => {
               const allGroupSelected = group.items.every(i => selectedIds.has(i.messageId));
+              const isFirstInYear = groupIdx === 0 || groupedMedia[groupIdx - 1].year !== group.year;
 
               return (
-                <section key={group.label} id={`year-anchor-${group.year}`} className="space-y-1.5">
+                <section
+                  key={group.label}
+                  id={isFirstInYear ? `year-anchor-${group.year}` : undefined}
+                  className="space-y-1.5"
+                >
                   {/* Sticky Date Header (Google Photos Desktop Reference) */}
                   <div className="flex items-center justify-between sticky top-0 bg-[#F8FAFD]/95 dark:bg-[#131314]/95 backdrop-blur-md py-1.5 z-10">
                     <div className="flex items-baseline gap-2">
