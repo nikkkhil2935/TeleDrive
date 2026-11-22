@@ -10,12 +10,10 @@ export const AlbumsView: React.FC = () => {
 
   const albumsData = useLiveQuery(
     async () => {
+      if (!session) return [];
+      const activeScope = session.channelId || session.userId || 'me';
       let allMedia = await db.media.toArray();
-      if (session?.channelId) {
-        allMedia = allMedia.filter(m => m.libraryId === session.channelId || (session.userId && m.libraryId === session.userId));
-      } else if (!session) {
-        return [];
-      }
+      allMedia = allMedia.filter(m => m.libraryId === activeScope || (session.userId && m.libraryId === session.userId));
       const albumMap = new Map<string, { name: string; count: number; coverUrl?: string }>();
 
       // Populate from media items

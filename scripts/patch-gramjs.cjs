@@ -173,3 +173,23 @@ if (fs.existsSync(uploadsFile)) {
     console.log('[patch-gramjs] Saved patched uploads.js');
   }
 }
+
+// 3. Patch downloads.js for 512 KB chunk size on downloadFileV2
+const downloadsFile = path.resolve(__dirname, '../node_modules/telegram/client/downloads.js');
+if (fs.existsSync(downloadsFile)) {
+  let downloadsContent = fs.readFileSync(downloadsFile, 'utf8');
+  let changed = false;
+
+  // Maximize download chunk size to 512 KB
+  if (downloadsContent.includes('partSizeKb = 64;')) {
+    downloadsContent = downloadsContent.replace(/partSizeKb = 64;/g, 'partSizeKb = 512;');
+    changed = true;
+    console.log('[patch-gramjs] Successfully boosted download chunk size to 512 KB');
+  }
+
+  if (changed) {
+    fs.writeFileSync(downloadsFile, downloadsContent, 'utf8');
+    console.log('[patch-gramjs] Saved patched downloads.js');
+  }
+}
+

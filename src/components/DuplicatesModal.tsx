@@ -30,14 +30,15 @@ export const DuplicatesModal: React.FC = () => {
 
   const allMedia = useLiveQuery(
     async () => {
-      if (!session?.channelId) return [];
+      if (!session) return [];
+      const activeScope = session.channelId || session.userId || 'me';
       return await db.media
         .where('libraryId')
-        .equals(session.channelId)
+        .equals(activeScope)
         .and(m => !m.trashedAt)
         .toArray();
     },
-    [session?.channelId],
+    [session?.channelId, session?.userId],
     []
   );
 
@@ -113,7 +114,7 @@ export const DuplicatesModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 select-none animate-in fade-in duration-150">
-      <div className="bg-[#FFFFFF] dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col text-[#1F1F1F] dark:text-[#E3E3E3] transition-colors">
+      <div className="t-modal-content bg-[#FFFFFF] dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col text-[#1F1F1F] dark:text-[#E3E3E3] transition-colors">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-[#444746]/40 flex items-center justify-between">
           <div className="flex items-center gap-3">

@@ -118,13 +118,23 @@ export const Header: React.FC = () => {
           className="flex items-center gap-2.5 cursor-pointer group"
           title="Framely - Private Photos in your Telegram"
         >
-          {/* Framely Aperture / Frame Geometric Pinwheel */}
+          {/* Framely Bespoke Frame + Spark Mark */}
           <div className="w-8 h-8 shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <svg viewBox="0 0 24 24" className="w-7 h-7 drop-shadow-xs">
-              <path fill="#0B57D0" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z" />
-              <circle cx="12" cy="12" r="3" fill="#EA4335" opacity="0.9" />
-              <path fill="#FBBC04" d="M12 2a10 10 0 0 1 10 10h-4a6 6 0 0 0-6-6V2z" />
-              <path fill="#34A853" d="M2 12a10 10 0 0 1 10-10v4a6 6 0 0 0-6 6H2z" />
+            <svg viewBox="0 0 48 48" className="w-8 h-8 drop-shadow-xs">
+              <defs>
+                <linearGradient id="headerFramelyGrad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#0B57D0" />
+                  <stop offset="1" stopColor="#4285F4" />
+                </linearGradient>
+                <linearGradient id="headerSparkGrad" x1="30" y1="8" x2="40" y2="18" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#FDD663" />
+                  <stop offset="1" stopColor="#F9AB00" />
+                </linearGradient>
+              </defs>
+              <rect x="4" y="4" width="40" height="40" rx="12" fill="url(#headerFramelyGrad)" />
+              <rect x="11" y="11" width="26" height="26" rx="6" stroke="#FFFFFF" strokeWidth="2.5" strokeOpacity="0.95" fill="none" />
+              <path d="M12 32L19 23C19.5 22.3 20.5 22.3 21 23L25 28L28.5 24C29 23.4 30 23.4 30.5 24L36 32" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              <circle cx="31" cy="17" r="3.5" fill="url(#headerSparkGrad)" />
             </svg>
           </div>
           <div>
@@ -172,7 +182,7 @@ export const Header: React.FC = () => {
 
         {/* Search Suggestions Dropdown */}
         {showSearchSuggestions && !searchQuery && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1E1F20] rounded-2xl shadow-xl border border-slate-200 dark:border-[#444746] py-3 px-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+          <div className="t-dropdown absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1E1F20] rounded-2xl shadow-xl border border-slate-200 dark:border-[#444746] py-3 px-2 z-50">
             <div className="px-3 pb-2 text-[11px] font-semibold text-[#5F6368] dark:text-[#C2C7CF] uppercase tracking-wider">
               Explore Categories
             </div>
@@ -211,7 +221,7 @@ export const Header: React.FC = () => {
           </button>
 
           {showCreateMenu && (
-            <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-[#1E1F20] rounded-2xl shadow-xl border border-slate-200 dark:border-[#444746] py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div className="t-dropdown absolute right-0 top-full mt-2 w-52 bg-white dark:bg-[#1E1F20] rounded-2xl shadow-xl border border-slate-200 dark:border-[#444746] py-2 z-50">
               <button
                 onClick={() => {
                   setShowCreateMenu(false);
@@ -299,7 +309,7 @@ export const Header: React.FC = () => {
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#1E1F20] rounded-2xl shadow-xl border border-slate-200 dark:border-[#444746] p-3 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-2">
+              <div className="t-dropdown absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#1E1F20] rounded-2xl shadow-xl border border-slate-200 dark:border-[#444746] p-3 z-50 space-y-2">
                 <div className="px-2 py-1">
                   <div className="font-semibold text-xs text-[#1F1F1F] dark:text-[#E3E3E3] truncate">
                     {session.userName || 'Telegram User'}

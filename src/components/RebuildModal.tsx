@@ -49,7 +49,7 @@ export const RebuildModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150 select-none">
-      <div className="bg-[#FFFFFF] dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl text-[#1F1F1F] dark:text-[#E3E3E3] transition-colors flex flex-col">
+      <div className="t-modal-content bg-[#FFFFFF] dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl text-[#1F1F1F] dark:text-[#E3E3E3] transition-colors flex flex-col">
         <div className="p-5 border-b border-slate-100 dark:border-[#444746]/40 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#D3E3FD] dark:bg-[#004A77] text-[#0B57D0] dark:text-[#C2E7FF] flex items-center justify-center font-bold">

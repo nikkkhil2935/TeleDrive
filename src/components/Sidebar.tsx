@@ -34,17 +34,20 @@ export const Sidebar: React.FC = () => {
     setSelectedAlbum,
     lockVault,
     uploadFiles,
+    session,
   } = useApp();
 
   const [isCollectionsOpen, setIsCollectionsOpen] = useState(true);
   const [showDocumentsCallout, setShowDocumentsCallout] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Compute live library size from Dexie
+  // Compute live library size from Dexie, strictly isolated to active session
   const totalSizeBytes = useLiveQuery(async () => {
-    const items = await db.media.toArray();
+    if (!session) return 0;
+    const activeScope = session.channelId || session.userId || 'me';
+    const items = await db.media.where('libraryId').equals(activeScope).toArray();
     return items.reduce((acc, item) => acc + (item.sizeBytes || 0), 0);
-  }, [], 0);
+  }, [session?.channelId, session?.userId], 0);
 
   const formattedStorage = totalSizeBytes > 1_000_000_000
     ? `${(totalSizeBytes / 1_000_000_000).toFixed(1)} GB of 5 TB used`

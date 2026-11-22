@@ -41,11 +41,11 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#F8FAFD] dark:bg-[#131314] text-[#1F1F1F] dark:text-[#E3E3E3] font-sans transition-colors duration-200 select-none">
       <Header />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
-        <main className="flex-1 flex flex-col overflow-hidden bg-slate-50/50 dark:bg-slate-950/40 pb-16 md:pb-0">
+        <main className="flex-1 flex flex-col overflow-hidden bg-[#F8FAFD] dark:bg-[#131314] pb-16 md:pb-0">
           {activeTab === 'albums' ? <AlbumsView /> : <TimelineView />}
         </main>
       </div>

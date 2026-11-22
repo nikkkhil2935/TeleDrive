@@ -36,7 +36,7 @@ export const VaultUnlockModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in duration-200 select-none">
-      <div className="bg-[#FFFFFF] dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl text-[#1F1F1F] dark:text-[#E3E3E3] flex flex-col p-6 sm:p-7 space-y-6">
+      <div className="t-modal-content bg-[#FFFFFF] dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl text-[#1F1F1F] dark:text-[#E3E3E3] flex flex-col p-6 sm:p-7 space-y-6">
         {/* Header Icon & Title */}
         <div className="flex flex-col items-center text-center space-y-3">
           <div className="w-16 h-16 rounded-3xl bg-[#D3E3FD] dark:bg-[#004A77] text-[#0B57D0] dark:text-[#C2E7FF] flex items-center justify-center shadow-xs">

@@ -739,6 +739,15 @@ export function getCachedFullMediaUrl(messageId: number): string | undefined {
   return fullMediaUrlCache.get(messageId);
 }
 
+export function clearFullMediaUrlCache(): void {
+  for (const url of fullMediaUrlCache.values()) {
+    try {
+      URL.revokeObjectURL(url);
+    } catch (e) {}
+  }
+  fullMediaUrlCache.clear();
+}
+
 /**
  * Downloads the original full-resolution media from Telegram for a given message ID.
  * Returns an Object URL (blob:...) that can be rendered directly by <img> or <video>.

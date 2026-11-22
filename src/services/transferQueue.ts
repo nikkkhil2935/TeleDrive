@@ -13,6 +13,14 @@ class TransferQueueService {
   private cooldownUntil: number | null = null;
   private fileCache: Map<string, File> = new Map();
 
+  getMaxConcurrency(): number {
+    return this.maxConcurrency;
+  }
+
+  setMaxConcurrency(count: number): void {
+    this.maxConcurrency = Math.max(1, Math.min(4, count));
+  }
+
   subscribe(listener: QueueListener): () => void {
     this.listeners.add(listener);
     this.notify();

@@ -81,12 +81,12 @@ export const TimelineView: React.FC = () => {
       try {
         let items = await db.media.toArray();
 
-        // Account & Channel Isolation
-        if (session?.channelId) {
-          items = items.filter(m => m.libraryId === session.channelId || (session.userId && m.libraryId === session.userId));
-        } else if (!session) {
+        // Strict Account & Channel Isolation: Zero ghost photos from previous sessions
+        if (!session) {
           return [];
         }
+        const activeScope = session.channelId || session.userId || 'me';
+        items = items.filter(m => m.libraryId === activeScope || (session.userId && m.libraryId === session.userId));
 
         // Filter by Tab (matching Google Photos collections)
         if (activeTab === 'favorites') {
@@ -340,7 +340,7 @@ export const TimelineView: React.FC = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-tr from-sky-900 to-indigo-900" />
+                    <div className="w-full h-full bg-gradient-to-tr from-sky-950 to-indigo-950 t-shimmer" />
                   )}
 
                   {/* Bottom Vignette & Google Photos Typography */}

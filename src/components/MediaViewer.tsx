@@ -35,7 +35,7 @@ import {
 } from '../services/tgClient';
 
 export const MediaViewer: React.FC = () => {
-  const { selectedMedia, setSelectedMedia, toggleFavorite, moveToTrash } = useApp();
+  const { selectedMedia, setSelectedMedia, toggleFavorite, moveToTrash, session } = useApp();
   const [showInfo, setShowInfo] = useState(true);
   const [showFilmstrip, setShowFilmstrip] = useState(true);
   const [rotation, setRotation] = useState(0);
@@ -48,17 +48,23 @@ export const MediaViewer: React.FC = () => {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [streamError, setStreamError] = useState(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const activeThumbnailRef = useRef<HTMLButtonElement>(null);
 
   // Fetch all active items in the timeline for navigation and the Google Photos filmstrip
+  // Strictly isolated to the active session account / channel
   const allIds = useLiveQuery(
     async () => {
-      const items = await db.media.orderBy('takenAt').reverse().toArray();
-      return items.filter(m => !m.trashedAt);
+      if (!session) return [];
+      const activeScope = session.channelId || session.userId || 'me';
+      const items = await db.media.where('libraryId').equals(activeScope).toArray();
+      return items
+        .filter(m => !m.trashedAt)
+        .sort((a, b) => new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime());
     },
-    [],
+    [session?.channelId, session?.userId],
     []
   );
 
@@ -87,6 +93,7 @@ export const MediaViewer: React.FC = () => {
     setRotation(0);
     setZoom(1);
     setPan({ x: 0, y: 0 });
+    setStreamError(false);
 
     // Check in-memory cache first
     const cached = getCachedFullMediaUrl(selectedMedia.messageId);
@@ -115,11 +122,13 @@ export const MediaViewer: React.FC = () => {
         if (!cancelled) {
           setFullMediaUrl(url);
           setIsLoadingOriginal(false);
+          setStreamError(false);
         }
       } catch (err) {
         console.warn('[MediaViewer] Could not stream full media, using thumbnail:', err);
         if (!cancelled) {
           setIsLoadingOriginal(false);
+          setStreamError(true);
         }
       }
     })();
@@ -443,8 +452,10 @@ export const MediaViewer: React.FC = () => {
                   controls
                   autoPlay
                   playsInline
-                  className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-2xl"
+                  className="w-full h-full object-contain rounded-2xl shadow-2xl"
                   style={{
+                    width: '100%',
+                    height: '100%',
                     maxHeight: showFilmstrip ? 'calc(100vh - 170px)' : 'calc(100vh - 84px)',
                     maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
                     transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
@@ -453,8 +464,10 @@ export const MediaViewer: React.FC = () => {
                 />
               ) : (
                 <div
-                  className="relative flex items-center justify-center max-w-full max-h-full"
+                  className="relative flex items-center justify-center w-full h-full"
                   style={{
+                    width: '100%',
+                    height: '100%',
                     maxHeight: showFilmstrip ? 'calc(100vh - 170px)' : 'calc(100vh - 84px)',
                     maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
                   }}
@@ -462,15 +475,15 @@ export const MediaViewer: React.FC = () => {
                   <img
                     src={selectedMedia.thumbnailDataUrl}
                     alt={selectedMedia.filename}
-                    className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-2xl"
+                    className="w-full h-full object-contain rounded-2xl shadow-2xl"
                     style={{
-                      maxHeight: showFilmstrip ? 'calc(100vh - 170px)' : 'calc(100vh - 84px)',
-                      maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
+                      width: '100%',
+                      height: '100%',
                       transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
                       transition: isDragging ? 'none' : 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
                     }}
                   />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-xs rounded-xl">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-xs rounded-2xl">
                     <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-slate-900/90 text-white border border-white/10 shadow-2xl">
                       <div className="w-4 h-4 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
                       <span className="text-xs font-medium">Streaming original video from Telegram...</span>
@@ -483,13 +496,15 @@ export const MediaViewer: React.FC = () => {
                 src={fullMediaUrl || selectedMedia.thumbnailDataUrl}
                 alt={selectedMedia.filename}
                 draggable={false}
-                className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl drop-shadow-2xl select-none"
+                className="w-full h-full object-contain rounded-2xl drop-shadow-2xl select-none"
                 style={{
+                  width: '100%',
+                  height: '100%',
                   maxHeight: showFilmstrip ? 'calc(100vh - 170px)' : 'calc(100vh - 84px)',
                   maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
                   transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
                   transition: isDragging ? 'none' : 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1), filter 300ms ease',
-                  filter: fullMediaUrl ? 'none' : 'blur(0.4px)',
+                  filter: fullMediaUrl ? 'none' : 'blur(0.2px)',
                 }}
               />
             )}
@@ -516,6 +531,11 @@ export const MediaViewer: React.FC = () => {
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 text-emerald-400 text-[11px] shadow-xl">
                 <Sparkles className="w-3 h-3" />
                 <span>Original Quality ({selectedMedia.width}×{selectedMedia.height})</span>
+              </div>
+            ) : streamError ? (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur-md border border-white/10 text-white/70 text-[11px] shadow-xl">
+                <ShieldCheck className="w-3 h-3 text-sky-400" />
+                <span>Preview · Original safe on Telegram</span>
               </div>
             ) : null}
           </div>

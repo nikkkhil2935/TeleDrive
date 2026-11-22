@@ -9,6 +9,7 @@ import {
   getTelegramClient,
   syncRecentChannelMessages,
   startChannelLiveListener,
+  clearFullMediaUrlCache,
 } from '../services/tgClient';
 import { transferQueue } from '../services/transferQueue';
 import {
@@ -200,6 +201,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // True Logout: server-side session revocation & complete local wipe
   const logout = async () => {
     try {
+      clearFullMediaUrlCache();
+      transferQueue.clearAll();
+      setSelectedMedia(null);
+      setSelectedIds(new Set());
+      setSessionState(null);
       const client = await getTelegramClient();
       await executeTrueLogout(client);
     } catch (e) {

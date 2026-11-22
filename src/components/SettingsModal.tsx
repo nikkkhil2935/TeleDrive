@@ -24,7 +24,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { db } from '../db';
-import { getTelegramClient } from '../services/tgClient';
+import { getTelegramClient, clearFullMediaUrlCache } from '../services/tgClient';
+import { transferQueue } from '../services/transferQueue';
 import {
   hasEncryptedVault,
   saveVaultSession,
@@ -48,6 +49,8 @@ export const SettingsModal: React.FC = () => {
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'customization' | 'security' | 'speed'>('customization');
+  const [concurrency, setConcurrency] = useState<number>(transferQueue.getMaxConcurrency());
+  const [cacheCleared, setCacheCleared] = useState(false);
   const [newPassphrase, setNewPassphrase] = useState('');
   const [confirmPassphrase, setConfirmPassphrase] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -130,7 +133,7 @@ export const SettingsModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 select-none animate-in fade-in duration-150">
-      <div className="bg-[#FFFFFF] dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl flex flex-col text-[#1F1F1F] dark:text-[#E3E3E3] transition-colors">
+      <div className="t-modal-content bg-[#FFFFFF] dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl flex flex-col text-[#1F1F1F] dark:text-[#E3E3E3] transition-colors">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-[#444746]/40 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -314,18 +317,45 @@ export const SettingsModal: React.FC = () => {
                   <span>High-Throughput Multi-Stream MTProto</span>
                 </div>
                 <p className="text-[11px] text-[#5F6368] dark:text-[#C2C7CF] leading-relaxed">
-                  Uploads and downloads stream chunks concurrently via WebSockets directly to Telegram data centers. Zero intermediate proxy bottlenecks.
+                  Uploads and downloads stream chunks concurrently via WebSockets directly to Telegram data centers with zero intermediate proxy bottlenecks.
                 </p>
               </div>
 
+              {/* Concurrency Selector */}
               <div className="p-4 rounded-2xl border border-slate-200 dark:border-[#444746]/50 space-y-3 bg-[#F8FAFD] dark:bg-[#131314]">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-[#5F6368] dark:text-[#C2C7CF]">Multi-Part Concurrency:</span>
-                  <span className="font-semibold text-[#0B57D0] dark:text-[#A8C7FA]">2 Parallel Streams</span>
+                  <span className="font-medium text-[#1F1F1F] dark:text-[#E3E3E3]">Upload Parallel Streams:</span>
+                  <span className="font-semibold text-[#0B57D0] dark:text-[#A8C7FA]">{concurrency} Files Concurrent</span>
                 </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {[1, 2, 3, 4].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => {
+                        setConcurrency(num);
+                        transferQueue.setMaxConcurrency(num);
+                      }}
+                      className={`py-2 px-3 rounded-xl border text-center text-xs font-medium transition-all cursor-pointer ${
+                        concurrency === num
+                          ? 'border-[#0B57D0] dark:border-[#A8C7FA] bg-[#D3E3FD] dark:bg-[#004A77] text-[#0B57D0] dark:text-[#C2E7FF] font-semibold'
+                          : 'border-slate-200 dark:border-[#444746]/40 hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#5F6368] dark:text-[#C2C7CF]'
+                      }`}
+                    >
+                      {num} {num === 1 ? 'Stream' : 'Streams'}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-[#5F6368] dark:text-[#C2C7CF]">
+                  Higher concurrency yields maximum upload speed on fast fiber connections. 2 streams is optimal for most connections.
+                </p>
+              </div>
+
+              {/* Protocol Spec Overview */}
+              <div className="p-4 rounded-2xl border border-slate-200 dark:border-[#444746]/50 space-y-3 bg-[#F8FAFD] dark:bg-[#131314]">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-[#5F6368] dark:text-[#C2C7CF]">Chunk Part Size:</span>
-                  <span className="font-semibold text-emerald-500">512 KB (High Speed)</span>
+                  <span className="font-semibold text-emerald-500">512 KB (Max MTProto Cap)</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-[#5F6368] dark:text-[#C2C7CF]">Zero-Copy File Streaming:</span>
@@ -334,6 +364,20 @@ export const SettingsModal: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-[#5F6368] dark:text-[#C2C7CF]">In-Memory Object URL Cache:</span>
                   <span className="font-semibold text-sky-400">Active (Instant switching)</span>
+                </div>
+                <div className="pt-2 border-t border-slate-200 dark:border-[#444746]/40 flex items-center justify-between">
+                  <span className="text-[11px] text-[#5F6368] dark:text-[#C2C7CF]">Free browser memory:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearFullMediaUrlCache();
+                      setCacheCleared(true);
+                      setTimeout(() => setCacheCleared(false), 2500);
+                    }}
+                    className="py-1 px-3 rounded-full text-xs font-medium border border-slate-200 dark:border-[#444746]/60 hover:bg-slate-100 dark:hover:bg-[#282A2C] text-[#1F1F1F] dark:text-[#E3E3E3] transition-colors cursor-pointer"
+                  >
+                    {cacheCleared ? 'Cache Purged!' : 'Purge Image Cache'}
+                  </button>
                 </div>
               </div>
             </div>
