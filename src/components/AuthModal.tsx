@@ -250,8 +250,8 @@ export const AuthModal: React.FC = () => {
               <FramelyLogo className="w-9 h-9" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-semibold tracking-tight text-white">Sign in with Telegram</h3>
-              <p className="text-xs text-white/50">Direct client-to-datacenter MTProto • Zero knowledge</p>
+              <h3 className="text-base sm:text-lg font-wordmark font-[900] tracking-tight text-white">Sign in with Telegram</h3>
+              <p className="text-xs font-[500] text-white/50">Direct client-to-datacenter MTProto • Zero knowledge</p>
             </div>
           </div>
 
@@ -268,11 +268,16 @@ export const AuthModal: React.FC = () => {
         <div className="p-5 sm:p-6 space-y-4.5 overflow-y-auto max-h-[78vh] scrollbar-thin relative z-10">
           {/* Privacy Guarantee Card */}
           <div className="p-4 rounded-2xl bg-sky-500/[0.06] border border-sky-500/20 text-xs text-sky-200 space-y-1.5">
-            <div className="font-semibold flex items-center gap-2 text-sky-400">
-              <ShieldCheck className="w-4 h-4 shrink-0" />
-              <span>Direct Telegram MTProto Connection</span>
+            <div className="flex items-center justify-between">
+              <div className="font-badge-card font-[700] flex items-center gap-2 text-sky-400">
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                <span>Direct Telegram MTProto Connection</span>
+              </div>
+              <span className="font-handwriting text-sky-400 text-sm -rotate-1 select-none hidden sm:inline">
+                client-side WSS ✦
+              </span>
             </div>
-            <p className="text-[11px] leading-relaxed text-sky-200/80">
+            <p className="text-[11px] font-[500] leading-relaxed text-sky-200/80">
               Your browser communicates directly with official Telegram servers over encrypted WSS. No middleman server ever receives your credentials, session keys, or media files.
             </p>
           </div>
@@ -280,18 +285,18 @@ export const AuthModal: React.FC = () => {
           {/* Quick Keys Helper */}
           <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.07] text-xs">
             <div className="space-y-0.5 pr-2">
-              <div className="font-medium text-white flex items-center gap-1.5">
+              <div className="font-badge-card font-[700] text-white flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 <span>Need quick Telegram API keys?</span>
               </div>
-              <div className="text-[11px] text-white/40">
+              <div className="text-[11px] font-[500] text-white/40">
                 You can auto-fill standard Telegram Desktop keys or use your own.
               </div>
             </div>
             <button
               type="button"
               onClick={useOfficialAppKeys}
-              className={`text-xs font-medium px-3 py-1.5 rounded-xl transition-all shrink-0 active:scale-95 flex items-center gap-1.5 ${
+              className={`text-xs font-[600] px-3 py-1.5 rounded-xl transition-all shrink-0 active:scale-95 flex items-center gap-1.5 cursor-pointer ${
                 keysFilled
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                   : 'bg-white/[0.08] hover:bg-white/[0.14] text-white/90 border border-white/10'
@@ -303,16 +308,16 @@ export const AuthModal: React.FC = () => {
           </div>
 
           {/* Tab Selector: Phone / QR Code */}
-          <div className="grid grid-cols-2 gap-1.5 p-1 bg-black/40 rounded-2xl border border-white/[0.08] text-xs font-medium">
+          <div className="grid grid-cols-2 gap-1.5 p-1 bg-black/40 rounded-2xl border border-white/[0.08] text-xs font-nav-tag font-[650]">
             <button
               type="button"
               onClick={() => {
                 setAuthMethod('credentials');
                 setError(null);
               }}
-              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all ${
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all cursor-pointer ${
                 authMethod === 'credentials'
-                  ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white font-semibold shadow-md shadow-sky-500/25'
+                  ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white font-[600] shadow-md shadow-sky-500/25'
                   : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -326,9 +331,9 @@ export const AuthModal: React.FC = () => {
                 setError(null);
                 if (!qrDataUrl) handleStartQrLogin();
               }}
-              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all ${
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all cursor-pointer ${
                 authMethod === 'qr'
-                  ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white font-semibold shadow-md shadow-sky-500/25'
+                  ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white font-[600] shadow-md shadow-sky-500/25'
                   : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -399,7 +404,7 @@ export const AuthModal: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-sky-500 via-sky-600 to-blue-600 hover:from-sky-400 hover:via-sky-500 hover:to-blue-500 disabled:opacity-50 text-white font-medium text-xs sm:text-sm py-3 rounded-xl shadow-lg shadow-sky-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
+                  className="w-full bg-gradient-to-r from-sky-500 via-sky-600 to-blue-600 hover:from-sky-400 hover:via-sky-500 hover:to-blue-500 disabled:opacity-50 text-white font-[600] text-xs sm:text-sm py-3 rounded-xl shadow-lg shadow-sky-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 cursor-pointer"
                 >
                   {isLoading ? (
                     <>

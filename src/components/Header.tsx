@@ -126,7 +126,7 @@ export const Header: React.FC = () => {
             <FramelyLogo className="w-8 h-8" />
           </div>
           <div>
-            <span className="text-[19px] font-medium tracking-tight text-[#1F1F1F] dark:text-[#E3E3E3]">
+            <span className="text-[20px] font-wordmark font-[900] tracking-tight text-[#1F1F1F] dark:text-[#E3E3E3]">
               Framely
             </span>
           </div>

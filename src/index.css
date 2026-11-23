@@ -1,7 +1,64 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "./fonts.css";
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@100..900&family=Caveat+Brush&family=Anton&display=swap');
+
+@theme {
+  --font-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-inter: 'Inter Tight', sans-serif;
+  --font-handwriting: 'Caveat Brush', cursive;
+  --font-caveat: 'Caveat Brush', cursive;
+  --font-anton: 'Anton', sans-serif;
+  --font-ticket: 'Anton', sans-serif;
+}
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Typography Usage Classes as specified by User:
+   - Inter Tight (variable 100-900): All UI, wordmark (900), nav tags (650), badge cards (800/700/600), descriptions (700/500), buttons (600)
+   - Caveat Brush 400: The "motion-design" handwriting
+   - Anton 400: The ticket titles and display numbers
+   - font-display: swap for all three, body -webkit-font-smoothing: antialiased
+*/
+.font-wordmark {
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.font-nav-tag {
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.font-badge-card {
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.font-badge-card-800 {
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.font-badge-card-600 {
+  font-family: 'Inter Tight', sans-serif;
+  font-weight: 600;
+}
+
+.font-handwriting {
+  font-family: 'Caveat Brush', cursive;
+  font-weight: 400;
+}
+
+.font-ticket-title {
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 
 :root {
   color-scheme: light dark;
@@ -94,7 +151,7 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: "Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow-x: hidden;
   overflow-y: auto;
   background-color: var(--gp-app-bg);

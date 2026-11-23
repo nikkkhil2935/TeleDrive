@@ -187,17 +187,17 @@ export const LandingPage: React.FC = () => {
           >
             <FramelyLogo className="w-8 h-8 transition-transform group-hover:scale-105 duration-200 shrink-0" />
             <div className="flex flex-col">
-              <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white font-['Google_Sans',sans-serif] leading-tight">
+              <span className="text-xl font-wordmark font-[900] tracking-tight text-slate-900 dark:text-white leading-tight">
                 Framely
               </span>
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-blue-600 dark:text-sky-400">
+              <span className="text-[10px] font-nav-tag font-[650] uppercase tracking-wider text-blue-600 dark:text-sky-400">
                 Direct Telegram Drive
               </span>
             </div>
           </div>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-300">
+          <nav className="hidden md:flex items-center gap-8 text-sm font-nav-tag font-[650] text-slate-600 dark:text-slate-300">
             <a href="#features" className="hover:text-blue-600 dark:hover:text-sky-400 transition-colors">Features</a>
             <a href="#bento" className="hover:text-blue-600 dark:hover:text-sky-400 transition-colors">Architecture Bento</a>
             <a href="#comparison" className="hover:text-blue-600 dark:hover:text-sky-400 transition-colors">Comparison</a>
@@ -220,7 +220,7 @@ export const LandingPage: React.FC = () => {
             {/* Sign In */}
             <button
               onClick={handleSignIn}
-              className="hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+              className="hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-[600] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
             >
               Sign In
             </button>
@@ -228,7 +228,7 @@ export const LandingPage: React.FC = () => {
             {/* Launch App Primary CTA */}
             <button
               onClick={handleLaunchApp}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-white bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 transition-all shadow-sm hover:shadow-md active:scale-98 cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-[600] text-white bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 transition-all shadow-sm hover:shadow-md active:scale-98 cursor-pointer"
             >
               <span>Launch Web App</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -245,19 +245,24 @@ export const LandingPage: React.FC = () => {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           
-          {/* Eyebrow Pill */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-sky-950/60 dark:text-sky-300 border border-blue-200/60 dark:border-sky-800/60 mb-6">
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400" />
-            <span>Open Source • Telegram Channel Cloud Engine • Zero-Knowledge Vault</span>
+          {/* Eyebrow Pill + Handwriting Motion Design Badge */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-badge-card font-[700] bg-blue-50 text-blue-700 dark:bg-sky-950/60 dark:text-sky-300 border border-blue-200/60 dark:border-sky-800/60">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400" />
+              <span>Open Source • Telegram Channel Cloud Engine • Zero-Knowledge Vault</span>
+            </div>
+            <span className="font-handwriting text-blue-600 dark:text-sky-400 text-lg tracking-wide -rotate-2 select-none inline-flex items-center">
+              motion-design in your browser ✦
+            </span>
           </div>
 
           {/* Factual, assertive headline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-950 dark:text-white max-w-4xl mx-auto leading-[1.08] font-['Google_Sans',sans-serif]">
-            Your private photos, in your own Telegram.
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-wordmark font-[900] tracking-tight text-slate-950 dark:text-white max-w-4xl mx-auto leading-[1.08]">
+            Your photos, in your own Telegram.
           </h1>
 
           {/* Sub-headline with concrete technical guarantees */}
-          <p className="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-6 text-lg sm:text-xl font-[500] text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
             Uncompressed original master bitstreams. Unlimited storage in your private Telegram channel. 
             Client-side AES-256-GCM encryption. Zero middleman servers.
           </p>
@@ -266,7 +271,7 @@ export const LandingPage: React.FC = () => {
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <button
               onClick={handleLaunchApp}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-semibold text-white bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 transition-all shadow-md hover:shadow-lg active:scale-98 cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-[600] text-white bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 transition-all shadow-md hover:shadow-lg active:scale-98 cursor-pointer"
             >
               <span>Open Framely App</span>
               <ArrowRight className="w-4 h-4" />
@@ -274,29 +279,29 @@ export const LandingPage: React.FC = () => {
 
             <button
               onClick={handleStartOnboarding}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-xs cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-[600] text-slate-700 dark:text-slate-200 bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-xs cursor-pointer"
             >
               <span>3-Minute Quick Setup</span>
             </button>
           </div>
 
-          {/* 4-Metric Concrete Proof Strip */}
+          {/* 4-Metric Concrete Proof Strip with Anton Ticket Titles */}
           <div className="mt-12 max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-[#1A1B1C]/80 border border-slate-200/80 dark:border-white/10 backdrop-blur-sm">
             <div className="flex flex-col items-center justify-center p-2">
-              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">2,048 MB</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Max Single File Cap</span>
+              <span className="text-3xl font-ticket-title font-anton text-slate-900 dark:text-white">2,048 MB</span>
+              <span className="text-xs font-nav-tag font-[650] text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">Max Single File</span>
             </div>
             <div className="flex flex-col items-center justify-center p-2">
-              <span className="text-2xl font-black text-blue-600 dark:text-sky-400 tracking-tight">$0.00 / mo</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Free Cloud Storage</span>
+              <span className="text-3xl font-ticket-title font-anton text-blue-600 dark:text-sky-400">$0.00 / MO</span>
+              <span className="text-xs font-nav-tag font-[650] text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">Free Cloud Storage</span>
             </div>
             <div className="flex flex-col items-center justify-center p-2">
-              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">256-Bit</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">AES-GCM Web Crypto</span>
+              <span className="text-3xl font-ticket-title font-anton text-slate-900 dark:text-white">256-BIT</span>
+              <span className="text-xs font-nav-tag font-[650] text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">AES-GCM Web Crypto</span>
             </div>
             <div className="flex flex-col items-center justify-center p-2">
-              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">0 Bytes</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Transmitted Unencrypted</span>
+              <span className="text-3xl font-ticket-title font-anton text-emerald-600 dark:text-emerald-400">0 BYTES</span>
+              <span className="text-xs font-nav-tag font-[650] text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">Plaintext Leaked</span>
             </div>
           </div>
 
@@ -681,21 +686,26 @@ export const LandingPage: React.FC = () => {
             {/* Tile 1: Hero UI (Span 2 cols) - Client-Side Zero-Knowledge Encryption Engine */}
             <div className="md:col-span-2 p-8 rounded-3xl bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
-                    <Shield className="w-6 h-6" />
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
+                      <Shield className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-wordmark font-[900] text-slate-900 dark:text-white">
+                        Zero-Knowledge Hardware Encryption
+                      </h3>
+                      <p className="text-xs text-slate-500 font-mono mt-0.5">
+                        AES-256-GCM • PBKDF2 100,000 Iterations • Web Crypto API
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white font-['Google_Sans',sans-serif]">
-                      Zero-Knowledge Hardware Encryption
-                    </h3>
-                    <p className="text-xs text-slate-500 font-mono mt-0.5">
-                      AES-256-GCM • PBKDF2 100,000 Iterations • Web Crypto API
-                    </p>
-                  </div>
+                  <span className="font-handwriting text-emerald-600 dark:text-emerald-400 text-sm rotate-[-1deg] select-none hidden sm:inline">
+                    100k PBKDF2 rounds • zero servers ✦
+                  </span>
                 </div>
 
-                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+                <p className="text-sm font-[500] text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
                   Every photo, thumbnail, and EXIF payload is encrypted in memory before leaving your device. 
                   Neither Telegram nor any middleman can read your photos. Only you hold the passphrase.
                 </p>
@@ -739,24 +749,29 @@ export const LandingPage: React.FC = () => {
             {/* Tile 2: Stat Tile (Span 1 col) - Unlimited Free Cloud Storage */}
             <div className="p-8 rounded-3xl bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
               <div>
-                <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-sky-950/50 text-blue-600 dark:text-sky-400 border border-blue-200 dark:border-sky-800/40 w-fit mb-4">
-                  <HardDrive className="w-6 h-6" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-sky-950/50 text-blue-600 dark:text-sky-400 border border-blue-200 dark:border-sky-800/40 w-fit">
+                    <HardDrive className="w-6 h-6" />
+                  </div>
+                  <span className="font-handwriting text-sky-500 dark:text-sky-400 text-sm -rotate-2 select-none">
+                    unlimited free cloud! ✦
+                  </span>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white font-['Google_Sans',sans-serif] mb-2">
+                <h3 className="text-xl font-wordmark font-[900] text-slate-900 dark:text-white mb-2">
                   Unlimited Free Cloud Storage
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+                <p className="text-sm font-[500] text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
                   Powered by Telegram Channel Document infrastructure. Store tens of thousands of raw 4K videos and DNG files without paying monthly subscription fees.
                 </p>
 
                 <div className="space-y-3">
                   <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-sky-950/30 border border-blue-200/70 dark:border-sky-800/40">
                     <div className="flex justify-between items-baseline mb-1">
-                      <span className="text-xs font-bold text-blue-900 dark:text-sky-200">Framely (Telegram)</span>
-                      <span className="text-2xl font-black text-blue-600 dark:text-sky-400">$0.00</span>
+                      <span className="text-xs font-nav-tag font-[650] text-blue-900 dark:text-sky-200 uppercase tracking-wider">Framely (Telegram)</span>
+                      <span className="text-3xl font-ticket-title font-anton text-blue-600 dark:text-sky-400">$0.00</span>
                     </div>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">
-                      Unlimited TB • 2,048 MB single file cap
+                    <span className="text-[11px] font-nav-tag font-[650] text-slate-500 dark:text-slate-400 block">
+                      UNLIMITED TB • 2,048 MB SINGLE FILE CAP
                     </span>
                   </div>
 
@@ -770,7 +785,7 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/5 text-xs text-slate-500">
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/5 text-xs font-nav-tag font-[650] text-slate-500 uppercase tracking-wider">
                 Official Telegram Channel Documents
               </div>
             </div>
@@ -778,19 +793,24 @@ export const LandingPage: React.FC = () => {
             {/* Tile 3: Diagram Tile (Span 1 col) - Direct MTProto 2.0 WSS Streaming */}
             <div className="p-8 rounded-3xl bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
               <div>
-                <div className="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40 w-fit mb-4">
-                  <Zap className="w-6 h-6" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40 w-fit">
+                    <Zap className="w-6 h-6" />
+                  </div>
+                  <span className="font-handwriting text-amber-500 dark:text-amber-400 text-sm rotate-1 select-none">
+                    0 middleman servers ✦
+                  </span>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white font-['Google_Sans',sans-serif] mb-2">
+                <h3 className="text-xl font-wordmark font-[900] text-slate-900 dark:text-white mb-2">
                   Direct MTProto 2.0 WSS
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+                <p className="text-sm font-[500] text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
                   Your browser connects directly to Telegram Datacenters over secure WebSockets. Multi-chunk concurrent transfers deliver instant streaming.
                 </p>
 
                 {/* SVG Architecture Diagram */}
                 <div className="p-4 rounded-2xl bg-slate-900 text-slate-200 text-xs font-mono space-y-2">
-                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 font-nav-tag font-[650] uppercase tracking-wider">
                     <span>Browser Client</span>
                     <span className="text-emerald-400">Direct WSS</span>
                     <span>Telegram DC 1</span>
@@ -799,13 +819,13 @@ export const LandingPage: React.FC = () => {
                     <div className="h-full bg-emerald-400 w-full animate-pulse" />
                   </div>
                   <div className="flex justify-between text-[11px] text-slate-400 pt-1">
-                    <span>Relay Servers: <strong className="text-rose-400 font-mono">0</strong></span>
-                    <span>Latency: <strong className="text-amber-300 font-mono">24ms</strong></span>
+                    <span>Relay Servers: <strong className="text-rose-400 font-ticket-title font-anton text-sm">0</strong></span>
+                    <span>Latency: <strong className="text-amber-300 font-ticket-title font-anton text-sm">24MS</strong></span>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/5 text-xs text-slate-500">
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/5 text-xs font-nav-tag font-[650] text-slate-500 uppercase tracking-wider">
                 Zero proxy intermediaries
               </div>
             </div>
@@ -813,21 +833,26 @@ export const LandingPage: React.FC = () => {
             {/* Tile 4: Component Tile (Span 2 cols) - Authentic Google Photos Desktop Craft */}
             <div className="md:col-span-2 p-8 rounded-3xl bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-sky-950/50 text-blue-600 dark:text-sky-400 border border-blue-200 dark:border-sky-800/40">
-                    <Layers className="w-6 h-6" />
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-sky-950/50 text-blue-600 dark:text-sky-400 border border-blue-200 dark:border-sky-800/40">
+                      <Layers className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-wordmark font-[900] text-slate-900 dark:text-white">
+                        Authentic Desktop Library Ergonomics
+                      </h3>
+                      <p className="text-xs text-slate-500 font-mono mt-0.5">
+                        60 FPS Virtualized Timeline • Floating Date Scrubber • Keyboard Navigation
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white font-['Google_Sans',sans-serif]">
-                      Authentic Desktop Library Ergonomics
-                    </h3>
-                    <p className="text-xs text-slate-500 font-mono mt-0.5">
-                      60 FPS Virtualized Timeline • Floating Date Scrubber • Keyboard Navigation
-                    </p>
-                  </div>
+                  <span className="font-handwriting text-blue-600 dark:text-sky-400 text-sm rotate-1 select-none hidden sm:inline">
+                    raw EXIF bitstreams ✦
+                  </span>
                 </div>
 
-                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+                <p className="text-sm font-[500] text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
                   Every interaction was designed to mirror the refined ergonomics of desktop Google Photos: 
                   instant year jumping via the floating frosted date rail, memories carousel highlights, 
                   and full keyboard navigation (Space, Esc, Arrow Keys, Delete).

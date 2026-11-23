@@ -222,11 +222,11 @@ export const PlacesView: React.FC = () => {
           {/* Header Banner */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/[0.08]">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-[#1F1F1F] dark:text-[#E3E3E3] tracking-tight flex items-center gap-2.5">
+              <h1 className="text-xl sm:text-2xl font-wordmark font-[900] text-[#1F1F1F] dark:text-[#E3E3E3] tracking-tight flex items-center gap-2.5">
                 <Compass className="w-6 h-6 text-emerald-500" />
                 <span>Places</span>
               </h1>
-              <p className="text-xs sm:text-sm text-[#5F6368] dark:text-[#C2C7CF] mt-1">
+              <p className="text-xs sm:text-sm font-[500] text-[#5F6368] dark:text-[#C2C7CF] mt-1">
                 Explore your photos and memories grouped by geographical destinations.
               </p>
             </div>
@@ -277,17 +277,17 @@ export const PlacesView: React.FC = () => {
                       <div className="p-1.5 rounded-full bg-black/40 backdrop-blur-md text-emerald-400 border border-white/10">
                         <MapPin className="w-3.5 h-3.5" />
                       </div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-black/50 backdrop-blur-md text-white text-[11px] font-medium border border-white/10">
+                      <span className="px-2.5 py-0.5 rounded-full bg-black/50 backdrop-blur-md text-white text-[11px] font-nav-tag font-[650] border border-white/10">
                         {place.items.length} {place.items.length === 1 ? 'photo' : 'photos'}
                       </span>
                     </div>
 
                     {/* Bottom Title & Subtitle */}
                     <div className="absolute bottom-3 left-3 right-3 text-white">
-                      <h3 className="font-semibold text-sm sm:text-base drop-shadow-md truncate tracking-tight">
+                      <h3 className="font-badge-card font-[800] text-sm sm:text-base drop-shadow-md truncate tracking-tight">
                         {place.name}
                       </h3>
-                      <p className="text-[11px] text-white/70 truncate mt-0.5 font-medium">
+                      <p className="text-[11px] text-white/70 truncate mt-0.5 font-[500]">
                         {place.subtitle}
                       </p>
                     </div>
@@ -295,11 +295,11 @@ export const PlacesView: React.FC = () => {
 
                   {/* Footer Meta */}
                   <div className="px-4 py-3 flex items-center justify-between text-xs text-[#5F6368] dark:text-[#C2C7CF] bg-white dark:bg-[#1E1F20]">
-                    <span className="flex items-center gap-1.5 text-[11px]">
+                    <span className="flex items-center gap-1.5 text-[11px] font-nav-tag font-[650]">
                       <Navigation className="w-3.5 h-3.5 text-emerald-500" />
                       <span>Explore album</span>
                     </span>
-                    <span className="text-sky-600 dark:text-sky-400 font-semibold group-hover:translate-x-0.5 transition-transform text-xs">
+                    <span className="text-sky-600 dark:text-sky-400 font-[600] group-hover:translate-x-0.5 transition-transform text-xs">
                       View →
                     </span>
                   </div>

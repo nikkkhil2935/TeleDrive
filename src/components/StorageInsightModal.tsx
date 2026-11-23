@@ -70,38 +70,38 @@ export const StorageInsightModal: React.FC = () => {
               <FramelyLogo className="w-9 h-9" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-[#1F1F1F] dark:text-white tracking-tight">Storage Insights</h3>
-              <p className="text-xs text-[#5F6368] dark:text-white/50">Telegram Cloud storage allocation</p>
+              <h3 className="text-base sm:text-lg font-wordmark font-[900] text-[#1F1F1F] dark:text-white tracking-tight">Storage Insights</h3>
+              <p className="text-xs font-[500] text-[#5F6368] dark:text-white/50">Telegram Cloud storage allocation</p>
             </div>
           </div>
           <button
             onClick={() => setIsStorageModalOpen(false)}
             aria-label="Close"
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-5 sm:p-6 space-y-5 text-xs text-[#1F1F1F] dark:text-[#E3E3E3]">
-          {/* Total Storage Summary Card */}
+          {/* Total Storage Summary Card with Anton Numbers */}
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.07] flex items-center justify-between">
             <div>
-              <div className="text-[#5F6368] dark:text-white/50 font-medium text-xs">Total Library Size</div>
-              <div className="text-2xl font-bold text-[#1F1F1F] dark:text-white mt-0.5 tracking-tight font-mono">
+              <div className="text-[#5F6368] dark:text-white/50 font-nav-tag font-[650] text-xs uppercase tracking-wider">Total Library Size</div>
+              <div className="text-3xl font-ticket-title font-anton text-[#1F1F1F] dark:text-white mt-1">
                 {stats ? formatSize(stats.totalBytes) : '0 MB'}
               </div>
-              <div className="text-[11px] text-sky-600 dark:text-sky-400 mt-1 flex items-center gap-1.5 font-medium">
+              <div className="text-[11px] text-sky-600 dark:text-sky-400 mt-1 flex items-center gap-1.5 font-badge-card font-[700]">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Encrypted Telegram Channel #{session?.channelId || '4298525450'}</span>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-[#5F6368] dark:text-white/50 font-medium text-xs">Total Media</div>
-              <div className="text-2xl font-bold text-[#1F1F1F] dark:text-white mt-0.5 tracking-tight font-mono">
+              <div className="text-[#5F6368] dark:text-white/50 font-nav-tag font-[650] text-xs uppercase tracking-wider">Total Media</div>
+              <div className="text-3xl font-ticket-title font-anton text-[#1F1F1F] dark:text-white mt-1">
                 {stats?.totalItems || 0}
               </div>
-              <div className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-medium flex items-center justify-end gap-1">
+              <div className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-badge-card font-[700] flex items-center justify-end gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Zero-Knowledge
               </div>
@@ -111,8 +111,10 @@ export const StorageInsightModal: React.FC = () => {
           {/* Storage Bar Breakdown */}
           <div className="space-y-2">
             <div className="flex justify-between text-[11px] text-[#5F6368] dark:text-white/50">
-              <span className="font-medium">Storage composition</span>
-              <span className="font-mono text-[#0B57D0] dark:text-sky-400">Unlimited Telegram Cloud</span>
+              <span className="font-nav-tag font-[650] uppercase tracking-wider">Storage composition</span>
+              <span className="font-handwriting text-sm text-[#0B57D0] dark:text-sky-400 select-none">
+                unlimited Telegram cloud quota ✦
+              </span>
             </div>
             <div className="w-full h-3 rounded-full bg-slate-200 dark:bg-white/[0.08] flex overflow-hidden p-0.5 gap-0.5">
               <div
@@ -126,7 +128,7 @@ export const StorageInsightModal: React.FC = () => {
                 title={`Videos: ${videoPercent}%`}
               />
             </div>
-            <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-white/40 pt-0.5">
+            <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-white/40 pt-0.5 font-nav-tag font-[650]">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-sky-500" />
                 <span>Photos ({photoPercent}%)</span>
@@ -146,11 +148,11 @@ export const StorageInsightModal: React.FC = () => {
                   <ImageIcon className="w-4.5 h-4.5" />
                 </div>
                 <div>
-                  <div className="font-semibold text-[#1F1F1F] dark:text-white text-sm">Photos</div>
-                  <div className="text-[11px] text-[#5F6368] dark:text-white/50">{stats?.photoCount || 0} images</div>
+                  <div className="font-badge-card font-[700] text-[#1F1F1F] dark:text-white text-sm">Photos</div>
+                  <div className="text-[11px] font-[500] text-[#5F6368] dark:text-white/50">{stats?.photoCount || 0} images</div>
                 </div>
               </div>
-              <div className="font-semibold text-sm text-[#1F1F1F] dark:text-white font-mono">
+              <div className="font-ticket-title font-anton text-base text-[#1F1F1F] dark:text-white">
                 {stats ? formatSize(stats.photoBytes) : '0 MB'}
               </div>
             </div>
@@ -161,11 +163,11 @@ export const StorageInsightModal: React.FC = () => {
                   <Video className="w-4.5 h-4.5" />
                 </div>
                 <div>
-                  <div className="font-semibold text-[#1F1F1F] dark:text-white text-sm">Videos</div>
-                  <div className="text-[11px] text-[#5F6368] dark:text-white/50">{stats?.videoCount || 0} clips</div>
+                  <div className="font-badge-card font-[700] text-[#1F1F1F] dark:text-white text-sm">Videos</div>
+                  <div className="text-[11px] font-[500] text-[#5F6368] dark:text-white/50">{stats?.videoCount || 0} clips</div>
                 </div>
               </div>
-              <div className="font-semibold text-sm text-[#1F1F1F] dark:text-white font-mono">
+              <div className="font-ticket-title font-anton text-base text-[#1F1F1F] dark:text-white">
                 {stats ? formatSize(stats.videoBytes) : '0 MB'}
               </div>
             </div>

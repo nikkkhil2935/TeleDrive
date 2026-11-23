@@ -291,14 +291,14 @@ To restore your library on any device:
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-semibold tracking-tight text-[#1F1F1F] dark:text-[#F1F3F4]">
+                <h2 className="text-base sm:text-lg font-wordmark font-[900] tracking-tight text-[#1F1F1F] dark:text-[#F1F3F4]">
                   Welcome to Framely
                 </h2>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 dark:bg-blue-400/15 text-[#0B57D0] dark:text-[#A8C7FA]">
+                <span className="text-[11px] font-nav-tag font-[650] px-2.5 py-0.5 rounded-full bg-blue-500/10 dark:bg-blue-400/15 text-[#0B57D0] dark:text-[#A8C7FA]">
                   Step {step} of {totalSteps}
                 </span>
               </div>
-              <p className="text-xs text-[#5F6368] dark:text-[#9AA0A6] mt-0.5">
+              <p className="text-xs font-[500] text-[#5F6368] dark:text-[#9AA0A6] mt-0.5">
                 {step === 1 && 'Your private photos, in your own Telegram'}
                 {step === 2 && 'Connect Telegram MTProto API credentials'}
                 {step === 3 && 'Sign in to your Telegram account'}
@@ -371,12 +371,17 @@ To restore your library on any device:
 
               {/* Title & Subtitle */}
               <div className="space-y-2 max-w-lg mx-auto">
-                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1F1F1F] dark:text-[#F1F3F4]">
+                <h3 className="text-xl sm:text-2xl font-wordmark font-[900] tracking-tight text-[#1F1F1F] dark:text-[#F1F3F4]">
                   Your photos, in your own Telegram.
                 </h3>
-                <p className="text-xs sm:text-sm text-[#5F6368] dark:text-[#9AA0A6] leading-relaxed">
+                <p className="text-xs sm:text-sm font-[500] text-[#5F6368] dark:text-[#9AA0A6] leading-relaxed">
                   Private, fast, and free forever. Framely gives you a fluid Google Photos-style library backed directly by your unlimited Telegram cloud storage.
                 </p>
+                <div className="pt-1">
+                  <span className="font-handwriting text-blue-600 dark:text-sky-400 text-base -rotate-1 inline-block select-none">
+                    100% private to your Telegram account ✦
+                  </span>
+                </div>
               </div>
 
               {/* 3 Value Proposition Cards */}
@@ -385,8 +390,8 @@ To restore your library on any device:
                   <div className="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center mb-2.5">
                     <ShieldCheck className="w-4.5 h-4.5" />
                   </div>
-                  <div className="font-semibold text-xs text-[#1F1F1F] dark:text-[#F1F3F4]">Zero Middlemen</div>
-                  <p className="text-[11px] text-[#5F6368] dark:text-[#9AA0A6] mt-1 leading-relaxed">
+                  <div className="font-badge-card font-[800] text-xs text-[#1F1F1F] dark:text-[#F1F3F4]">Zero Middlemen</div>
+                  <p className="text-[11px] font-[500] text-[#5F6368] dark:text-[#9AA0A6] mt-1 leading-relaxed">
                     Direct MTProto WSS from your browser to Telegram DCs. No intermediate proxies.
                   </p>
                 </div>
@@ -395,8 +400,8 @@ To restore your library on any device:
                   <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-2.5">
                     <Lock className="w-4.5 h-4.5" />
                   </div>
-                  <div className="font-semibold text-xs text-[#1F1F1F] dark:text-[#F1F3F4]">Zero Knowledge</div>
-                  <p className="text-[11px] text-[#5F6368] dark:text-[#9AA0A6] mt-1 leading-relaxed">
+                  <div className="font-badge-card font-[800] text-xs text-[#1F1F1F] dark:text-[#F1F3F4]">Zero Knowledge</div>
+                  <p className="text-[11px] font-[500] text-[#5F6368] dark:text-[#9AA0A6] mt-1 leading-relaxed">
                     Client-side AES-256-GCM hardware encryption protects your session keys at rest.
                   </p>
                 </div>
@@ -405,15 +410,15 @@ To restore your library on any device:
                   <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-2.5">
                     <Sparkles className="w-4.5 h-4.5" />
                   </div>
-                  <div className="font-semibold text-xs text-[#1F1F1F] dark:text-[#F1F3F4]">Original Quality</div>
-                  <p className="text-[11px] text-[#5F6368] dark:text-[#9AA0A6] mt-1 leading-relaxed">
+                  <div className="font-badge-card font-[800] text-xs text-[#1F1F1F] dark:text-[#F1F3F4]">Original Quality</div>
+                  <p className="text-[11px] font-[500] text-[#5F6368] dark:text-[#9AA0A6] mt-1 leading-relaxed">
                     Stored as uncompressed documents with full EXIF, timestamps & GPS coordinates.
                   </p>
                 </div>
               </div>
 
               {/* Informational reassurance */}
-              <div className="pt-2 text-[11px] text-[#5F6368] dark:text-[#9AA0A6]">
+              <div className="pt-2 text-[11px] font-[500] text-[#5F6368] dark:text-[#9AA0A6]">
                 Takes approximately 3 minutes · No credit card required · Open-source local client
               </div>
             </div>
@@ -829,7 +834,7 @@ To restore your library on any device:
             <button
               type="button"
               onClick={() => setStep(step - 1)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#1F1F1F] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-[600] text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#1F1F1F] dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back</span>
@@ -841,7 +846,7 @@ To restore your library on any device:
                 localStorage.setItem('framely_onboarding_completed', 'true');
                 setIsOnboardingOpen(false);
               }}
-              className="text-xs font-semibold text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#1F1F1F] dark:hover:text-white px-3 py-2 rounded-xl hover:bg-slate-200/40 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+              className="text-xs font-[600] text-[#5F6368] dark:text-[#9AA0A6] hover:text-[#1F1F1F] dark:hover:text-white px-3 py-2 rounded-xl hover:bg-slate-200/40 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
             >
               I already have a library
             </button>
@@ -877,7 +882,7 @@ To restore your library on any device:
                 (step === 5 && !hasSavedRecoveryKit) ||
                 (step === 4 && passphrase.length > 0 && passphrase !== confirmPassphrase)
               }
-              className="gp-btn-primary py-2 px-5 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="gp-btn-primary py-2 px-5 text-xs font-[600] shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <span>
                 {step === 1
@@ -892,7 +897,7 @@ To restore your library on any device:
             <button
               type="button"
               onClick={handleCompleteOnboarding}
-              className="gp-btn-primary py-2 px-6 text-xs font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer"
+              className="gp-btn-primary py-2 px-6 text-xs font-[600] shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
               <span>Open My Photos</span>
               <Check className="w-4 h-4 stroke-[2.5]" />

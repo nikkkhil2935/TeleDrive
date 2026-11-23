@@ -645,10 +645,10 @@ export const TimelineView: React.FC = () => {
                   {/* Sticky Date Header (Google Photos Desktop Reference) */}
                   <div className="group/header flex items-center justify-between sticky top-0 bg-[#F8FAFD]/95 dark:bg-[#131314]/95 backdrop-blur-md py-2 z-10">
                     <div className="flex items-baseline gap-2">
-                      <h2 className="text-sm font-semibold text-[#1F1F1F] dark:text-[#E3E3E3] flex items-center gap-1.5 cursor-pointer">
+                      <h2 className="text-sm font-badge-card font-[700] text-[#1F1F1F] dark:text-[#E3E3E3] flex items-center gap-1.5 cursor-pointer">
                         <span>{group.label}</span>
                         {group.location && (
-                          <span className="text-xs text-[#5F6368] dark:text-[#C2C7CF] font-normal flex items-center gap-1">
+                          <span className="text-xs text-[#5F6368] dark:text-[#C2C7CF] font-[500] flex items-center gap-1">
                             · {group.location}
                           </span>
                         )}
@@ -745,7 +745,7 @@ export const TimelineView: React.FC = () => {
       {/* Google Photos Floating Vertical Date Scrubber Rail (True Google Photos Floating Overlay) */}
       {availableYears.length > 0 && (
         <div className="absolute right-2 sm:right-3.5 top-32 bottom-28 z-20 flex flex-col items-center justify-center pointer-events-none select-none">
-          <div className="py-3 px-1.5 rounded-full bg-white/80 dark:bg-[#1E1F20]/80 backdrop-blur-md border border-slate-200/80 dark:border-white/10 shadow-lg flex flex-col items-center space-y-3.5 pointer-events-auto">
+          <div className="py-3 px-2 rounded-full bg-white/90 dark:bg-[#1E1F20]/90 backdrop-blur-md border border-slate-200/90 dark:border-white/10 shadow-lg flex flex-col items-center space-y-3.5 pointer-events-auto">
             {availableYears.map((yr) => (
               <div
                 key={yr}
@@ -756,9 +756,12 @@ export const TimelineView: React.FC = () => {
                 title={`Jump to ${yr}`}
               >
                 <div className="w-2.5 h-2.5 rounded-full bg-slate-400/80 dark:bg-white/40 group-hover:scale-125 group-hover:bg-[#0B57D0] dark:group-hover:bg-sky-400 transition-all shadow-xs" />
+                <span className="text-[10px] font-nav-tag font-[650] text-[#5F6368] dark:text-[#C2C7CF] group-hover:text-[#0B57D0] dark:group-hover:text-sky-400 ml-1.5 hidden md:inline transition-colors">
+                  {yr}
+                </span>
 
                 {hoveredScrubYear === yr && (
-                  <div className="absolute right-8 z-40 px-3 py-1 rounded-full bg-[#0B57D0] dark:bg-sky-500 text-white font-bold text-xs shadow-xl animate-in fade-in zoom-in-75 slide-in-from-right-2 duration-150 whitespace-nowrap">
+                  <div className="absolute right-9 z-40 px-3 py-1 rounded-full bg-[#0B57D0] dark:bg-sky-500 text-white font-ticket-title font-anton text-xs shadow-xl animate-in fade-in zoom-in-75 slide-in-from-right-2 duration-150 whitespace-nowrap">
                     {yr}
                   </div>
                 )}

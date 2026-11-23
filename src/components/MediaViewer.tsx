@@ -653,13 +653,13 @@ export const MediaViewer: React.FC = () => {
             {/* Header */}
             <div className="px-5 py-4 border-b border-white/[0.08] flex items-center justify-between shrink-0">
               <div>
-                <h3 className="text-sm font-semibold text-white tracking-tight">Details & Info</h3>
+                <h3 className="text-sm font-wordmark font-[900] text-white tracking-tight">Details & Info</h3>
                 <p className="text-white/40 text-[11px] truncate max-w-[240px] mt-0.5">{selectedMedia.filename}</p>
               </div>
               <button
                 onClick={() => setShowInfo(false)}
                 aria-label="Close details panel"
-                className="text-white/50 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                className="text-white/50 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -671,7 +671,7 @@ export const MediaViewer: React.FC = () => {
               <div className="space-y-2">
                 <button
                   onClick={handleDownload}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-medium text-xs shadow-lg shadow-sky-500/20 active:scale-[0.98] transition-all"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-[600] text-xs shadow-lg shadow-sky-500/20 active:scale-[0.98] transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   <span>Download Original ({formatBytes(selectedMedia.sizeBytes)})</span>
@@ -679,7 +679,7 @@ export const MediaViewer: React.FC = () => {
 
                 <button
                   onClick={handleCopyMeta}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-white/80 hover:text-white text-[11px] border border-white/[0.08] active:scale-[0.98] transition-all"
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-white/80 hover:text-white text-[11px] font-[600] border border-white/[0.08] active:scale-[0.98] transition-all cursor-pointer"
                 >
                   {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
                   <span>{copiedLink ? 'Copied Specs to Clipboard' : 'Copy Media Specs'}</span>
@@ -689,25 +689,25 @@ export const MediaViewer: React.FC = () => {
               {/* Quick Specs Cards */}
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="p-3 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:border-white/15 transition-colors">
-                  <div className="text-[10px] uppercase tracking-wider font-semibold text-white/40 mb-1">
+                  <div className="text-[10px] uppercase tracking-wider font-nav-tag font-[650] text-white/40 mb-1">
                     Dimensions
                   </div>
-                  <div className="text-sm font-semibold text-white font-mono">
+                  <div className="text-base font-ticket-title font-anton text-white tracking-wide">
                     {selectedMedia.width} × {selectedMedia.height}
                   </div>
-                  <div className="text-[11px] text-sky-400 mt-0.5">
+                  <div className="text-[11px] font-nav-tag font-[650] text-sky-400 mt-0.5">
                     {megapixels} MP • {getAspectLabel(selectedMedia.width, selectedMedia.height)}
                   </div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:border-white/15 transition-colors">
-                  <div className="text-[10px] uppercase tracking-wider font-semibold text-white/40 mb-1">
+                  <div className="text-[10px] uppercase tracking-wider font-nav-tag font-[650] text-white/40 mb-1">
                     File Size
                   </div>
-                  <div className="text-sm font-semibold text-white font-mono">
+                  <div className="text-base font-ticket-title font-anton text-white tracking-wide">
                     {formatBytes(selectedMedia.sizeBytes)}
                   </div>
-                  <div className="text-[11px] text-emerald-400 mt-0.5">
+                  <div className="text-[11px] font-nav-tag font-[650] text-emerald-400 mt-0.5">
                     Original Bitstream
                   </div>
                 </div>
@@ -715,12 +715,12 @@ export const MediaViewer: React.FC = () => {
 
               {/* Date & Time Captured Card */}
               <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.07] space-y-2">
-                <div className="flex items-center gap-2 text-white/90 font-medium">
+                <div className="flex items-center gap-2 text-white/90 font-badge-card font-[700]">
                   <Calendar className="w-4 h-4 text-sky-400 shrink-0" />
                   <span>Date & Capture Time</span>
                 </div>
                 <div className="pl-6 space-y-0.5">
-                  <div className="text-white text-xs font-medium">
+                  <div className="text-white text-xs font-[600]">
                     {new Date(selectedMedia.takenAt).toLocaleDateString(undefined, {
                       weekday: 'long',
                       year: 'numeric',
@@ -740,7 +740,7 @@ export const MediaViewer: React.FC = () => {
               {/* Camera & Optics EXIF Card */}
               <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.07] space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-white/90 font-medium">
+                  <div className="flex items-center gap-2 text-white/90 font-badge-card font-[700]">
                     <Camera className="w-4 h-4 text-violet-400 shrink-0" />
                     <span>Camera & Optics</span>
                   </div>
@@ -755,19 +755,19 @@ export const MediaViewer: React.FC = () => {
                   {/* Photographic Exposure Chips */}
                   <div className="grid grid-cols-4 gap-1.5 pt-1">
                     <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05] text-center">
-                      <div className="text-[9px] text-white/40 uppercase">Aperture</div>
+                      <div className="text-[9px] text-white/40 uppercase font-nav-tag font-[650]">Aperture</div>
                       <div className="text-[11px] font-mono text-white/90 font-medium mt-0.5">ƒ/1.8</div>
                     </div>
                     <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05] text-center">
-                      <div className="text-[9px] text-white/40 uppercase">Shutter</div>
+                      <div className="text-[9px] text-white/40 uppercase font-nav-tag font-[650]">Shutter</div>
                       <div className="text-[11px] font-mono text-white/90 font-medium mt-0.5">1/240s</div>
                     </div>
                     <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05] text-center">
-                      <div className="text-[9px] text-white/40 uppercase">Focal</div>
+                      <div className="text-[9px] text-white/40 uppercase font-nav-tag font-[650]">Focal</div>
                       <div className="text-[11px] font-mono text-white/90 font-medium mt-0.5">26mm</div>
                     </div>
                     <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05] text-center">
-                      <div className="text-[9px] text-white/40 uppercase">ISO</div>
+                      <div className="text-[9px] text-white/40 uppercase font-nav-tag font-[650]">ISO</div>
                       <div className="text-[11px] font-mono text-white/90 font-medium mt-0.5">100</div>
                     </div>
                   </div>
@@ -776,7 +776,7 @@ export const MediaViewer: React.FC = () => {
 
               {/* Location & Map Pin Card */}
               <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.07] space-y-2">
-                <div className="flex items-center gap-2 text-white/90 font-medium">
+                <div className="flex items-center gap-2 text-white/90 font-badge-card font-[700]">
                   <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>Location</span>
                 </div>
@@ -809,11 +809,11 @@ export const MediaViewer: React.FC = () => {
               {/* Telegram Cloud Storage & Security Card */}
               <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.07] space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-white/90 font-medium">
+                  <div className="flex items-center gap-2 text-white/90 font-badge-card font-[700]">
                     <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
                     <span>Telegram Cloud Storage</span>
                   </div>
-                  <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-badge-card font-[700]">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Verified
                   </span>
@@ -821,18 +821,18 @@ export const MediaViewer: React.FC = () => {
 
                 <div className="space-y-2 font-mono text-[11px] pt-1">
                   <div className="flex items-center justify-between text-white/70">
-                    <span className="text-white/40">Message ID:</span>
+                    <span className="text-white/40 font-nav-tag font-[650] uppercase tracking-wider text-[10px]">Message ID:</span>
                     <span className="text-white font-semibold">#{selectedMedia.messageId}</span>
                   </div>
                   <div className="flex items-center justify-between text-white/70">
-                    <span className="text-white/40">Channel Vault:</span>
+                    <span className="text-white/40 font-nav-tag font-[650] uppercase tracking-wider text-[10px]">Channel Vault:</span>
                     <span className="text-white truncate max-w-[140px]">{selectedMedia.libraryId}</span>
                   </div>
                   <div className="flex items-center justify-between text-white/70">
-                    <span className="text-white/40">Checksum:</span>
+                    <span className="text-white/40 font-nav-tag font-[650] uppercase tracking-wider text-[10px]">Checksum:</span>
                     <button
                       onClick={handleCopyChecksum}
-                      className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors"
+                      className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors cursor-pointer"
                       title="Click to copy full SHA-256"
                     >
                       <span>{selectedMedia.sha256.substring(0, 12)}...</span>
@@ -840,12 +840,12 @@ export const MediaViewer: React.FC = () => {
                     </button>
                   </div>
                   <div className="flex items-center justify-between text-white/70">
-                    <span className="text-white/40">Protocol:</span>
+                    <span className="text-white/40 font-nav-tag font-[650] uppercase tracking-wider text-[10px]">Protocol:</span>
                     <span className="text-white/90">MTProto 2.0 Direct WSS</span>
                   </div>
                   <div className="flex items-center justify-between text-white/70">
-                    <span className="text-white/40">Encryption:</span>
-                    <span className="text-emerald-400">Zero-Knowledge AES-256</span>
+                    <span className="text-white/40 font-nav-tag font-[650] uppercase tracking-wider text-[10px]">Encryption:</span>
+                    <span className="text-emerald-400 font-semibold">Zero-Knowledge AES-256</span>
                   </div>
                 </div>
               </div>

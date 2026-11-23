@@ -98,11 +98,11 @@ export const Sidebar: React.FC = () => {
 
       <div className="space-y-3">
         {/* Primary Navigation Pills (Google Photos Desktop Layout) */}
-        <nav className="space-y-1">
+        <nav className="space-y-1 font-nav-tag font-[650]">
           <button
             onClick={() => handleSelectTab('photos')}
             title="Photos"
-            className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+            className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-full text-sm transition-all cursor-pointer ${
               activeTab === 'photos'
                 ? 'bg-[#D3E3FD] text-[#041E49] dark:bg-[#004A77] dark:text-[#C2E7FF]'
                 : 'text-[#1F1F1F] dark:text-[#E3E3E3] hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C]'
@@ -115,7 +115,7 @@ export const Sidebar: React.FC = () => {
           <button
             onClick={() => handleSelectTab('explore')}
             title="Explore"
-            className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+            className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-full text-sm transition-all cursor-pointer ${
               activeTab === 'explore'
                 ? 'bg-[#D3E3FD] text-[#041E49] dark:bg-[#004A77] dark:text-[#C2E7FF]'
                 : 'text-[#1F1F1F] dark:text-[#E3E3E3] hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C]'
@@ -128,7 +128,7 @@ export const Sidebar: React.FC = () => {
           <button
             onClick={() => handleSelectTab('sharing')}
             title="Sharing"
-            className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+            className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-full text-sm transition-all cursor-pointer ${
               activeTab === 'sharing'
                 ? 'bg-[#D3E3FD] text-[#041E49] dark:bg-[#004A77] dark:text-[#C2E7FF]'
                 : 'text-[#1F1F1F] dark:text-[#E3E3E3] hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C]'
@@ -143,7 +143,7 @@ export const Sidebar: React.FC = () => {
         <div className="pt-2">
           <button
             onClick={() => setIsCollectionsOpen(!isCollectionsOpen)}
-            className="w-full flex items-center justify-between px-3.5 py-1.5 text-xs font-semibold text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-white transition-colors"
+            className="w-full flex items-center justify-between px-3.5 py-1.5 text-xs font-nav-tag font-[650] text-[#5F6368] dark:text-[#C2C7CF] hover:text-[#1F1F1F] dark:hover:text-white transition-colors cursor-pointer"
           >
             <span className="hidden lg:inline tracking-wide">Collections</span>
             {isCollectionsOpen ? (
@@ -154,7 +154,7 @@ export const Sidebar: React.FC = () => {
           </button>
 
           {isCollectionsOpen && (
-            <div className="space-y-0.5 mt-1 relative">
+            <div className="space-y-0.5 mt-1 relative font-nav-tag font-[650]">
               {collectionItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -165,7 +165,7 @@ export const Sidebar: React.FC = () => {
                     <button
                       onClick={() => handleSelectTab(item.id)}
                       title={item.label}
-                      className={`w-full flex items-center gap-3.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      className={`w-full flex items-center gap-3.5 px-4 py-2 rounded-full text-sm transition-all cursor-pointer ${
                         isActive
                           ? 'bg-[#D3E3FD] text-[#041E49] dark:bg-[#004A77] dark:text-[#C2E7FF]'
                           : 'text-[#1F1F1F] dark:text-[#E3E3E3] hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C]'
@@ -202,12 +202,12 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Utilities: Duplicates & Privacy */}
-        <div className="pt-2 border-t border-slate-100 dark:border-[#444746]/40">
+        <div className="pt-2 border-t border-slate-100 dark:border-[#444746]/40 font-nav-tag font-[650]">
           <nav className="space-y-0.5">
             <button
               onClick={() => setIsDuplicatesOpen(true)}
               title="Duplicate Finder"
-              className="w-full flex items-center gap-3.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-[#1F1F1F] dark:text-[#E3E3E3] hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] transition-all"
+              className="w-full flex items-center gap-3.5 px-4 py-2 rounded-full text-[13.5px] text-[#1F1F1F] dark:text-[#E3E3E3] hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] transition-all cursor-pointer"
             >
               <Copy className="w-5 h-5 shrink-0" />
               <span className="hidden lg:inline truncate">Duplicates</span>
@@ -215,7 +215,7 @@ export const Sidebar: React.FC = () => {
             <button
               onClick={() => setIsPrivacyOpen(true)}
               title="Privacy & Storage Security"
-              className="w-full flex items-center gap-3.5 px-4 py-2 rounded-full text-[13.5px] font-medium text-[#1F1F1F] dark:text-[#E3E3E3] hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] transition-all"
+              className="w-full flex items-center gap-3.5 px-4 py-2 rounded-full text-[13.5px] text-[#1F1F1F] dark:text-[#E3E3E3] hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] transition-all cursor-pointer"
             >
               <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
               <span className="hidden lg:inline truncate">Privacy & Trust</span>
@@ -225,9 +225,9 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Storage Widget & Google Photos Footer (Spec Phase 4 & 7) */}
-      <div className="pt-4 border-t border-slate-200 dark:border-[#444746]/50 space-y-3">
+      <div className="pt-4 border-t border-slate-200 dark:border-[#444746]/50 space-y-3 font-nav-tag font-[650]">
         <div className="px-2 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-medium text-[#5F6368] dark:text-[#C2C7CF]">
+          <div className="flex items-center gap-2 text-xs font-badge-card font-[700] text-[#5F6368] dark:text-[#C2C7CF]">
             <Cloud className="w-4 h-4 text-[#0B57D0] dark:text-[#A8C7FA] shrink-0" />
             <span className="hidden lg:inline">Storage</span>
           </div>
@@ -245,7 +245,7 @@ export const Sidebar: React.FC = () => {
 
           <button
             onClick={() => setIsStorageModalOpen(true)}
-            className="hidden lg:block w-full py-1.5 px-4 rounded-full border border-slate-300 dark:border-[#5E5E5E] hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#0B57D0] dark:text-[#A8C7FA] text-xs font-medium transition-colors text-center"
+            className="hidden lg:block w-full py-1.5 px-4 rounded-full border border-slate-300 dark:border-[#5E5E5E] hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#0B57D0] dark:text-[#A8C7FA] text-xs font-[600] transition-colors text-center cursor-pointer"
           >
             Get more storage
           </button>
