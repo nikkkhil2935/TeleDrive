@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShieldCheck,
   Cloud,
   Zap,
   Lock,
+  Unlock,
   HardDrive,
   RefreshCw,
   Layers,
   CheckCircle2,
   ArrowRight,
-  Sparkles,
   MapPin,
   Camera,
   Download,
@@ -25,15 +25,20 @@ import {
   Globe,
   Sliders,
   Play,
+  Pause,
   Heart,
   Grid3X3,
   Search,
-  Maximize2
+  Maximize2,
+  ExternalLink,
+  Smartphone,
+  Cpu,
+  FolderLock
 } from 'lucide-react';
 import { FramelyLogo } from './FramelyLogo';
 import { useApp } from '../context/AppContext';
 
-// High-resolution real photography for the authentic product stage & bento preview
+// Curated high-resolution master photography for authentic product stages
 const SAMPLE_PHOTOS = [
   {
     id: 1,
@@ -109,19 +114,45 @@ const SAMPLE_PHOTOS = [
   },
 ];
 
+const SAMPLE_PLACES = [
+  { name: 'Mumbai City & Harbor', count: 248, coords: '18.92° N, 72.83° E', preview: SAMPLE_PHOTOS[0].url },
+  { name: 'Vasai & Virar Coast', count: 184, coords: '19.38° N, 72.82° E', preview: SAMPLE_PHOTOS[4].url },
+  { name: 'Pune & Western Ghats', count: 96, coords: '18.52° N, 73.85° E', preview: SAMPLE_PHOTOS[2].url },
+  { name: 'Palghar & Coastal Beaches', count: 64, coords: '19.69° N, 72.76° E', preview: SAMPLE_PHOTOS[1].url },
+];
+
 export const LandingPage: React.FC = () => {
   const { enterApp, setIsAuthModalOpen, setIsOnboardingOpen, theme, setTheme } = useApp();
 
-  // Interactive Stage State
+  // Stageshow Desktop Stage State
+  const [activeStageTab, setActiveStageTab] = useState<'photos' | 'places' | 'vault'>('photos');
   const [activePhoto, setActivePhoto] = useState(SAMPLE_PHOTOS[0]);
   const [isExifModalOpen, setIsExifModalOpen] = useState(false);
   const [stageDensity, setStageDensity] = useState<'standard' | 'dense'>('standard');
   const [favorites, setFavorites] = useState<number[]>([1, 3]);
+  const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
+  const [vaultPassphrase, setVaultPassphrase] = useState('master-key-2026');
 
-  // Interactive Bento Vault Simulator
-  const [vaultInput, setVaultInput] = useState('My Secret Vacation 2026');
-  const [vaultKey] = useState('aes-256-gcm-0x8f2d...91e4');
+  // Stageshow Auto-Tour State
+  const [isAutoTourRunning, setIsAutoTourRunning] = useState(false);
+
+  // Interactive Bento Vault Simulator State
+  const [vaultInput, setVaultInput] = useState('Master_Backup_2026_RAW.DNG');
+  const [bentoDensityPreview, setBentoDensityPreview] = useState<'compact' | 'standard' | 'large'>('standard');
   const [faqOpenIndex, setFaqOpenIndex] = useState<number | null>(0);
+
+  // Auto-tour effect
+  useEffect(() => {
+    if (!isAutoTourRunning) return;
+    const interval = setInterval(() => {
+      setActiveStageTab((prev) => {
+        if (prev === 'photos') return 'places';
+        if (prev === 'places') return 'vault';
+        return 'photos';
+      });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [isAutoTourRunning]);
 
   const toggleFavorite = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -149,9 +180,12 @@ export const LandingPage: React.FC = () => {
       <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-white/90 dark:bg-[#131314]/90 border-b border-slate-200/80 dark:border-white/10 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
-          {/* Brand Mark (STRICT REQUIREMENT: Pure Framely Logo, NO enclosing box/container) */}
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <FramelyLogo className="w-8 h-8 transition-transform group-hover:scale-105 duration-200" />
+          {/* Brand Mark (STRICT: Pure Framely Logo, NO enclosing box/container) */}
+          <div
+            className="flex items-center gap-3 cursor-pointer group"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
+            <FramelyLogo className="w-8 h-8 transition-transform group-hover:scale-105 duration-200 shrink-0" />
             <div className="flex flex-col">
               <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white font-['Google_Sans',sans-serif] leading-tight">
                 Framely
@@ -176,7 +210,7 @@ export const LandingPage: React.FC = () => {
             {/* Theme Toggle */}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+              className="p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
               title="Toggle Theme"
               aria-label="Toggle Theme"
             >
@@ -186,7 +220,7 @@ export const LandingPage: React.FC = () => {
             {/* Sign In */}
             <button
               onClick={handleSignIn}
-              className="hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+              className="hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
             >
               Sign In
             </button>
@@ -194,7 +228,7 @@ export const LandingPage: React.FC = () => {
             {/* Launch App Primary CTA */}
             <button
               onClick={handleLaunchApp}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-white bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 transition-all shadow-sm hover:shadow-md active:scale-98"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-white bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 transition-all shadow-sm hover:shadow-md active:scale-98 cursor-pointer"
             >
               <span>Launch Web App</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -203,21 +237,21 @@ export const LandingPage: React.FC = () => {
         </div>
       </header>
 
-      {/* 2. Hero Section */}
-      <section className="relative pt-16 pb-20 md:pt-24 md:pb-28 overflow-hidden bg-gradient-to-b from-slate-50/50 via-white to-white dark:from-[#161718] dark:via-[#131314] dark:to-[#131314]">
+      {/* 2. Hero Section with Stageshow Miniature Desktop & Satellite */}
+      <section className="relative pt-14 pb-20 md:pt-20 md:pb-28 overflow-hidden bg-gradient-to-b from-slate-50/50 via-white to-white dark:from-[#161718] dark:via-[#131314] dark:to-[#131314]">
         
-        {/* Subtle grid background pattern */}
+        {/* Subtle grid pattern background */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           
           {/* Eyebrow Pill */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-sky-950/60 dark:text-sky-300 border border-blue-200/60 dark:border-sky-800/60 mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400" />
-            <span>Open Source • Telegram-Backed Cloud Storage • Zero-Knowledge Vault</span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-sky-950/60 dark:text-sky-300 border border-blue-200/60 dark:border-sky-800/60 mb-6">
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400" />
+            <span>Open Source • Telegram Channel Cloud Engine • Zero-Knowledge Vault</span>
           </div>
 
-          {/* Plain, factual, assertive headline */}
+          {/* Factual, assertive headline */}
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-950 dark:text-white max-w-4xl mx-auto leading-[1.08] font-['Google_Sans',sans-serif]">
             Your private photos, in your own Telegram.
           </h1>
@@ -232,7 +266,7 @@ export const LandingPage: React.FC = () => {
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <button
               onClick={handleLaunchApp}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-semibold text-white bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 transition-all shadow-md hover:shadow-lg active:scale-98"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-semibold text-white bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 transition-all shadow-md hover:shadow-lg active:scale-98 cursor-pointer"
             >
               <span>Open Framely App</span>
               <ArrowRight className="w-4 h-4" />
@@ -240,7 +274,7 @@ export const LandingPage: React.FC = () => {
 
             <button
               onClick={handleStartOnboarding}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-xs"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-xs cursor-pointer"
             >
               <span>3-Minute Quick Setup</span>
             </button>
@@ -266,243 +300,385 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Stageshow Desktop App Window Mockup */}
-          <div className="mt-14 max-w-5xl mx-auto relative rounded-2xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#131314] shadow-2xl overflow-hidden text-left transition-all">
+          {/* ======================================================== */}
+          {/* STAGESHOW HERO WINDOW & SATELLITE (framing.md Gold Bar)   */}
+          {/* ======================================================== */}
+          <div className="mt-14 max-w-5xl mx-auto relative text-left">
             
-            {/* Window Chrome Titlebar */}
-            <div className="h-10 px-4 bg-slate-100 dark:bg-[#1E1F20] border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-rose-500/80" />
-                <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                <span className="ml-3 text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                  <Lock className="w-3 h-3 text-emerald-500" />
-                  <span>https://framely.local • Encrypted Session #4298525450</span>
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-sky-950 dark:text-sky-300">
-                  Interactive Demo
-                </span>
-              </div>
-            </div>
-
-            {/* Stageshow App Interior */}
-            <div className="flex h-[480px] sm:h-[540px]">
+            {/* Primary Desktop Window Frame */}
+            <div className="relative rounded-2xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#131314] shadow-2xl overflow-hidden transition-all">
               
-              {/* Mini App Sidebar */}
-              <div className="hidden sm:flex w-48 border-r border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-[#171819] flex-col p-3 space-y-1">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-blue-100 text-blue-900 dark:bg-sky-950 dark:text-sky-200 font-semibold text-xs">
-                  <FramelyLogo className="w-4 h-4" />
-                  <span>Photos</span>
+              {/* Window Chrome Titlebar */}
+              <div className="h-10 px-4 bg-slate-100 dark:bg-[#1E1F20] border-b border-slate-200 dark:border-white/10 flex items-center justify-between select-none">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-rose-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-amber-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                  <span className="ml-3 text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <Lock className="w-3 h-3 text-emerald-500" />
+                    <span>telegram://channel/4298525450 • MTProto 2.0 Direct WSS</span>
+                  </span>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-full text-slate-600 dark:text-slate-400 font-medium text-xs hover:bg-slate-200/50 dark:hover:bg-white/5 cursor-pointer">
-                  <Sparkles className="w-4 h-4" />
-                  <span>Explore</span>
+                
+                <div className="flex items-center gap-2">
+                  {/* Tour Toggle Button */}
+                  <button
+                    onClick={() => setIsAutoTourRunning(!isAutoTourRunning)}
+                    className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white dark:bg-white/10 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/15 transition-colors cursor-pointer"
+                  >
+                    {isAutoTourRunning ? <Pause className="w-3 h-3 text-amber-500" /> : <Play className="w-3 h-3 text-blue-600 dark:text-sky-400" />}
+                    <span>{isAutoTourRunning ? 'Pause Tour' : 'Auto Tour'}</span>
+                  </button>
+                  <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-sky-950 dark:text-sky-300">
+                    Live Stage
+                  </span>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-full text-slate-600 dark:text-slate-400 font-medium text-xs hover:bg-slate-200/50 dark:hover:bg-white/5 cursor-pointer">
-                  <MapPin className="w-4 h-4" />
-                  <span>Places</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-full text-slate-600 dark:text-slate-400 font-medium text-xs hover:bg-slate-200/50 dark:hover:bg-white/5 cursor-pointer">
-                  <Heart className="w-4 h-4" />
-                  <span>Favorites ({favorites.length})</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-full text-slate-600 dark:text-slate-400 font-medium text-xs hover:bg-slate-200/50 dark:hover:bg-white/5 cursor-pointer">
-                  <Lock className="w-4 h-4" />
-                  <span>Locked Folder</span>
+              </div>
+
+              {/* Stageshow App Interior */}
+              <div className="flex h-[490px] sm:h-[550px]">
+                
+                {/* Mini App Sidebar with Interactive Tabs */}
+                <div className="hidden sm:flex w-52 border-r border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-[#171819] flex-col p-3 space-y-1 select-none">
+                  <div
+                    onClick={() => setActiveStageTab('photos')}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-full font-semibold text-xs cursor-pointer transition-colors ${
+                      activeStageTab === 'photos'
+                        ? 'bg-blue-100 text-blue-900 dark:bg-sky-950 dark:text-sky-200'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    <FramelyLogo className="w-4 h-4" />
+                    <span>Photos Timeline</span>
+                  </div>
+
+                  <div
+                    onClick={() => setActiveStageTab('places')}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-full font-semibold text-xs cursor-pointer transition-colors ${
+                      activeStageTab === 'places'
+                        ? 'bg-blue-100 text-blue-900 dark:bg-sky-950 dark:text-sky-200'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    <MapPin className="w-4 h-4 text-rose-500" />
+                    <span>Smart Places</span>
+                  </div>
+
+                  <div
+                    onClick={() => setActiveStageTab('vault')}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-full font-semibold text-xs cursor-pointer transition-colors ${
+                      activeStageTab === 'vault'
+                        ? 'bg-blue-100 text-blue-900 dark:bg-sky-950 dark:text-sky-200'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    <Lock className="w-4 h-4 text-emerald-500" />
+                    <span>Locked Folder</span>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 px-3 py-2 rounded-full text-slate-500 dark:text-slate-400 font-medium text-xs hover:bg-slate-200/50 dark:hover:bg-white/5 cursor-pointer">
+                    <Heart className="w-4 h-4 text-rose-400" />
+                    <span>Favorites ({favorites.length})</span>
+                  </div>
+
+                  {/* Storage Allocation Gauge */}
+                  <div className="pt-4 mt-auto border-t border-slate-200 dark:border-white/10 text-[10px] text-slate-500">
+                    <div className="flex justify-between mb-1.5 font-medium">
+                      <span>Telegram Storage</span>
+                      <span className="font-semibold text-blue-600 dark:text-sky-400">1.77 GB / Unlimited</span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
+                      <div className="h-full bg-blue-600 dark:bg-sky-400 w-1/4 rounded-full" />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="pt-4 mt-auto border-t border-slate-200 dark:border-white/10 text-[10px] text-slate-500">
-                  <div className="flex justify-between mb-1">
-                    <span>Telegram Vault</span>
-                    <span className="font-semibold text-blue-600 dark:text-sky-400">1.77 GB</span>
+                {/* Mini App Main Stage */}
+                <div className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-[#131314]">
+                  
+                  {/* Top Bar with Search & Quick density */}
+                  <div className="h-12 border-b border-slate-200 dark:border-white/10 px-4 flex items-center justify-between gap-4">
+                    <div className="flex-1 max-w-sm flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-[#1E1F20] text-xs text-slate-500">
+                      <Search className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Search dates, camera, or places...</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setStageDensity(d => d === 'standard' ? 'dense' : 'standard')}
+                        className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
+                        title="Toggle Density"
+                      >
+                        <Grid3X3 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={handleLaunchApp}
+                        className="px-3 py-1 rounded-full text-xs font-semibold bg-[#0B57D0] text-white hover:bg-[#0842A0] cursor-pointer"
+                      >
+                        Launch App
+                      </button>
+                    </div>
                   </div>
-                  <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
-                    <div className="h-full bg-blue-600 dark:bg-sky-400 w-1/3 rounded-full" />
+
+                  {/* Dynamic Stage View Switcher */}
+                  <div className="flex-1 overflow-y-auto p-4 relative">
+                    
+                    {/* VIEW 1: PHOTOS TIMELINE */}
+                    {activeStageTab === 'photos' && (
+                      <div className="space-y-4 animate-in fade-in duration-200">
+                        {/* Memories Carousel */}
+                        <div>
+                          <div className="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">
+                            <span>Recent Highlights</span>
+                            <span className="text-[10px] text-blue-600 dark:text-sky-400 font-medium">Auto-Clustered</span>
+                          </div>
+                          <div className="flex gap-2.5 overflow-x-hidden">
+                            {SAMPLE_PHOTOS.slice(0, 3).map((item) => (
+                              <div
+                                key={item.id}
+                                onClick={() => { setActivePhoto(item); setIsExifModalOpen(true); }}
+                                className="w-36 h-22 rounded-xl relative overflow-hidden group cursor-pointer border border-slate-200 dark:border-white/10 shrink-0"
+                              >
+                                <img src={item.url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-2 flex flex-col justify-end text-white">
+                                  <span className="text-[11px] font-bold truncate">{item.title}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Date Group Heading */}
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 pt-1">
+                          <span>Saturday, Nov 23, 2026</span>
+                          <span className="text-[10px] text-slate-400 font-normal">Original Uncompressed Documents</span>
+                        </div>
+
+                        {/* Photo Grid */}
+                        <div className={`grid ${stageDensity === 'dense' ? 'grid-cols-3 sm:grid-cols-4 gap-2' : 'grid-cols-2 sm:grid-cols-3 gap-2.5'}`}>
+                          {SAMPLE_PHOTOS.map((photo) => (
+                            <div
+                              key={photo.id}
+                              onClick={() => { setActivePhoto(photo); setIsExifModalOpen(true); }}
+                              className="group relative aspect-4/3 rounded-xl overflow-hidden bg-slate-100 dark:bg-white/5 cursor-pointer border border-slate-200/60 dark:border-white/5 hover:border-blue-500 transition-all shadow-xs hover:shadow-md"
+                            >
+                              <img
+                                src={photo.url}
+                                alt={photo.title}
+                                className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
+                              />
+                              
+                              {/* Hover Overlay with telemetry */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity p-2 flex flex-col justify-between text-white">
+                                <div className="flex items-center justify-between">
+                                  <button
+                                    onClick={(e) => toggleFavorite(photo.id, e)}
+                                    className={`p-1 rounded-full backdrop-blur-md cursor-pointer ${favorites.includes(photo.id) ? 'text-rose-500 bg-white/90' : 'text-white bg-black/40 hover:bg-black/60'}`}
+                                  >
+                                    <Heart className="w-3 h-3 fill-current" />
+                                  </button>
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-black/60 backdrop-blur-xs">
+                                    {photo.size}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className="text-[11px] font-bold truncate">{photo.title}</p>
+                                  <p className="text-[9px] text-slate-300 font-mono truncate">{photo.camera}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* VIEW 2: SMART PLACES */}
+                    {activeStageTab === 'places' && (
+                      <div className="space-y-4 animate-in fade-in duration-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white font-['Google_Sans',sans-serif]">
+                              Regional Place Clusters
+                            </h4>
+                            <p className="text-xs text-slate-500">Clustered locally from EXIF GPS metadata</p>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                            Zero Remote Geocoding Calls
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {SAMPLE_PLACES.map((place, idx) => (
+                            <div
+                              key={idx}
+                              className="p-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-[#1E1F20]/60 flex items-center gap-3 hover:border-blue-500 transition-all cursor-pointer group"
+                            >
+                              <div className="w-16 h-14 rounded-lg overflow-hidden shrink-0">
+                                <img src={place.preview} alt={place.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{place.name}</p>
+                                <p className="text-[10px] font-mono text-slate-500 truncate">{place.coords}</p>
+                                <span className="inline-block mt-1 text-[10px] font-semibold text-blue-600 dark:text-sky-400">
+                                  {place.count} photos & videos
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* VIEW 3: LOCKED FOLDER */}
+                    {activeStageTab === 'vault' && (
+                      <div className="h-full flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-200">
+                        <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 mb-3">
+                          <FolderLock className="w-8 h-8" />
+                        </div>
+                        <h4 className="text-base font-bold text-slate-900 dark:text-white font-['Google_Sans',sans-serif]">
+                          Zero-Knowledge Locked Folder
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1 mb-4">
+                          Protected by client-side AES-256-GCM. Unencrypted master files never touch the network or drive.
+                        </p>
+
+                        <div className="w-full max-w-xs p-3 rounded-xl bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-slate-500 font-mono text-[11px]">Hardware Cipher:</span>
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">AES-256-GCM</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <input
+                              type="password"
+                              value={vaultPassphrase}
+                              onChange={(e) => setVaultPassphrase(e.target.value)}
+                              className="flex-1 px-2.5 py-1.5 rounded-lg text-xs bg-white dark:bg-[#1E1F20] border border-slate-300 dark:border-white/15 text-slate-900 dark:text-white font-mono"
+                            />
+                            <button
+                              onClick={() => setIsVaultUnlocked(!isVaultUnlocked)}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                            >
+                              {isVaultUnlocked ? 'Lock' : 'Unlock'}
+                            </button>
+                          </div>
+                          {isVaultUnlocked && (
+                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                              ✓ 14 Protected Items Unlocked in Memory
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Google Photos Floating Vertical Date Rail */}
+                    {activeStageTab === 'photos' && (
+                      <div className="absolute right-2 top-20 bottom-10 flex flex-col items-center justify-center pointer-events-none select-none">
+                        <div className="py-2.5 px-1 rounded-full bg-white/90 dark:bg-[#1E1F20]/90 backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-md flex flex-col items-center space-y-2 pointer-events-auto">
+                          {['2026', '2025', '2024'].map((yr) => (
+                            <div key={yr} className="group relative flex items-center justify-center cursor-pointer p-0.5">
+                              <div className="w-2 h-2 rounded-full bg-slate-400 group-hover:bg-blue-600 dark:group-hover:bg-sky-400 transition-all" />
+                              <div className="hidden group-hover:block absolute right-5 px-2 py-0.5 rounded bg-blue-600 text-white font-bold text-[10px] whitespace-nowrap shadow-md">
+                                {yr}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                   </div>
                 </div>
               </div>
 
-              {/* Mini App Gallery Area */}
-              <div className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-[#131314]">
-                
-                {/* Mini Top bar */}
-                <div className="h-12 border-b border-slate-200 dark:border-white/10 px-4 flex items-center justify-between gap-4">
-                  <div className="flex-1 max-w-sm flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-[#1E1F20] text-xs text-slate-500">
-                    <Search className="w-3.5 h-3.5" />
-                    <span>Search Alpine, Mountains, Leica...</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setStageDensity(d => d === 'standard' ? 'dense' : 'standard')}
-                      className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
-                      title="Toggle Density"
-                    >
-                      <Grid3X3 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={handleLaunchApp}
-                      className="px-3 py-1 rounded-full text-xs font-semibold bg-[#0B57D0] text-white hover:bg-[#0842A0]"
-                    >
-                      Launch Live App
-                    </button>
-                  </div>
-                </div>
-
-                {/* Mini Gallery Scroll Container */}
-                <div className="flex-1 overflow-y-auto p-4 relative">
-                  
-                  {/* Memories Strip */}
-                  <div className="mb-4">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Recent Highlights</span>
-                    </div>
-                    <div className="flex gap-2.5 overflow-x-hidden">
-                      {SAMPLE_PHOTOS.slice(0, 3).map((item) => (
-                        <div
-                          key={item.id}
-                          onClick={() => { setActivePhoto(item); setIsExifModalOpen(true); }}
-                          className="w-32 h-20 rounded-xl relative overflow-hidden group cursor-pointer border border-slate-200 dark:border-white/10 shrink-0"
-                        >
-                          <img src={item.url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-1.5 flex flex-col justify-end text-white">
-                            <span className="text-[10px] font-bold truncate">{item.title}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Date Group Heading */}
-                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 py-1 mb-2">
-                    <span>Saturday, Nov 23, 2026</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Original Uncompressed Documents</span>
-                  </div>
-
-                  {/* Photo Grid */}
-                  <div className={`grid ${stageDensity === 'dense' ? 'grid-cols-3 sm:grid-cols-4 gap-2' : 'grid-cols-2 sm:grid-cols-3 gap-2.5'}`}>
-                    {SAMPLE_PHOTOS.map((photo) => (
-                      <div
-                        key={photo.id}
-                        onClick={() => { setActivePhoto(photo); setIsExifModalOpen(true); }}
-                        className="group relative aspect-4/3 rounded-xl overflow-hidden bg-slate-100 dark:bg-white/5 cursor-pointer border border-slate-200/60 dark:border-white/5 hover:border-blue-500 transition-all shadow-xs hover:shadow-md"
+              {/* Stageshow Photo EXIF Popover */}
+              {isExifModalOpen && (
+                <div className="absolute inset-0 z-40 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+                  <div className="bg-white dark:bg-[#1E1F20] rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 animate-in zoom-in-95 duration-150">
+                    <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/10">
+                      <div className="flex items-center gap-2">
+                        <Camera className="w-4 h-4 text-blue-600 dark:text-sky-400" />
+                        <span className="font-bold text-sm text-slate-900 dark:text-white">{activePhoto.title}</span>
+                      </div>
+                      <button
+                        onClick={() => setIsExifModalOpen(false)}
+                        className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
                       >
-                        <img
-                          src={photo.url}
-                          alt={photo.title}
-                          className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
-                        />
-                        
-                        {/* Hover Overlay with EXIF trigger & favorite */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity p-2 flex flex-col justify-between text-white">
-                          <div className="flex items-center justify-between">
-                            <button
-                              onClick={(e) => toggleFavorite(photo.id, e)}
-                              className={`p-1 rounded-full backdrop-blur-md ${favorites.includes(photo.id) ? 'text-rose-500 bg-white/90' : 'text-white bg-black/40 hover:bg-black/60'}`}
-                            >
-                              <Heart className="w-3 h-3 fill-current" />
-                            </button>
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-black/60 backdrop-blur-xs">
-                              {photo.size}
-                            </span>
-                          </div>
-                          <div>
-                            <p className="text-[11px] font-bold truncate">{photo.title}</p>
-                            <p className="text-[9px] text-slate-300 font-mono truncate">{photo.camera}</p>
-                          </div>
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      <div className="w-full h-44 rounded-xl overflow-hidden bg-slate-950">
+                        <img src={activePhoto.url} alt={activePhoto.title} className="w-full h-full object-contain" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2.5 text-xs">
+                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                          <span className="text-slate-500 dark:text-slate-400 block mb-0.5">Optics & Body</span>
+                          <span className="font-semibold text-slate-900 dark:text-white font-mono">{activePhoto.camera}</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                          <span className="text-slate-500 dark:text-slate-400 block mb-0.5">File Payload</span>
+                          <span className="font-semibold text-slate-900 dark:text-white font-mono">{activePhoto.size} • Raw DNG</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                          <span className="text-slate-500 dark:text-slate-400 block mb-0.5">Resolution</span>
+                          <span className="font-semibold text-slate-900 dark:text-white font-mono">{activePhoto.dimensions}</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                          <span className="text-slate-500 dark:text-slate-400 block mb-0.5">Shutter / ISO</span>
+                          <span className="font-semibold text-slate-900 dark:text-white font-mono">{activePhoto.shutter} • {activePhoto.iso}</span>
                         </div>
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Floating Date Scrubber Rail (True Google Photos Floating Overlay) */}
-                  <div className="absolute right-2 top-20 bottom-10 flex flex-col items-center justify-center pointer-events-none select-none">
-                    <div className="py-2.5 px-1 rounded-full bg-white/90 dark:bg-[#1E1F20]/90 backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-md flex flex-col items-center space-y-2 pointer-events-auto">
-                      {['2026', '2025', '2024'].map((yr) => (
-                        <div key={yr} className="group relative flex items-center justify-center cursor-pointer p-0.5">
-                          <div className="w-2 h-2 rounded-full bg-slate-400 group-hover:bg-blue-600 dark:group-hover:bg-sky-400 transition-all" />
-                          <div className="hidden group-hover:block absolute right-5 px-2 py-0.5 rounded bg-blue-600 text-white font-bold text-[10px] whitespace-nowrap shadow-md">
-                            {yr}
-                          </div>
-                        </div>
-                      ))}
+                      <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-sky-950/40 border border-blue-200/60 dark:border-sky-800/60 flex items-center gap-2 text-xs text-blue-900 dark:text-sky-200 font-medium">
+                        <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-sky-400 shrink-0" />
+                        <span>Stored directly on Telegram Channel #4298525450 as an uncompressed document.</span>
+                      </div>
                     </div>
                   </div>
                 </div>
+              )}
+            </div>
+
+            {/* SATELLITE CARD (framing.md Rule 7 & 18): Straddles bottom-right edge */}
+            <div className="hidden md:flex absolute -bottom-6 right-6 z-20 items-center gap-3 p-3.5 rounded-2xl bg-white/95 dark:bg-[#1E1F20]/95 backdrop-blur-md border border-slate-200/90 dark:border-white/15 shadow-xl animate-in slide-in-from-bottom-3 duration-300">
+              <div className="p-2 rounded-xl bg-blue-50 dark:bg-sky-950/50 text-blue-600 dark:text-sky-400 border border-blue-200/60 dark:border-sky-800/40">
+                <Cloud className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">Direct Telegram Sync</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                    24ms WSS
+                  </span>
+                </div>
+                <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                  IMG_2026_RAW.DNG (24.1 MB) • Bitstream Verified
+                </p>
               </div>
             </div>
 
-            {/* Stageshow Interactive EXIF Modal */}
-            {isExifModalOpen && (
-              <div className="absolute inset-0 z-40 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-                <div className="bg-white dark:bg-[#1E1F20] rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 animate-in zoom-in-95 duration-150">
-                  <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-white/10">
-                    <div className="flex items-center gap-2">
-                      <Camera className="w-4 h-4 text-blue-600 dark:text-sky-400" />
-                      <span className="font-bold text-sm text-slate-900 dark:text-white">{activePhoto.title}</span>
-                    </div>
-                    <button
-                      onClick={() => setIsExifModalOpen(false)}
-                      className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="p-4 space-y-4">
-                    <div className="w-full h-44 rounded-xl overflow-hidden bg-slate-950">
-                      <img src={activePhoto.url} alt={activePhoto.title} className="w-full h-full object-contain" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                        <span className="text-slate-500 dark:text-slate-400 block mb-0.5">Optics & Body</span>
-                        <span className="font-semibold text-slate-900 dark:text-white font-mono">{activePhoto.camera}</span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                        <span className="text-slate-500 dark:text-slate-400 block mb-0.5">File Payload</span>
-                        <span className="font-semibold text-slate-900 dark:text-white font-mono">{activePhoto.size} • Raw DNG</span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                        <span className="text-slate-500 dark:text-slate-400 block mb-0.5">Resolution</span>
-                        <span className="font-semibold text-slate-900 dark:text-white font-mono">{activePhoto.dimensions}</span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                        <span className="text-slate-500 dark:text-slate-400 block mb-0.5">Shutter / ISO</span>
-                        <span className="font-semibold text-slate-900 dark:text-white font-mono">{activePhoto.shutter} • {activePhoto.iso}</span>
-                      </div>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-sky-950/40 border border-blue-200/60 dark:border-sky-800/60 flex items-center gap-2 text-xs text-blue-900 dark:text-sky-200 font-medium">
-                      <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-sky-400 shrink-0" />
-                      <span>Stored directly on Telegram Channel #4298525450 as an uncompressed document.</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </section>
 
-      {/* 3. 6-Card Bento Grid Section */}
+      {/* 3. Refined 6-Card Bento Grid Section (bento.md Guidelines) */}
       <section id="bento" className="py-20 md:py-28 bg-slate-50 dark:bg-[#161718] border-y border-slate-200 dark:border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-xs uppercase tracking-widest font-bold text-blue-600 dark:text-sky-400 mb-2">
-              Deep Architecture & Craft
+              Architecture Bento
             </h2>
             <p className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-white font-['Google_Sans',sans-serif] tracking-tight">
               Six engineering pillars behind Framely.
             </p>
             <p className="mt-4 text-base text-slate-600 dark:text-slate-400">
-              Zero shortcuts. Clean separation between client-side Web Crypto, local IndexedDB caching, and direct MTProto WSS transport.
+              Clean separation between client-side Web Crypto, local IndexedDB caching, and direct MTProto WSS transport.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            {/* Bento Card 1: Client-Side Zero-Knowledge Encryption (Span 2 cols) */}
+            {/* Tile 1: Hero UI (Span 2 cols) - Client-Side Zero-Knowledge Encryption Engine */}
             <div className="md:col-span-2 p-8 rounded-3xl bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-4">
@@ -511,7 +687,7 @@ export const LandingPage: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white font-['Google_Sans',sans-serif]">
-                      Client-Side Zero-Knowledge Encryption
+                      Zero-Knowledge Hardware Encryption
                     </h3>
                     <p className="text-xs text-slate-500 font-mono mt-0.5">
                       AES-256-GCM • PBKDF2 100,000 Iterations • Web Crypto API
@@ -524,12 +700,12 @@ export const LandingPage: React.FC = () => {
                   Neither Telegram nor any middleman can read your photos. Only you hold the passphrase.
                 </p>
 
-                {/* Interactive Encryption Simulator */}
+                {/* Interactive Cipher Harness */}
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-white/5 space-y-3">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    <span>Live Encryption Test Harness</span>
+                    <span>Live In-Browser Crypto Harness</span>
                     <span className="font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Web Crypto Verified
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Hardware Tag Verified
                     </span>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2">
@@ -537,18 +713,18 @@ export const LandingPage: React.FC = () => {
                       type="text"
                       value={vaultInput}
                       onChange={(e) => setVaultInput(e.target.value)}
-                      placeholder="Type sample photo caption..."
+                      placeholder="Type sample photo filename..."
                       className="flex-1 px-3 py-2 rounded-xl text-xs bg-white dark:bg-[#171819] border border-slate-300 dark:border-white/15 text-slate-900 dark:text-white font-mono focus:outline-hidden focus:border-blue-500"
                     />
                     <div className="px-3 py-2 rounded-xl text-xs font-mono bg-slate-200/70 dark:bg-white/10 text-slate-700 dark:text-slate-300 flex items-center gap-1.5 shrink-0">
                       <Key className="w-3.5 h-3.5 text-amber-500" />
-                      <span>{vaultKey}</span>
+                      <span>aes-256-gcm-0x8f2d...91e4</span>
                     </div>
                   </div>
                   <div className="text-[11px] font-mono p-2.5 rounded-xl bg-slate-900 text-emerald-400 dark:bg-black overflow-x-auto">
                     <span>CIPHERTEXT: </span>
                     <span className="text-slate-400">
-                      {btoa(vaultInput + '_encrypted_aes_gcm_auth_tag_verified')}...==
+                      {btoa(vaultInput + '_authenticated_aes256_gcm_tag_ok')}...==
                     </span>
                   </div>
                 </div>
@@ -560,7 +736,7 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Bento Card 2: Unlimited Cloud Storage Quota (Span 1 col) */}
+            {/* Tile 2: Stat Tile (Span 1 col) - Unlimited Free Cloud Storage */}
             <div className="p-8 rounded-3xl bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-sky-950/50 text-blue-600 dark:text-sky-400 border border-blue-200 dark:border-sky-800/40 w-fit mb-4">
@@ -574,18 +750,20 @@ export const LandingPage: React.FC = () => {
                 </p>
 
                 <div className="space-y-3">
-                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/5">
-                    <div className="flex justify-between text-xs font-semibold mb-1">
-                      <span className="text-slate-700 dark:text-slate-300">Framely (Telegram)</span>
-                      <span className="text-blue-600 dark:text-sky-400 font-bold">$0.00 / month</span>
+                  <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-sky-950/30 border border-blue-200/70 dark:border-sky-800/40">
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span className="text-xs font-bold text-blue-900 dark:text-sky-200">Framely (Telegram)</span>
+                      <span className="text-2xl font-black text-blue-600 dark:text-sky-400">$0.00</span>
                     </div>
-                    <span className="text-[11px] text-slate-500 block">Unlimited TB • 2GB single file limit</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">
+                      Unlimited TB • 2,048 MB single file cap
+                    </span>
                   </div>
 
-                  <div className="p-3 rounded-2xl bg-slate-50/50 dark:bg-white/5 border border-slate-200/40 dark:border-white/5 opacity-70">
-                    <div className="flex justify-between text-xs font-medium mb-1">
-                      <span className="text-slate-500 line-through">Google Photos 2TB</span>
-                      <span className="text-slate-500">$9.99 / month</span>
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 opacity-70">
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span className="text-xs font-medium text-slate-500 line-through">Google Photos 2TB</span>
+                      <span className="text-xs font-bold text-slate-500">$9.99 / mo</span>
                     </div>
                     <span className="text-[11px] text-slate-400 block">Restricted quota • Downscales on free tier</span>
                   </div>
@@ -593,35 +771,36 @@ export const LandingPage: React.FC = () => {
               </div>
 
               <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/5 text-xs text-slate-500">
-                Official Telegram MTProto Protocol
+                Official Telegram Channel Documents
               </div>
             </div>
 
-            {/* Bento Card 3: Direct MTProto 2.0 WSS Streaming (Span 1 col) */}
+            {/* Tile 3: Diagram Tile (Span 1 col) - Direct MTProto 2.0 WSS Streaming */}
             <div className="p-8 rounded-3xl bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40 w-fit mb-4">
                   <Zap className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white font-['Google_Sans',sans-serif] mb-2">
-                  Direct MTProto 2.0 WSS Streaming
+                  Direct MTProto 2.0 WSS
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
                   Your browser connects directly to Telegram Datacenters over secure WebSockets. Multi-chunk concurrent transfers deliver instant streaming.
                 </p>
 
-                <div className="p-4 rounded-2xl bg-slate-900 text-slate-200 text-xs font-mono space-y-1.5">
-                  <div className="flex justify-between text-[11px] text-slate-400">
-                    <span>DC Connection</span>
-                    <span className="text-emerald-400">wss://flora.web.telegram.org</span>
+                {/* SVG Architecture Diagram */}
+                <div className="p-4 rounded-2xl bg-slate-900 text-slate-200 text-xs font-mono space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Browser Client</span>
+                    <span className="text-emerald-400">Direct WSS</span>
+                    <span>Telegram DC 1</span>
                   </div>
-                  <div className="flex justify-between text-[11px] text-slate-400">
-                    <span>Chunk Concurrency</span>
-                    <span className="text-sky-300">4 Parallel Streams</span>
+                  <div className="w-full h-1.5 rounded-full bg-slate-800 relative overflow-hidden">
+                    <div className="h-full bg-emerald-400 w-full animate-pulse" />
                   </div>
-                  <div className="flex justify-between text-[11px] text-slate-400">
-                    <span>Handshake Latency</span>
-                    <span className="text-amber-300">28ms direct</span>
+                  <div className="flex justify-between text-[11px] text-slate-400 pt-1">
+                    <span>Relay Servers: <strong className="text-rose-400 font-mono">0</strong></span>
+                    <span>Latency: <strong className="text-amber-300 font-mono">24ms</strong></span>
                   </div>
                 </div>
               </div>
@@ -631,7 +810,7 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Bento Card 4: Authentic Google Photos Desktop Craft (Span 2 cols) */}
+            {/* Tile 4: Component Tile (Span 2 cols) - Authentic Google Photos Desktop Craft */}
             <div className="md:col-span-2 p-8 rounded-3xl bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-4">
@@ -640,10 +819,10 @@ export const LandingPage: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white font-['Google_Sans',sans-serif]">
-                      Authentic Google Photos Desktop Craft
+                      Authentic Desktop Library Ergonomics
                     </h3>
                     <p className="text-xs text-slate-500 font-mono mt-0.5">
-                      60 FPS Virtualized Timeline • Floating Date Scrubber • Keyboard Control
+                      60 FPS Virtualized Timeline • Floating Date Scrubber • Keyboard Navigation
                     </p>
                   </div>
                 </div>
@@ -654,33 +833,46 @@ export const LandingPage: React.FC = () => {
                   and full keyboard navigation (Space, Esc, Arrow Keys, Delete).
                 </p>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
-                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                    <span className="font-bold text-slate-900 dark:text-white block mb-0.5">Floating Rail</span>
-                    <span className="text-slate-500 text-[11px]">Instant Year Scrubber</span>
+                {/* Interactive Density Switcher Preview */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-white/5">
+                  <div className="flex items-center justify-between mb-3 text-xs">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">Live Grid Density Control:</span>
+                    <div className="flex gap-1.5 p-1 rounded-xl bg-slate-200/70 dark:bg-white/10">
+                      {(['compact', 'standard', 'large'] as const).map((mode) => (
+                        <button
+                          key={mode}
+                          onClick={() => setBentoDensityPreview(mode)}
+                          className={`px-3 py-1 rounded-lg font-medium text-xs capitalize transition-colors cursor-pointer ${
+                            bentoDensityPreview === mode
+                              ? 'bg-white dark:bg-[#1E1F20] text-slate-900 dark:text-white shadow-xs'
+                              : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                          }`}
+                        >
+                          {mode}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                    <span className="font-bold text-slate-900 dark:text-white block mb-0.5">Dexie IndexedDB</span>
-                    <span className="text-slate-500 text-[11px]">Sub-5ms Query Speed</span>
-                  </div>
-                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                    <span className="font-bold text-slate-900 dark:text-white block mb-0.5">Shift + Click</span>
-                    <span className="text-slate-500 text-[11px]">Multi-Select Batch</span>
-                  </div>
-                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                    <span className="font-bold text-slate-900 dark:text-white block mb-0.5">Zero Slop</span>
-                    <span className="text-slate-500 text-[11px]">Transitions.dev Tokens</span>
+
+                  <div className={`grid gap-2 transition-all ${
+                    bentoDensityPreview === 'compact' ? 'grid-cols-6' : bentoDensityPreview === 'large' ? 'grid-cols-3' : 'grid-cols-4'
+                  }`}>
+                    {SAMPLE_PHOTOS.slice(0, 6).map((item) => (
+                      <div key={item.id} className="aspect-square rounded-lg overflow-hidden bg-slate-200 dark:bg-white/10">
+                        <img src={item.url} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
 
               <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500">
                 <span>Designed for photographers with 50,000+ libraries</span>
-                <span className="font-medium text-blue-600 dark:text-sky-400">Virtualized DOM</span>
+                <span className="font-medium text-blue-600 dark:text-sky-400">Virtualized IndexedDB Engine</span>
               </div>
             </div>
 
-            {/* Bento Card 5: Smart Regional Places (Span 1 col) */}
+            {/* Tile 5: Collection Tile (Span 1 col) - Smart Regional Places */}
             <div className="p-8 rounded-3xl bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="p-2.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 w-fit mb-4">
@@ -710,7 +902,7 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Bento Card 6: Cinema Lightbox & EXIF Studio (Span 2 cols) */}
+            {/* Tile 6: Object / Optic Tile (Span 2 cols) - Darkroom Cinema Lightbox & EXIF Studio */}
             <div className="md:col-span-2 p-8 rounded-3xl bg-white dark:bg-[#1E1F20] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-4">
@@ -732,19 +924,19 @@ export const LandingPage: React.FC = () => {
                 </p>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
-                  <div className="p-3 rounded-2xl bg-slate-900 text-white">
+                  <div className="p-3.5 rounded-2xl bg-slate-900 text-white">
                     <span className="text-slate-400 text-[10px] block">APERTURE</span>
                     <span className="text-base font-bold text-sky-400">f / 1.8</span>
                   </div>
-                  <div className="p-3 rounded-2xl bg-slate-900 text-white">
+                  <div className="p-3.5 rounded-2xl bg-slate-900 text-white">
                     <span className="text-slate-400 text-[10px] block">SHUTTER</span>
                     <span className="text-base font-bold text-emerald-400">1 / 240s</span>
                   </div>
-                  <div className="p-3 rounded-2xl bg-slate-900 text-white">
+                  <div className="p-3.5 rounded-2xl bg-slate-900 text-white">
                     <span className="text-slate-400 text-[10px] block">FOCAL</span>
                     <span className="text-base font-bold text-amber-400">26mm</span>
                   </div>
-                  <div className="p-3 rounded-2xl bg-slate-900 text-white">
+                  <div className="p-3.5 rounded-2xl bg-slate-900 text-white">
                     <span className="text-slate-400 text-[10px] block">SENSITIVITY</span>
                     <span className="text-base font-bold text-rose-400">ISO 100</span>
                   </div>
@@ -784,7 +976,7 @@ export const LandingPage: React.FC = () => {
                   <th className="p-4 sm:p-6">Feature Vector</th>
                   <th className="p-4 sm:p-6 text-blue-600 dark:text-sky-400 bg-blue-50/50 dark:bg-sky-950/20 font-bold">
                     <div className="flex items-center gap-2">
-                      <FramelyLogo className="w-4 h-4" />
+                      <FramelyLogo className="w-4 h-4 shrink-0" />
                       <span>Framely (Telegram)</span>
                     </div>
                   </th>
@@ -956,7 +1148,7 @@ export const LandingPage: React.FC = () => {
                 >
                   <button
                     onClick={() => setFaqOpenIndex(isOpen ? null : idx)}
-                    className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-sky-400 transition-colors"
+                    className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-sky-400 transition-colors cursor-pointer"
                   >
                     <span className="text-sm sm:text-base">{faq.q}</span>
                     <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
@@ -978,7 +1170,7 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           
           <div className="max-w-3xl mx-auto">
-            {/* Pure logo without any box */}
+            {/* Pure logo mark without any box */}
             <div className="flex justify-center mb-6">
               <FramelyLogo className="w-12 h-12" />
             </div>
@@ -993,7 +1185,7 @@ export const LandingPage: React.FC = () => {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <button
                 onClick={handleLaunchApp}
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-sm font-bold text-slate-950 bg-white hover:bg-slate-100 transition-all shadow-lg active:scale-98"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-sm font-bold text-slate-950 bg-white hover:bg-slate-100 transition-all shadow-lg active:scale-98 cursor-pointer"
               >
                 <span>Launch Framely Web App</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1001,7 +1193,7 @@ export const LandingPage: React.FC = () => {
 
               <button
                 onClick={handleStartOnboarding}
-                className="inline-flex items-center gap-2 px-6 py-4 rounded-full text-sm font-semibold text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-4 rounded-full text-sm font-semibold text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer"
               >
                 <span>Get Started Guide (3 min)</span>
               </button>
@@ -1010,7 +1202,7 @@ export const LandingPage: React.FC = () => {
 
           <div className="mt-16 pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
             <div className="flex items-center gap-3">
-              <FramelyLogo className="w-5 h-5" />
+              <FramelyLogo className="w-5 h-5 shrink-0" />
               <span>Framely • Private Photos in your own Telegram</span>
             </div>
             <div className="flex items-center gap-6">
