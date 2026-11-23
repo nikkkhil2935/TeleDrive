@@ -32,6 +32,8 @@ export const Header: React.FC = () => {
     logout,
     lockVault,
     isAnotherTabActive,
+    isLandingOpen,
+    setIsLandingOpen,
     theme,
     setTheme,
     setIsAuthModalOpen,
@@ -115,9 +117,9 @@ export const Header: React.FC = () => {
       {/* Left: Framely Brand & Wordmark (Authentic Google Photos Style - Pure Logo, No Enclosing Box) */}
       <div className="flex items-center gap-3 shrink-0">
         <div
-          onClick={() => setIsOnboardingOpen(true)}
+          onClick={() => setIsLandingOpen(true)}
           className="flex items-center gap-2.5 cursor-pointer group"
-          title="Framely - Private Photos in your Telegram"
+          title="Framely - Product Tour & Architecture"
         >
           {/* Pure Framely Pinwheel Logo (No background box) */}
           <div className="group-hover:rotate-12 group-hover:scale-105 transition-transform duration-300">

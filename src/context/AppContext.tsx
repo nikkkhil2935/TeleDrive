@@ -45,6 +45,9 @@ interface AppContextType {
   setBrandAccent: (a: BrandAccent) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isLandingOpen: boolean;
+  setIsLandingOpen: (open: boolean) => void;
+  enterApp: () => void;
   selectedMedia: MediaItem | null;
   setSelectedMedia: (m: MediaItem | null) => void;
 
@@ -117,8 +120,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAnotherTabActive, setIsAnotherTabActive] = useState(false);
 
   const [theme, setThemeState] = useState<ThemeMode>(() => {
-    return (localStorage.getItem('tg_photos_theme') as ThemeMode) || 'dark';
+    return (localStorage.getItem('tg_photos_theme') as ThemeMode) || 'light';
   });
+  const [isLandingOpen, setIsLandingOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const hasEntered = sessionStorage.getItem('framely_app_active');
+      if (hasEntered === 'true') return false;
+    }
+    return true;
+  });
+
+  const enterApp = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('framely_app_active', 'true');
+    }
+    setIsLandingOpen(false);
+  }, []);
   const [activeTab, setActiveTab] = useState<string>('photos');
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
 
@@ -327,7 +344,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [brandAccent, theme]);
 
   useEffect(() => {
-    if (!session && !isVaultLocked) {
+    if (!session && !isVaultLocked && !isLandingOpen) {
       const hasOnboarded = localStorage.getItem('framely_onboarding_completed');
       if (!hasOnboarded) {
         setIsOnboardingOpen(true);
@@ -335,7 +352,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsAuthModalOpen(true);
       }
     }
-  }, [session, isVaultLocked]);
+  }, [session, isVaultLocked, isLandingOpen]);
 
   useEffect(() => {
     const unsubscribe = transferQueue.subscribe((jobs) => {
@@ -504,6 +521,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setBrandAccent,
         activeTab,
         setActiveTab,
+        isLandingOpen,
+        setIsLandingOpen,
+        enterApp,
         selectedMedia,
         setSelectedMedia,
         selectedIds,

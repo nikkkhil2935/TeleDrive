@@ -21,6 +21,7 @@ import { StorageInsightModal } from './components/StorageInsightModal';
 import { TransferManagerModal } from './components/TransferManagerModal';
 import { SettingsModal } from './components/SettingsModal';
 import { VaultUnlockModal } from './components/VaultUnlockModal';
+import { LandingPage } from './components/LandingPage';
 import { useApp } from './context/AppContext';
 import { db } from './db';
 
@@ -38,11 +39,21 @@ async function purgePlaceholderMedia() {
 }
 
 export const App: React.FC = () => {
-  const { activeTab } = useApp();
+  const { activeTab, isLandingOpen } = useApp();
 
   useEffect(() => {
     purgePlaceholderMedia();
   }, []);
+
+  if (isLandingOpen) {
+    return (
+      <div className="min-h-screen w-screen overflow-x-hidden bg-white dark:bg-[#131314] text-[#1F1F1F] dark:text-[#E3E3E3] font-sans transition-colors duration-200">
+        <LandingPage />
+        <AuthModal />
+        <OnboardingModal />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#F8FAFD] dark:bg-[#131314] text-[#1F1F1F] dark:text-[#E3E3E3] font-sans transition-colors duration-200 select-none">
