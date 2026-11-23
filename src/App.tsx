@@ -47,7 +47,7 @@ export const App: React.FC = () => {
 
   if (isLandingOpen) {
     return (
-      <div className="min-h-screen w-screen overflow-x-hidden bg-white dark:bg-[#131314] text-[#1F1F1F] dark:text-[#E3E3E3] font-sans transition-colors duration-200">
+      <div className="min-h-screen w-full overflow-x-hidden bg-white dark:bg-[#131314] text-[#1F1F1F] dark:text-[#E3E3E3] font-sans transition-colors duration-200">
         <LandingPage />
         <AuthModal />
         <OnboardingModal />
