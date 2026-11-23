@@ -309,6 +309,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setThemeState(t);
   };
 
+  // Brand Accent Synchronization
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute('data-accent', brandAccent);
+    const accentMap: Record<BrandAccent, { light: string; dark: string; lightHover: string; darkHover: string; navLight: string; navDark: string }> = {
+      blue: { light: '#0B57D0', dark: '#A8C7FA', lightHover: '#0842A0', darkHover: '#8AB4F8', navLight: '#D3E3FD', navDark: '#004A77' },
+      indigo: { light: '#4F46E5', dark: '#818CF8', lightHover: '#4338CA', darkHover: '#6366F1', navLight: '#E0E7FF', navDark: '#312E81' },
+      teal: { light: '#0D9488', dark: '#2DD4BF', lightHover: '#0F766E', darkHover: '#14B8A6', navLight: '#CCFBF1', navDark: '#134E4A' },
+      coral: { light: '#E11D48', dark: '#FB7185', lightHover: '#BE123C', darkHover: '#F43F5E', navLight: '#FFE4E6', navDark: '#881337' },
+    };
+    const c = accentMap[brandAccent] || accentMap.blue;
+    const isDark = root.classList.contains('dark');
+    root.style.setProperty('--gp-primary-blue', isDark ? c.dark : c.light);
+    root.style.setProperty('--gp-primary-blue-hover', isDark ? c.darkHover : c.lightHover);
+    root.style.setProperty('--gp-nav-selected', isDark ? c.navDark : c.navLight);
+  }, [brandAccent, theme]);
+
   useEffect(() => {
     if (!session && !isVaultLocked) {
       const hasOnboarded = localStorage.getItem('framely_onboarding_completed');

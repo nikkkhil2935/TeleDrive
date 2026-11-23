@@ -75,6 +75,18 @@ html.light {
   color-scheme: light;
 }
 
+html.midnight {
+  color-scheme: dark;
+  --gp-app-bg: #000000;
+  --gp-surface: #0A0A0A;
+  --gp-surface-variant: #141414;
+  --gp-text-primary: #F5F5F5;
+  --gp-text-secondary: #A3A3A3;
+  --gp-border: #222222;
+  --gp-hover-bg: #1A1A1A;
+  --gp-chip-bg: #141414;
+}
+
 body {
   margin: 0;
   padding: 0;
