@@ -6,6 +6,7 @@ import { transferQueue } from '../services/transferQueue';
 export const UploadBanner: React.FC = () => {
   const { activeJobs, selectedMedia, setIsTransfersOpen } = useApp();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -13,14 +14,14 @@ export const UploadBanner: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  if (activeJobs.length === 0 || selectedMedia) return null;
+  if (activeJobs.length === 0 || selectedMedia || isDismissed) return null;
 
   const currentJob = activeJobs[0];
   const isCooldown = currentJob.status === 'cooldown' && currentJob.cooldownUntil && currentJob.cooldownUntil > now;
   const cooldownRemainingSec = isCooldown ? Math.round((currentJob.cooldownUntil! - now) / 1000) : 0;
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 right-3 left-3 sm:left-auto sm:right-6 z-30 max-w-sm w-full bg-[#FFFFFF]/95 dark:bg-[#1E1F20]/95 border border-slate-200 dark:border-[#444746]/60 rounded-2xl shadow-xl backdrop-blur-md overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200 select-none">
+    <div className="fixed bottom-20 md:bottom-6 right-3 left-3 sm:left-auto sm:right-6 z-30 max-w-sm w-full bg-[#FFFFFF]/95 dark:bg-[#1E1F20]/95 border border-slate-200/90 dark:border-white/[0.08] rounded-2xl shadow-2xl backdrop-blur-md overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200 select-none">
       <div
         onClick={() => setIsTransfersOpen(true)}
         className="p-3.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#282A2C]/60 transition-colors"
@@ -53,15 +54,28 @@ export const UploadBanner: React.FC = () => {
           </div>
         </div>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsExpanded(!isExpanded);
-          }}
-          className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-full hover:bg-slate-100 dark:hover:bg-[#282A2C] transition-colors"
-        >
-          <ChevronRight className={`w-4 h-4 transform transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(!isExpanded);
+            }}
+            title={isExpanded ? "Collapse" : "Expand"}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-full hover:bg-slate-100 dark:hover:bg-[#282A2C] transition-colors cursor-pointer"
+          >
+            <ChevronRight className={`w-4 h-4 transform transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDismissed(true);
+            }}
+            title="Dismiss banner"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-full hover:bg-slate-100 dark:hover:bg-[#282A2C] transition-colors cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Progress Bar */}

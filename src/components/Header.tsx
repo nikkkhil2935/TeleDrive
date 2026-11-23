@@ -216,13 +216,22 @@ export const Header: React.FC = () => {
         )}
       </div>
 
-      {/* Right Actions: Create (+), Help (?), Settings, Theme, Avatar */}
+      {/* Right Actions: Upload Pill, Create (+), Help (?), Settings, Theme, Avatar */}
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-        {/* + Create / Upload Button */}
+        {/* Google Photos Desktop Upload Button */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-[#A8C7FA] dark:hover:bg-[#8AB4F8] text-white dark:text-[#041E49] text-xs font-semibold shadow-xs transition-all mr-0.5 cursor-pointer"
+        >
+          <UploadCloud className="w-3.5 h-3.5 stroke-[2.2]" />
+          <span>Upload</span>
+        </button>
+
+        {/* + Create / Add Button */}
         <div className="relative">
           <button
             onClick={() => setShowCreateMenu(!showCreateMenu)}
-            title="Create & Upload (+)"
+            title="Create Album or Upload (+)"
             aria-label="Create or upload photos and albums"
             className="p-2 sm:p-2.5 rounded-full hover:bg-[#F1F3F4] dark:hover:bg-[#282A2C] text-[#1F1F1F] dark:text-[#E3E3E3] transition-colors"
           >
@@ -275,8 +284,8 @@ export const Header: React.FC = () => {
         >
           <Activity className="w-5 h-5" />
           {activeTransferCount > 0 && (
-            <span className="absolute top-1 right-1 w-4 h-4 bg-[#0B57D0] text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-xs">
-              {activeTransferCount}
+            <span className="absolute -top-0.5 -right-0.5 min-w-4.5 h-4.5 px-1 bg-[#0B57D0] dark:bg-[#A8C7FA] text-white dark:text-[#041E49] text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs border-2 border-white dark:border-[#131314]">
+              {activeTransferCount > 99 ? '99+' : activeTransferCount}
             </span>
           )}
         </button>

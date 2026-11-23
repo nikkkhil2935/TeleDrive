@@ -96,19 +96,8 @@ export const Sidebar: React.FC = () => {
         onChange={handleFileChange}
       />
 
-      <div className="space-y-4">
-        {/* Prominent Google Photos Styled Upload Button */}
-        <div className="hidden lg:block px-1">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full flex items-center justify-center gap-2.5 py-3 px-5 rounded-full bg-[#0B57D0] hover:bg-[#0842A0] dark:bg-[#A8C7FA] dark:hover:bg-[#8AB4F8] text-white dark:text-[#041E49] font-medium text-sm shadow-sm hover:shadow-md transition-all active:scale-[0.98] cursor-pointer"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Upload photos</span>
-          </button>
-        </div>
-
-        {/* Primary Navigation Pills */}
+      <div className="space-y-3">
+        {/* Primary Navigation Pills (Google Photos Desktop Layout) */}
         <nav className="space-y-1">
           <button
             onClick={() => handleSelectTab('photos')}
