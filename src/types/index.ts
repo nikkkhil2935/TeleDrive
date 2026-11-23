@@ -45,7 +45,25 @@ export interface Album {
   createdAt: string;
 }
 
-export type JobStatus = 'queued' | 'processing' | 'uploading' | 'cooldown' | 'done' | 'error';
+export type JobStatus = 'queued' | 'processing' | 'uploading' | 'paused' | 'cooldown' | 'done' | 'error';
+
+export interface PersonGroup {
+  id: string;
+  name: string;
+  faceUrl: string;
+  mediaIds: number[];
+  count: number;
+  createdAt: string;
+  libraryId: string;
+}
+
+export interface UploadBlobRecord {
+  id: string;
+  blob: Blob;
+  filename: string;
+  mimeType: string;
+  lastModified: number;
+}
 
 export interface UploadJob {
   id: string;

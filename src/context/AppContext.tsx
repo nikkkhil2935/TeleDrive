@@ -111,10 +111,9 @@ const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSessionState] = useState<UserSession | null>(() => {
-    if (hasEncryptedVault()) return null;
     return getActiveSession();
   });
-  const [isVaultLocked, setIsVaultLocked] = useState<boolean>(() => hasEncryptedVault());
+  const [isVaultLocked, setIsVaultLocked] = useState<boolean>(false);
   const [isAnotherTabActive, setIsAnotherTabActive] = useState(false);
 
   const [theme, setThemeState] = useState<ThemeMode>(() => {
@@ -158,12 +157,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeJobs, setActiveJobs] = useState<UploadJob[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Lock Vault
+  // Lock Vault (Only for users who opted into an Encrypted Vault Passphrase)
   const lockVault = useCallback(() => {
-    clearActiveSession();
-    setSessionState(null);
-    setIsVaultLocked(true);
-    setSelectedMedia(null);
+    if (hasEncryptedVault()) {
+      setSessionState(null);
+      setIsVaultLocked(true);
+      setSelectedMedia(null);
+    }
   }, []);
 
   // Global Keyboard Shortcuts
@@ -226,12 +226,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return cleanup;
   }, []);
 
-  // Inactivity & Background tab Auto-Lock
+  // Inactivity & Background tab Auto-Lock (Only active if user opted into an Encrypted Vault Passphrase)
   useEffect(() => {
-    if (!session) return;
+    if (!session || !hasEncryptedVault()) return;
     const cleanup = setupAutoLockEngine(() => {
       lockVault();
-    }, 15);
+    }, 30);
     return cleanup;
   }, [session, lockVault]);
 

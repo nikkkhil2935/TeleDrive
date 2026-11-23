@@ -4,6 +4,10 @@ import { Sidebar } from './components/Sidebar';
 import { BottomNav } from './components/BottomNav';
 import { TimelineView } from './components/TimelineView';
 import { AlbumsView } from './components/AlbumsView';
+import { PeopleView } from './components/PeopleView';
+import { PlacesView } from './components/PlacesView';
+import { ExploreView } from './components/ExploreView';
+import { SharingView } from './components/SharingView';
 import { MediaViewer } from './components/MediaViewer';
 import { UploadBanner } from './components/UploadBanner';
 import { AuthModal } from './components/AuthModal';
@@ -46,7 +50,19 @@ export const App: React.FC = () => {
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
         <main className="flex-1 flex flex-col overflow-hidden bg-[#F8FAFD] dark:bg-[#131314] pb-16 md:pb-0">
-          {activeTab === 'albums' ? <AlbumsView /> : <TimelineView />}
+          {activeTab === 'albums' ? (
+            <AlbumsView />
+          ) : activeTab === 'people' ? (
+            <PeopleView />
+          ) : activeTab === 'places' ? (
+            <PlacesView />
+          ) : activeTab === 'explore' ? (
+            <ExploreView />
+          ) : activeTab === 'sharing' ? (
+            <SharingView />
+          ) : (
+            <TimelineView />
+          )}
         </main>
       </div>
 

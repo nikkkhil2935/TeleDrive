@@ -39,6 +39,8 @@ export const TransferManagerModal: React.FC = () => {
   const channelId = session?.channelId || 'me';
   const hasErrors = activeJobs.some(j => j.status === 'error');
   const hasDone = activeJobs.some(j => j.status === 'done');
+  const hasActive = activeJobs.some(j => j.status === 'uploading' || j.status === 'queued' || j.status === 'processing');
+  const hasPaused = activeJobs.some(j => j.status === 'paused');
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 select-none animate-in fade-in duration-150">
@@ -91,6 +93,26 @@ export const TransferManagerModal: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {hasActive && (
+              <button
+                onClick={() => transferQueue.pauseAll()}
+                className="text-xs text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 font-medium transition-colors px-2 py-1 rounded-full hover:bg-amber-500/10"
+                title="Pause all active uploads"
+              >
+                <Pause className="w-3 h-3" /> Pause All
+              </button>
+            )}
+
+            {hasPaused && (
+              <button
+                onClick={() => transferQueue.resumeAll(channelId)}
+                className="text-xs text-[#0B57D0] dark:text-[#A8C7FA] hover:underline flex items-center gap-1 font-medium transition-colors px-2 py-1 rounded-full hover:bg-sky-500/10"
+                title="Resume all paused uploads"
+              >
+                <Play className="w-3 h-3" /> Resume All
+              </button>
+            )}
+
             {hasDone && (
               <button
                 onClick={() => transferQueue.clearCompleted()}
@@ -175,10 +197,52 @@ export const TransferManagerModal: React.FC = () => {
                           <span className="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[10px] font-semibold flex items-center gap-1 animate-pulse">
                             <AlertCircle className="w-3 h-3" /> Flood Wait ({cooldownSec}s)
                           </span>
-                        ) : job.status === 'uploading' ? (
-                          <span className="px-2.5 py-1 rounded-full bg-[#D3E3FD] dark:bg-[#004A77] text-[#0B57D0] dark:text-[#C2E7FF] text-[10px] font-semibold flex items-center gap-1">
-                            <Loader2 className="w-3 h-3 animate-spin" /> Uploading {Math.round(job.progress * 100)}%
-                          </span>
+                        ) : job.status === 'uploading' || job.status === 'processing' ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="px-2.5 py-1 rounded-full bg-[#D3E3FD] dark:bg-[#004A77] text-[#0B57D0] dark:text-[#C2E7FF] text-[10px] font-semibold flex items-center gap-1">
+                              <Loader2 className="w-3 h-3 animate-spin" /> {job.status === 'processing' ? 'Processing' : `Uploading ${Math.round(job.progress * 100)}%`}
+                            </span>
+                            <button
+                              onClick={() => transferQueue.pauseJob(job.id)}
+                              className="p-1 rounded-full hover:bg-amber-500/15 text-amber-600 dark:text-amber-400 transition-colors"
+                              title="Pause this upload"
+                            >
+                              <Pause className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : job.status === 'paused' ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="px-2.5 py-1 rounded-full bg-slate-500/15 text-slate-500 dark:text-slate-400 text-[10px] font-semibold flex items-center gap-1">
+                              <Pause className="w-3 h-3" /> Paused
+                            </span>
+                            <button
+                              onClick={() => transferQueue.resumeJob(job.id, channelId)}
+                              className="p-1 rounded-full hover:bg-sky-500/15 text-[#0B57D0] dark:text-[#A8C7FA] transition-colors"
+                              title="Resume this upload"
+                            >
+                              <Play className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => transferQueue.removeJob(job.id)}
+                              className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 transition-colors"
+                              title="Remove from queue"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : job.status === 'queued' ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-slate-400 capitalize px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1E1F20]">
+                              Queued
+                            </span>
+                            <button
+                              onClick={() => transferQueue.pauseJob(job.id)}
+                              className="p-1 rounded-full hover:bg-amber-500/15 text-amber-600 dark:text-amber-400 transition-colors"
+                              title="Pause this upload"
+                            >
+                              <Pause className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         ) : job.status === 'done' ? (
                           <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3" /> Done
