@@ -742,28 +742,23 @@ export const TimelineView: React.FC = () => {
         )}
       </div>
 
-      {/* Google Photos Vertical Date Scrubber with Continuous Rail Track */}
+      {/* Google Photos Floating Vertical Date Scrubber Rail (True Google Photos Floating Overlay) */}
       {availableYears.length > 0 && (
-        <div className="w-8 sm:w-10 border-l border-slate-200 dark:border-white/[0.08] bg-[#F8FAFD] dark:bg-[#131314] flex flex-col items-center justify-center py-6 select-none shrink-0 relative">
-          {/* Continuous rail track */}
-          <div className="absolute top-8 bottom-8 w-0.5 bg-slate-200 dark:bg-white/[0.08] rounded-full" />
-
-          <div className="space-y-4 flex flex-col items-center relative z-10">
+        <div className="absolute right-2 sm:right-3.5 top-32 bottom-28 z-20 flex flex-col items-center justify-center pointer-events-none select-none">
+          <div className="py-3 px-1.5 rounded-full bg-white/80 dark:bg-[#1E1F20]/80 backdrop-blur-md border border-slate-200/80 dark:border-white/10 shadow-lg flex flex-col items-center space-y-3.5 pointer-events-auto">
             {availableYears.map((yr) => (
               <div
                 key={yr}
                 onClick={() => scrollToYear(yr)}
                 onMouseEnter={() => setHoveredScrubYear(yr)}
                 onMouseLeave={() => setHoveredScrubYear(null)}
-                className="group relative flex items-center justify-center cursor-pointer py-1"
+                className="group relative flex items-center justify-center cursor-pointer p-1"
+                title={`Jump to ${yr}`}
               >
-                <div className="w-2 h-2 rounded-full bg-slate-400 dark:bg-[#5E5E5E] group-hover:scale-150 group-hover:bg-[#0B57D0] dark:group-hover:bg-[#A8C7FA] transition-all shadow-xs" />
-                <span className="text-[10px] font-mono text-[#5F6368] dark:text-[#C2C7CF] group-hover:text-[#0B57D0] dark:group-hover:text-[#A8C7FA] group-hover:font-bold ml-1.5 hidden sm:inline transition-colors">
-                  {yr}
-                </span>
+                <div className="w-2.5 h-2.5 rounded-full bg-slate-400/80 dark:bg-white/40 group-hover:scale-125 group-hover:bg-[#0B57D0] dark:group-hover:bg-sky-400 transition-all shadow-xs" />
 
                 {hoveredScrubYear === yr && (
-                  <div className="absolute right-9 z-40 px-3 py-1 rounded-full bg-[#0B57D0] dark:bg-[#A8C7FA] text-white dark:text-[#041E49] font-bold text-xs shadow-md animate-in fade-in zoom-in-75 slide-in-from-right-2 duration-150 whitespace-nowrap">
+                  <div className="absolute right-8 z-40 px-3 py-1 rounded-full bg-[#0B57D0] dark:bg-sky-500 text-white font-bold text-xs shadow-xl animate-in fade-in zoom-in-75 slide-in-from-right-2 duration-150 whitespace-nowrap">
                     {yr}
                   </div>
                 )}

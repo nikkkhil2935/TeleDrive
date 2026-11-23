@@ -31,6 +31,7 @@ import {
   CheckCircle2,
   ArrowRight
 } from 'lucide-react';
+import { FramelyLogo } from './FramelyLogo';
 import { useApp } from '../context/AppContext';
 import { getTelegramClient, clearFullMediaUrlCache } from '../services/tgClient';
 import { transferQueue } from '../services/transferQueue';
@@ -154,8 +155,9 @@ export const SettingsModal: React.FC = () => {
         {/* Modal Header */}
         <div className="px-5 sm:px-7 py-4 sm:py-5 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500/15 to-indigo-500/10 dark:from-blue-500/25 dark:to-indigo-500/15 border border-blue-500/20 text-[#0B57D0] dark:text-[#A8C7FA] flex items-center justify-center shadow-xs">
-              <Settings className="w-5 h-5" />
+            {/* Pure Framely Logo - No Enclosing Box */}
+            <div className="shrink-0 hover:rotate-12 transition-transform duration-300">
+              <FramelyLogo className="w-8 h-8" />
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-semibold tracking-tight text-[#1F1F1F] dark:text-[#F1F3F4]">

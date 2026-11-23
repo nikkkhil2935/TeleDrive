@@ -23,6 +23,7 @@ import {
   Crop,
   FileText
 } from 'lucide-react';
+import { FramelyLogo } from './FramelyLogo';
 import { useApp } from '../context/AppContext';
 
 export const Header: React.FC = () => {
@@ -111,34 +112,19 @@ export const Header: React.FC = () => {
         onChange={handleFileChange}
       />
 
-      {/* Left: Framely Brand & Wordmark (Authentic Google Sans typography) */}
+      {/* Left: Framely Brand & Wordmark (Authentic Google Photos Style - Pure Logo, No Enclosing Box) */}
       <div className="flex items-center gap-3 shrink-0">
         <div
           onClick={() => setIsOnboardingOpen(true)}
           className="flex items-center gap-2.5 cursor-pointer group"
           title="Framely - Private Photos in your Telegram"
         >
-          {/* Framely Bespoke Frame + Spark Mark */}
-          <div className="w-8 h-8 shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <svg viewBox="0 0 48 48" className="w-8 h-8 drop-shadow-xs">
-              <defs>
-                <linearGradient id="headerFramelyGrad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#0B57D0" />
-                  <stop offset="1" stopColor="#4285F4" />
-                </linearGradient>
-                <linearGradient id="headerSparkGrad" x1="30" y1="8" x2="40" y2="18" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FDD663" />
-                  <stop offset="1" stopColor="#F9AB00" />
-                </linearGradient>
-              </defs>
-              <rect x="4" y="4" width="40" height="40" rx="12" fill="url(#headerFramelyGrad)" />
-              <rect x="11" y="11" width="26" height="26" rx="6" stroke="#FFFFFF" strokeWidth="2.5" strokeOpacity="0.95" fill="none" />
-              <path d="M12 32L19 23C19.5 22.3 20.5 22.3 21 23L25 28L28.5 24C29 23.4 30 23.4 30.5 24L36 32" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              <circle cx="31" cy="17" r="3.5" fill="url(#headerSparkGrad)" />
-            </svg>
+          {/* Pure Framely Pinwheel Logo (No background box) */}
+          <div className="group-hover:rotate-12 group-hover:scale-105 transition-transform duration-300">
+            <FramelyLogo className="w-8 h-8" />
           </div>
           <div>
-            <span className="text-[18px] font-medium tracking-tight text-[#1F1F1F] dark:text-[#E3E3E3]">
+            <span className="text-[19px] font-medium tracking-tight text-[#1F1F1F] dark:text-[#E3E3E3]">
               Framely
             </span>
           </div>

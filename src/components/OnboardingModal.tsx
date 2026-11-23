@@ -28,6 +28,7 @@ import {
   Search,
   Zap
 } from 'lucide-react';
+import { FramelyLogo } from './FramelyLogo';
 import { useApp } from '../context/AppContext';
 import {
   sendTelegramPhoneCode,
@@ -284,8 +285,9 @@ To restore your library on any device:
         {/* Progress Header */}
         <div className="px-5 sm:px-7 py-4 sm:py-5 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500/15 to-indigo-500/10 dark:from-blue-500/25 dark:to-indigo-500/15 border border-blue-500/20 text-[#0B57D0] dark:text-[#A8C7FA] flex items-center justify-center shadow-xs">
-              <Sparkles className="w-5 h-5" />
+            {/* Pure Framely Logo - No Enclosing Box */}
+            <div className="shrink-0 hover:rotate-12 transition-transform duration-300">
+              <FramelyLogo className="w-8 h-8" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -359,28 +361,11 @@ To restore your library on any device:
           {step === 1 && (
             <div className="space-y-6 text-center py-2">
               
-              {/* Stageshow Floating Product Mark */}
-              <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-3xl bg-blue-500/20 blur-xl animate-pulse" />
-                <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-600 via-sky-500 to-indigo-600 p-0.5 shadow-xl shadow-blue-500/25 flex items-center justify-center">
-                  <svg viewBox="0 0 48 48" className="w-11 h-11 drop-shadow-md">
-                    <defs>
-                      <linearGradient id="onboardSparkGrad" x1="30" y1="8" x2="40" y2="18" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#FDD663" />
-                        <stop offset="1" stopColor="#F9AB00" />
-                      </linearGradient>
-                    </defs>
-                    <rect x="8" y="8" width="32" height="32" rx="8" stroke="#FFFFFF" strokeWidth="2.5" strokeOpacity="0.95" fill="none" />
-                    <path
-                      d="M10 32L17 23C17.5 22.3 18.5 22.3 19 23L23 28L26.5 24C27 23.4 28 23.4 28.5 24L34 32"
-                      stroke="#FFFFFF"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                    <circle cx="29" cy="18" r="3" fill="url(#onboardSparkGrad)" />
-                  </svg>
+              {/* Pure Framely Pinwheel Logo (No background box) */}
+              <div className="relative mx-auto w-24 h-24 flex items-center justify-center group">
+                <div className="absolute inset-0 rounded-full bg-blue-500/15 blur-2xl animate-pulse pointer-events-none" />
+                <div className="relative transform group-hover:scale-105 group-hover:rotate-12 transition-transform duration-500">
+                  <FramelyLogo className="w-20 h-20 drop-shadow-xl" />
                 </div>
               </div>
 

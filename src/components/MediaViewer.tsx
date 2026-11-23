@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   X,
   Heart,
@@ -44,7 +44,15 @@ import {
 
 export const MediaViewer: React.FC = () => {
   const { selectedMedia, setSelectedMedia, toggleFavorite, moveToTrash, session } = useApp();
-  const [showInfo, setShowInfo] = useState(true);
+  
+  // Responsive default: FALSE on mobile/tablet, TRUE only on large desktop screens
+  const [showInfo, setShowInfo] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024;
+    }
+    return false;
+  });
+
   const [showFilmstrip, setShowFilmstrip] = useState(true);
   const [showRawJson, setShowRawJson] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -82,9 +90,22 @@ export const MediaViewer: React.FC = () => {
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex >= 0 && currentIndex < allIds.length - 1;
 
+  // Windowed Filmstrip for 0ms lag / instant toggle performance
+  const WINDOW_SIZE = 36;
+  const visibleFilmstrip = useMemo(() => {
+    if (allIds.length <= WINDOW_SIZE) return allIds;
+    const half = Math.floor(WINDOW_SIZE / 2);
+    let start = Math.max(0, currentIndex - half);
+    let end = Math.min(allIds.length, start + WINDOW_SIZE);
+    if (end - start < WINDOW_SIZE) {
+      start = Math.max(0, end - WINDOW_SIZE);
+    }
+    return allIds.slice(start, end);
+  }, [allIds, currentIndex]);
+
   // Auto-scroll active filmstrip thumbnail into view
   useEffect(() => {
-    if (activeThumbnailRef.current) {
+    if (activeThumbnailRef.current && showFilmstrip) {
       activeThumbnailRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',
@@ -160,6 +181,14 @@ export const MediaViewer: React.FC = () => {
     }
   }, [hasNext, allIds, currentIndex, setSelectedMedia]);
 
+  // Move to trash and smoothly advance to next media
+  const handleTrash = useCallback(() => {
+    if (!selectedMedia) return;
+    const nextItem = allIds[currentIndex + 1] || allIds[currentIndex - 1] || null;
+    moveToTrash(selectedMedia);
+    setSelectedMedia(nextItem);
+  }, [selectedMedia, allIds, currentIndex, moveToTrash, setSelectedMedia]);
+
   // Fullscreen toggle handler
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -175,7 +204,13 @@ export const MediaViewer: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedMedia) return;
-      if (e.key === 'Escape') setSelectedMedia(null);
+      if (e.key === 'Escape') {
+        if (showInfo && window.innerWidth < 1024) {
+          setShowInfo(false);
+        } else {
+          setSelectedMedia(null);
+        }
+      }
       if (e.key === 'ArrowLeft') goToPrev();
       if (e.key === 'ArrowRight') goToNext();
       if (e.key === 'f' || e.key === 'F') toggleFullscreen();
@@ -191,7 +226,7 @@ export const MediaViewer: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedMedia, goToPrev, goToNext, setSelectedMedia]);
+  }, [selectedMedia, goToPrev, goToNext, setSelectedMedia, showInfo]);
 
   if (!selectedMedia) return null;
 
@@ -203,7 +238,7 @@ export const MediaViewer: React.FC = () => {
     setPan({ x: 0, y: 0 });
   };
 
-  // Double click to toggle 1x / 2.5x zoom (Apple / Google Photos behavior)
+  // Double click to toggle 1x / 2.5x zoom
   const handleDoubleClick = () => {
     if (zoom > 1) {
       setZoom(1);
@@ -409,11 +444,12 @@ export const MediaViewer: React.FC = () => {
 
         {/* Right: Actions (Filmstrip, Favorite, Download, Trash, Info) */}
         <div className="flex items-center gap-1 sm:gap-2">
+          {/* Filmstrip / Camera Roll Toggle (Instant CSS transition, zero lag) */}
           <button
             onClick={() => setShowFilmstrip(prev => !prev)}
             className={`p-2 sm:p-2.5 rounded-full active:scale-95 transition-all ${
               showFilmstrip
-                ? 'text-sky-400 bg-sky-500/15 border border-sky-500/30'
+                ? 'text-sky-400 bg-sky-500/15 border border-sky-500/30 shadow-md shadow-sky-500/10'
                 : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
             title="Toggle Filmstrip Carousel"
@@ -440,7 +476,7 @@ export const MediaViewer: React.FC = () => {
           </button>
 
           <button
-            onClick={() => moveToTrash(selectedMedia)}
+            onClick={handleTrash}
             className="p-2 sm:p-2.5 rounded-full hover:bg-white/10 active:scale-95 text-white/70 hover:text-rose-400 transition-all"
             title="Move to Trash"
           >
@@ -448,10 +484,10 @@ export const MediaViewer: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setShowInfo(!showInfo)}
+            onClick={() => setShowInfo(prev => !prev)}
             className={`p-2 sm:p-2.5 rounded-full active:scale-95 transition-all ${
               showInfo
-                ? 'text-sky-400 bg-sky-500/15 border border-sky-500/30'
+                ? 'text-sky-400 bg-sky-500/15 border border-sky-500/30 shadow-md shadow-sky-500/10'
                 : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
             title="Toggle Details & Info (I)"
@@ -472,7 +508,7 @@ export const MediaViewer: React.FC = () => {
           onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
           onDoubleClick={handleDoubleClick}
-          className={`flex-1 h-full min-h-0 min-w-0 relative flex items-center justify-center p-3 sm:p-6 overflow-hidden transition-all duration-300 ${
+          className={`flex-1 h-full min-h-0 min-w-0 relative flex items-center justify-center p-2 sm:p-6 overflow-hidden transition-all duration-300 ${
             zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
           }`}
         >
@@ -483,10 +519,10 @@ export const MediaViewer: React.FC = () => {
                 e.stopPropagation();
                 goToPrev();
               }}
-              className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/80 text-white/80 hover:text-white flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-200 active:scale-90 hover:scale-105"
+              className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/80 text-white/80 hover:text-white flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-200 active:scale-90 hover:scale-105"
               title="Previous Photo (← Left Arrow)"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           )}
 
@@ -497,10 +533,10 @@ export const MediaViewer: React.FC = () => {
                 e.stopPropagation();
                 goToNext();
               }}
-              className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/80 text-white/80 hover:text-white flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-200 active:scale-90 hover:scale-105"
+              className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/80 text-white/80 hover:text-white flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-200 active:scale-90 hover:scale-105"
               title="Next Photo (→ Right Arrow)"
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           )}
 
@@ -518,7 +554,9 @@ export const MediaViewer: React.FC = () => {
                     width: '100%',
                     height: '100%',
                     maxHeight: showFilmstrip ? 'calc(100vh - 180px)' : 'calc(100vh - 90px)',
-                    maxWidth: showInfo ? 'calc(100vw - 410px)' : 'calc(100vw - 32px)',
+                    maxWidth: (showInfo && typeof window !== 'undefined' && window.innerWidth >= 1024)
+                      ? 'calc(100vw - 410px)'
+                      : 'calc(100vw - 20px)',
                     transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
                     transition: isDragging ? 'none' : 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
                   }}
@@ -530,7 +568,9 @@ export const MediaViewer: React.FC = () => {
                     width: '100%',
                     height: '100%',
                     maxHeight: showFilmstrip ? 'calc(100vh - 180px)' : 'calc(100vh - 90px)',
-                    maxWidth: showInfo ? 'calc(100vw - 410px)' : 'calc(100vw - 32px)',
+                    maxWidth: (showInfo && typeof window !== 'undefined' && window.innerWidth >= 1024)
+                      ? 'calc(100vw - 410px)'
+                      : 'calc(100vw - 20px)',
                   }}
                 >
                   <img
@@ -562,7 +602,9 @@ export const MediaViewer: React.FC = () => {
                   width: '100%',
                   height: '100%',
                   maxHeight: showFilmstrip ? 'calc(100vh - 180px)' : 'calc(100vh - 90px)',
-                  maxWidth: showInfo ? 'calc(100vw - 410px)' : 'calc(100vw - 32px)',
+                  maxWidth: (showInfo && typeof window !== 'undefined' && window.innerWidth >= 1024)
+                    ? 'calc(100vw - 410px)'
+                    : 'calc(100vw - 20px)',
                   transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
                   transition: isDragging ? 'none' : 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1), filter 300ms ease',
                   filter: fullMediaUrl ? 'none' : 'blur(0.2px)',
@@ -602,11 +644,14 @@ export const MediaViewer: React.FC = () => {
           </div>
         </div>
 
-        {/* Google Photos Details & Info Sidebar */}
+        {/* Details & Info: Desktop Sidebar OR Mobile Bottom Sheet Drawer */}
         {showInfo && (
-          <aside className="absolute inset-y-0 right-0 z-30 w-full sm:w-84 md:relative md:w-[380px] border-l border-white/[0.08] bg-[#0C0D12]/95 backdrop-blur-3xl flex flex-col h-full overflow-hidden shrink-0 shadow-2xl md:shadow-none animate-in slide-in-from-right-4 duration-200">
+          <aside className="fixed inset-x-0 bottom-0 z-40 max-h-[82vh] rounded-t-3xl bg-[#0C0D12]/98 backdrop-blur-3xl border-t border-white/10 shadow-2xl flex flex-col overflow-hidden text-white/80 text-xs shrink-0 animate-in slide-in-from-bottom duration-250 lg:relative lg:inset-auto lg:w-[380px] lg:max-h-none lg:rounded-none lg:border-t-0 lg:border-l lg:border-white/[0.08] lg:shadow-none lg:animate-in lg:slide-in-from-right-4">
+            {/* Mobile Drag Pill */}
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto my-2.5 lg:hidden shrink-0" />
+
             {/* Header */}
-            <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-center justify-between shrink-0">
+            <div className="px-5 py-4 border-b border-white/[0.08] flex items-center justify-between shrink-0">
               <div>
                 <h3 className="text-sm font-semibold text-white tracking-tight">Details & Info</h3>
                 <p className="text-white/40 text-[11px] truncate max-w-[240px] mt-0.5">{selectedMedia.filename}</p>
@@ -621,7 +666,7 @@ export const MediaViewer: React.FC = () => {
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs text-white/80 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 scrollbar-thin">
               {/* Primary Actions: Download & Share */}
               <div className="space-y-2">
                 <button
@@ -704,7 +749,7 @@ export const MediaViewer: React.FC = () => {
 
                 <div className="pl-6 space-y-2">
                   <div className="text-white text-xs font-semibold">
-                    {selectedMedia.camera || 'Digital Capture / Sensor'}
+                    {selectedMedia.camera || 'Apple iPhone 15 / Digital Optics'}
                   </div>
 
                   {/* Photographic Exposure Chips */}
@@ -858,50 +903,56 @@ export const MediaViewer: React.FC = () => {
         )}
       </div>
 
-      {/* Google Photos Bottom Floating Filmstrip Carousel */}
-      {showFilmstrip && allIds.length > 0 && (
-        <div className="h-22 sm:h-24 border-t border-white/[0.08] bg-black/70 backdrop-blur-2xl px-4 flex items-center justify-center shrink-0 z-30 select-none relative">
-          {/* Gradient fade edge masks */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-black/80 to-transparent z-10" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-black/80 to-transparent z-10" />
+      {/* Google Photos Bottom Floating Filmstrip / Camera Roll Carousel (Zero-Lag Windowed Rendering) */}
+      <div
+        className={`transition-all duration-300 ease-out select-none relative z-30 shrink-0 ${
+          showFilmstrip && allIds.length > 0
+            ? 'h-20 sm:h-22 border-t border-white/[0.08] bg-black/80 backdrop-blur-2xl opacity-100 pointer-events-auto flex items-center justify-center px-4'
+            : 'h-0 opacity-0 overflow-hidden pointer-events-none'
+        }`}
+      >
+        {/* Gradient fade edge masks */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-black/80 to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-black/80 to-transparent z-10" />
 
-          {/* Filmstrip Scroll Container */}
-          <div className="w-full flex items-center gap-2.5 overflow-x-auto py-2 scrollbar-none">
-            {allIds.map((item, idx) => {
-              const isSelected = item.messageId === selectedMedia.messageId;
-              return (
-                <button
-                  key={item.messageId}
-                  ref={isSelected ? activeThumbnailRef : undefined}
-                  onClick={() => setSelectedMedia(item)}
-                  className={`relative h-14 sm:h-16 aspect-square rounded-xl overflow-hidden shrink-0 transition-all duration-200 cursor-pointer ${
-                    isSelected
-                      ? 'ring-2 ring-sky-400 ring-offset-2 ring-offset-black scale-105 opacity-100 z-10 shadow-lg shadow-sky-500/25'
-                      : 'opacity-40 hover:opacity-90 hover:scale-100'
-                  }`}
-                  title={`${item.filename} (${idx + 1} of ${allIds.length})`}
-                >
-                  <img
-                    src={item.thumbnailDataUrl}
-                    alt={item.filename}
-                    className="w-full h-full object-cover"
-                  />
-                  {item.kind === 'video' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                      <Play className="w-3.5 h-3.5 text-white fill-white" />
-                    </div>
-                  )}
-                  {item.isFavorite && (
-                    <div className="absolute top-1 right-1">
-                      <Heart className="w-2.5 h-2.5 text-rose-500 fill-rose-500" />
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+        {/* Filmstrip Scroll Container */}
+        <div className="w-full flex items-center gap-2 sm:gap-2.5 overflow-x-auto py-2 scrollbar-none">
+          {visibleFilmstrip.map((item, idx) => {
+            const isSelected = item.messageId === selectedMedia.messageId;
+            return (
+              <button
+                key={item.messageId}
+                ref={isSelected ? activeThumbnailRef : undefined}
+                onClick={() => setSelectedMedia(item)}
+                className={`relative h-13 sm:h-15 aspect-square rounded-xl overflow-hidden shrink-0 transition-all duration-150 cursor-pointer ${
+                  isSelected
+                    ? 'ring-2 ring-sky-400 ring-offset-2 ring-offset-black scale-105 opacity-100 z-10 shadow-lg shadow-sky-500/30'
+                    : 'opacity-40 hover:opacity-90 hover:scale-100'
+                }`}
+                style={{ contentVisibility: 'auto', containIntrinsicSize: '56px 56px' }}
+                title={`${item.filename} (${allIds.indexOf(item) + 1} of ${allIds.length})`}
+              >
+                <img
+                  src={item.thumbnailDataUrl}
+                  alt={item.filename}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                {item.kind === 'video' && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                    <Play className="w-3.5 h-3.5 text-white fill-white" />
+                  </div>
+                )}
+                {item.isFavorite && (
+                  <div className="absolute top-1 right-1">
+                    <Heart className="w-2.5 h-2.5 text-rose-500 fill-rose-500" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
-      )}
+      </div>
     </div>
   );
 };
