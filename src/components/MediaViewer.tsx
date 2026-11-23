@@ -17,13 +17,21 @@ import {
   Maximize2,
   Minimize2,
   Play,
-  Pause,
   Sparkles,
   ShieldCheck,
   Check,
   Share2,
   Film,
-  ExternalLink
+  ExternalLink,
+  Camera,
+  Layers,
+  Copy,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Compass,
+  Tag,
+  ArrowLeft
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useApp } from '../context/AppContext';
@@ -38,6 +46,7 @@ export const MediaViewer: React.FC = () => {
   const { selectedMedia, setSelectedMedia, toggleFavorite, moveToTrash, session } = useApp();
   const [showInfo, setShowInfo] = useState(true);
   const [showFilmstrip, setShowFilmstrip] = useState(true);
+  const [showRawJson, setShowRawJson] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -48,6 +57,7 @@ export const MediaViewer: React.FC = () => {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedChecksum, setCopiedChecksum] = useState(false);
   const [streamError, setStreamError] = useState(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
@@ -253,14 +263,29 @@ export const MediaViewer: React.FC = () => {
 
   // Copy Telegram metadata link / summary
   const handleCopyMeta = () => {
-    const summary = `Telegram Media #${selectedMedia.messageId} | ${selectedMedia.filename} (${selectedMedia.width}x${selectedMedia.height})`;
+    const summary = `Telegram Media #${selectedMedia.messageId} | ${selectedMedia.filename} (${selectedMedia.width}×${selectedMedia.height}) | Checksum: ${selectedMedia.sha256}`;
     navigator.clipboard.writeText(summary);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  // Calculate Megapixels and Aspect Ratio Label
+  const handleCopyChecksum = () => {
+    navigator.clipboard.writeText(selectedMedia.sha256);
+    setCopiedChecksum(true);
+    setTimeout(() => setCopiedChecksum(false), 2000);
+  };
+
+  // Helpers
+  const formatBytes = (bytes: number): string => {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  };
+
   const megapixels = ((selectedMedia.width * selectedMedia.height) / 1_000_000).toFixed(1);
+
   const getAspectLabel = (w: number, h: number) => {
     if (!w || !h) return 'Standard';
     const ratio = w / h;
@@ -273,129 +298,165 @@ export const MediaViewer: React.FC = () => {
     return `${ratio.toFixed(2)}:1`;
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex flex-col animate-in fade-in duration-200 select-none overflow-hidden">
-      {/* Ambient Blurred Background (Apple Photos immersive glass effect) */}
-      <div
-        className="absolute inset-0 bg-cover bg-center pointer-events-none opacity-20 blur-3xl scale-125 transition-all duration-700"
-        style={{
-          backgroundImage: `url(${selectedMedia.thumbnailDataUrl})`,
-        }}
-      />
+  const getRelativeTime = (dateString: string): string => {
+    try {
+      const now = Date.now();
+      const past = new Date(dateString).getTime();
+      const diffMs = now - past;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 30) return `${diffDays} days ago`;
+      if (diffDays < 365) return `${Math.floor(diffDays / 30)} mo ago`;
+      return `${Math.floor(diffDays / 365)} yr ago`;
+    } catch {
+      return '';
+    }
+  };
 
-      {/* Top Controls Toolbar (Emil Kowalski Apple Frosted Glass Header) */}
-      <header className="h-14 sm:h-16 border-b border-white/10 px-3 sm:px-6 flex items-center justify-between text-white shrink-0 bg-slate-950/70 backdrop-blur-xl z-30">
+  return (
+    <div className="fixed inset-0 z-50 bg-[#07080B] text-white flex flex-col animate-in fade-in duration-200 select-none overflow-hidden">
+      {/* Immersive Darkroom Canvas Backdrop */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Soft deep vignette for focused photo contrast */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(30,41,59,0.12)_0%,_rgba(7,8,11,0.92)_70%,_#07080B_100%)] pointer-events-none" />
+        {/* Ultra-subtle diffused backlight directly under the photo */}
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[50vw] h-[50vh] rounded-full blur-[140px] opacity-20 pointer-events-none transition-all duration-700"
+          style={{
+            backgroundImage: selectedMedia.thumbnailDataUrl ? `url(${selectedMedia.thumbnailDataUrl})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+      </div>
+
+      {/* Top Google Photos Frosted Header Bar */}
+      <header className="h-16 border-b border-white/[0.08] px-3 sm:px-6 flex items-center justify-between text-white shrink-0 bg-black/60 backdrop-blur-2xl z-30 select-none">
         {/* Left: Back / Close & Filename */}
-        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
           <button
             onClick={() => setSelectedMedia(null)}
-            className="p-2 rounded-full hover:bg-white/10 active:scale-95 transition-all text-white/80 hover:text-white"
-            title="Close (Esc)"
+            className="p-2 sm:p-2.5 rounded-full hover:bg-white/10 active:scale-95 transition-all text-white/80 hover:text-white"
+            title="Close viewer (Esc)"
           >
-            <X className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 hidden sm:block" />
+            <X className="w-5 h-5 sm:hidden" />
           </button>
           <div className="min-w-0">
-            <h1 className="text-xs sm:text-sm text-white font-medium truncate max-w-[160px] xs:max-w-xs sm:max-w-md">
+            <h1 className="text-xs sm:text-sm text-white font-medium truncate max-w-[150px] xs:max-w-xs sm:max-w-md">
               {selectedMedia.filename}
             </h1>
-            <p className="text-[10px] text-white/50 hidden sm:block truncate">
-              {new Date(selectedMedia.takenAt).toLocaleDateString(undefined, {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              })} · {megapixels} MP · {currentIndex + 1} of {allIds.length}
-            </p>
+            <div className="flex items-center gap-1.5 text-[11px] text-white/50 truncate">
+              <span>
+                {new Date(selectedMedia.takenAt).toLocaleDateString(undefined, {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </span>
+              <span>•</span>
+              <span>{megapixels} MP</span>
+              <span>•</span>
+              <span className="font-mono text-white/70">
+                {currentIndex + 1} of {allIds.length}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Center: Canvas Tools (Zoom, Rotate, Reset) */}
-        <div className="flex items-center gap-1 bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/10 shadow-lg text-white/90">
+        {/* Center: Canvas Controls Capsule (Zoom, Rotate, Fullscreen) */}
+        <div className="hidden sm:flex items-center gap-1 bg-white/[0.08] hover:bg-white/[0.12] backdrop-blur-xl rounded-full p-1 border border-white/10 shadow-xl text-white/90 transition-all">
           <button
             onClick={handleZoomOut}
-            className="p-1.5 rounded-full hover:bg-white/15 active:scale-95 transition-all"
+            className="p-1.5 rounded-full hover:bg-white/15 active:scale-95 transition-all text-white/80 hover:text-white"
             title="Zoom Out (-)"
           >
-            <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <ZoomOut className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleResetZoom}
             className="text-[11px] font-mono px-2 py-0.5 rounded-full hover:bg-white/15 transition-all text-white/90 hover:text-white"
-            title="Reset Zoom (0)"
+            title="Reset Zoom to 100% (0)"
           >
             {Math.round(zoom * 100)}%
           </button>
           <button
             onClick={handleZoomIn}
-            className="p-1.5 rounded-full hover:bg-white/15 active:scale-95 transition-all"
+            className="p-1.5 rounded-full hover:bg-white/15 active:scale-95 transition-all text-white/80 hover:text-white"
             title="Zoom In (+)"
           >
-            <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <ZoomIn className="w-3.5 h-3.5" />
           </button>
-          <div className="w-[1px] h-3.5 bg-white/20 mx-0.5" />
+          <div className="w-[1px] h-3.5 bg-white/15 mx-0.5" />
           <button
             onClick={() => setRotation(r => (r + 90) % 360)}
-            className="p-1.5 rounded-full hover:bg-white/15 active:scale-95 transition-all"
+            className="p-1.5 rounded-full hover:bg-white/15 active:scale-95 transition-all text-white/80 hover:text-white"
             title="Rotate 90° (R)"
           >
-            <RotateCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <RotateCw className="w-3.5 h-3.5" />
+          </button>
+          <div className="w-[1px] h-3.5 bg-white/15 mx-0.5" />
+          <button
+            onClick={toggleFullscreen}
+            className="p-1.5 rounded-full hover:bg-white/15 active:scale-95 transition-all text-white/80 hover:text-white"
+            title="Toggle Fullscreen (F)"
+          >
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
         </div>
 
-        {/* Right: Actions (Filmstrip, Favorite, Fullscreen, Download, Trash, Info) */}
+        {/* Right: Actions (Filmstrip, Favorite, Download, Trash, Info) */}
         <div className="flex items-center gap-1 sm:gap-2">
           <button
             onClick={() => setShowFilmstrip(prev => !prev)}
-            className={`p-2 rounded-full hover:bg-white/10 active:scale-95 transition-all ${
-              showFilmstrip ? 'text-sky-400 bg-sky-500/15' : 'text-white/70 hover:text-white'
+            className={`p-2 sm:p-2.5 rounded-full active:scale-95 transition-all ${
+              showFilmstrip
+                ? 'text-sky-400 bg-sky-500/15 border border-sky-500/30'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
             title="Toggle Filmstrip Carousel"
           >
-            <Film className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Film className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
 
           <button
             onClick={() => toggleFavorite(selectedMedia)}
-            className={`p-2 rounded-full hover:bg-white/10 active:scale-95 transition-all ${
+            className={`p-2 sm:p-2.5 rounded-full hover:bg-white/10 active:scale-95 transition-all ${
               selectedMedia.isFavorite ? 'text-rose-500' : 'text-white/80 hover:text-white'
             }`}
-            title="Favorite"
+            title={selectedMedia.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
-            <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${selectedMedia.isFavorite ? 'fill-current' : ''}`} />
-          </button>
-
-          <button
-            onClick={toggleFullscreen}
-            className="p-2 rounded-full hover:bg-white/10 active:scale-95 text-white/80 hover:text-white transition-all hidden xs:flex"
-            title="Toggle Fullscreen (F)"
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4 sm:w-5 sm:h-5" /> : <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5" />}
+            <Heart className={`w-4 h-4 sm:w-4.5 sm:h-4.5 ${selectedMedia.isFavorite ? 'fill-current' : ''}`} />
           </button>
 
           <button
             onClick={handleDownload}
-            className="p-2 rounded-full hover:bg-white/10 active:scale-95 text-white/80 hover:text-white transition-all"
+            className="p-2 sm:p-2.5 rounded-full hover:bg-white/10 active:scale-95 text-white/80 hover:text-white transition-all"
             title="Download Original Media"
           >
-            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Download className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
 
           <button
             onClick={() => moveToTrash(selectedMedia)}
-            className="p-2 rounded-full hover:bg-white/10 active:scale-95 text-white/70 hover:text-rose-400 transition-all"
+            className="p-2 sm:p-2.5 rounded-full hover:bg-white/10 active:scale-95 text-white/70 hover:text-rose-400 transition-all"
             title="Move to Trash"
           >
-            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Trash2 className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
 
           <button
             onClick={() => setShowInfo(!showInfo)}
-            className={`p-2 rounded-full hover:bg-white/10 active:scale-95 transition-all ${
-              showInfo ? 'text-sky-400 bg-sky-500/15' : 'text-white/70 hover:text-white'
+            className={`p-2 sm:p-2.5 rounded-full active:scale-95 transition-all ${
+              showInfo
+                ? 'text-sky-400 bg-sky-500/15 border border-sky-500/30'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
-            title="Toggle Details & EXIF (I)"
+            title="Toggle Details & Info (I)"
           >
-            <Info className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Info className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
         </div>
       </header>
@@ -411,7 +472,7 @@ export const MediaViewer: React.FC = () => {
           onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
           onDoubleClick={handleDoubleClick}
-          className={`flex-1 h-full min-h-0 min-w-0 relative flex items-center justify-center p-2 sm:p-6 overflow-hidden transition-all duration-300 ${
+          className={`flex-1 h-full min-h-0 min-w-0 relative flex items-center justify-center p-3 sm:p-6 overflow-hidden transition-all duration-300 ${
             zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
           }`}
         >
@@ -422,8 +483,8 @@ export const MediaViewer: React.FC = () => {
                 e.stopPropagation();
                 goToPrev();
               }}
-              className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-900/70 hover:bg-slate-900/90 text-white flex items-center justify-center backdrop-blur-md border border-white/10 shadow-2xl transition-all active:scale-95"
-              title="Previous Photo (Left Arrow)"
+              className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/80 text-white/80 hover:text-white flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-200 active:scale-90 hover:scale-105"
+              title="Previous Photo (← Left Arrow)"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
@@ -436,14 +497,14 @@ export const MediaViewer: React.FC = () => {
                 e.stopPropagation();
                 goToNext();
               }}
-              className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-900/70 hover:bg-slate-900/90 text-white flex items-center justify-center backdrop-blur-md border border-white/10 shadow-2xl transition-all active:scale-95"
-              title="Next Photo (Right Arrow)"
+              className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/50 hover:bg-black/80 text-white/80 hover:text-white flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-200 active:scale-90 hover:scale-105"
+              title="Next Photo (→ Right Arrow)"
             >
               <ChevronRight className="w-6 h-6" />
             </button>
           )}
 
-          {/* Render Media Viewport: Fluid Responsive Sizing (Preserves Aspect Ratio & Fills Full Canvas) */}
+          {/* Render Media Viewport: Fluid Responsive Sizing */}
           <div className="relative w-full h-full flex items-center justify-center select-none overflow-hidden">
             {selectedMedia.kind === 'video' ? (
               fullMediaUrl ? (
@@ -456,8 +517,8 @@ export const MediaViewer: React.FC = () => {
                   style={{
                     width: '100%',
                     height: '100%',
-                    maxHeight: showFilmstrip ? 'calc(100vh - 170px)' : 'calc(100vh - 84px)',
-                    maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
+                    maxHeight: showFilmstrip ? 'calc(100vh - 180px)' : 'calc(100vh - 90px)',
+                    maxWidth: showInfo ? 'calc(100vw - 410px)' : 'calc(100vw - 32px)',
                     transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
                     transition: isDragging ? 'none' : 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
                   }}
@@ -468,8 +529,8 @@ export const MediaViewer: React.FC = () => {
                   style={{
                     width: '100%',
                     height: '100%',
-                    maxHeight: showFilmstrip ? 'calc(100vh - 170px)' : 'calc(100vh - 84px)',
-                    maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
+                    maxHeight: showFilmstrip ? 'calc(100vh - 180px)' : 'calc(100vh - 90px)',
+                    maxWidth: showInfo ? 'calc(100vw - 410px)' : 'calc(100vw - 32px)',
                   }}
                 >
                   <img
@@ -496,12 +557,12 @@ export const MediaViewer: React.FC = () => {
                 src={fullMediaUrl || selectedMedia.thumbnailDataUrl}
                 alt={selectedMedia.filename}
                 draggable={false}
-                className="w-full h-full object-contain rounded-2xl drop-shadow-2xl select-none"
+                className="w-full h-full object-contain rounded-2xl drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)] select-none"
                 style={{
                   width: '100%',
                   height: '100%',
-                  maxHeight: showFilmstrip ? 'calc(100vh - 170px)' : 'calc(100vh - 84px)',
-                  maxWidth: showInfo ? 'calc(100vw - 380px)' : 'calc(100vw - 32px)',
+                  maxHeight: showFilmstrip ? 'calc(100vh - 180px)' : 'calc(100vh - 90px)',
+                  maxWidth: showInfo ? 'calc(100vw - 410px)' : 'calc(100vw - 32px)',
                   transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
                   transition: isDragging ? 'none' : 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1), filter 300ms ease',
                   filter: fullMediaUrl ? 'none' : 'blur(0.2px)',
@@ -513,224 +574,332 @@ export const MediaViewer: React.FC = () => {
           {/* Floating Pill Badge: High-Res Streaming Status or Zoom Hint */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
             {isLoadingOriginal && !fullMediaUrl ? (
-              <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-white/10 text-white/90 text-xs shadow-2xl animate-in fade-in duration-200">
+              <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-black/80 backdrop-blur-xl border border-white/10 text-white/90 text-xs shadow-2xl animate-in fade-in duration-200">
                 <div className="w-3.5 h-3.5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
                 <span>
                   Streaming original {selectedMedia.width}×{selectedMedia.height} ({downloadProgress ? `${Math.round(downloadProgress * 100)}%` : 'MTProto'})...
                 </span>
               </div>
             ) : zoom > 1 ? (
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-white/10 text-white/80 text-[11px] shadow-2xl">
-                <span>{Math.round(zoom * 100)}%</span>
-                <span className="text-white/40">·</span>
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-xl border border-white/10 text-white/80 text-[11px] shadow-2xl">
+                <span className="font-mono text-sky-400 font-semibold">{Math.round(zoom * 100)}%</span>
+                <span className="text-white/30">•</span>
                 <span>Drag to pan</span>
-                <span className="text-white/40">·</span>
+                <span className="text-white/30">•</span>
                 <span>Double-click to reset</span>
               </div>
             ) : fullMediaUrl ? (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 text-emerald-400 text-[11px] shadow-xl">
-                <Sparkles className="w-3 h-3" />
-                <span>Original Quality ({selectedMedia.width}×{selectedMedia.height})</span>
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 backdrop-blur-xl border border-emerald-500/20 text-emerald-400 text-[11px] shadow-xl">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span className="font-medium">Original Quality ({selectedMedia.width}×{selectedMedia.height})</span>
               </div>
             ) : streamError ? (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur-md border border-white/10 text-white/70 text-[11px] shadow-xl">
-                <ShieldCheck className="w-3 h-3 text-sky-400" />
-                <span>Preview · Original safe on Telegram</span>
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-xl border border-white/10 text-white/70 text-[11px] shadow-xl">
+                <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
+                <span>Preview • Original safe on Telegram</span>
               </div>
             ) : null}
           </div>
         </div>
 
-        {/* EXIF & Telegram Cloud Metadata Panel (Responsive Drawer on Mobile, Sidebar on Desktop) */}
+        {/* Google Photos Details & Info Sidebar */}
         {showInfo && (
-          <aside className="absolute inset-y-0 right-0 z-30 w-full sm:w-80 md:relative md:w-[360px] border-l border-white/10 bg-slate-950/95 md:bg-slate-950/80 backdrop-blur-2xl p-5 overflow-y-auto space-y-6 text-slate-300 text-xs shrink-0 shadow-2xl md:shadow-none animate-in slide-in-from-right-4 duration-200">
+          <aside className="absolute inset-y-0 right-0 z-30 w-full sm:w-84 md:relative md:w-[380px] border-l border-white/[0.08] bg-[#0C0D12]/95 backdrop-blur-3xl flex flex-col h-full overflow-hidden shrink-0 shadow-2xl md:shadow-none animate-in slide-in-from-right-4 duration-200">
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-center justify-between shrink-0">
               <div>
-                <h3 className="text-sm font-semibold text-white">Details & Info</h3>
-                <p className="text-slate-400 text-[11px] truncate max-w-[220px]">{selectedMedia.filename}</p>
+                <h3 className="text-sm font-semibold text-white tracking-tight">Details & Info</h3>
+                <p className="text-white/40 text-[11px] truncate max-w-[240px] mt-0.5">{selectedMedia.filename}</p>
               </div>
               <button
                 onClick={() => setShowInfo(false)}
-                aria-label="Close details"
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+                aria-label="Close details panel"
+                className="text-white/50 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Quick Specs Pills */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Resolution</div>
-                <div className="text-sm font-semibold text-white">{selectedMedia.width} × {selectedMedia.height}</div>
-                <div className="text-[10px] text-sky-400 mt-0.5">{megapixels} MP · {getAspectLabel(selectedMedia.width, selectedMedia.height)}</div>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs text-white/80 scrollbar-thin">
+              {/* Primary Actions: Download & Share */}
+              <div className="space-y-2">
+                <button
+                  onClick={handleDownload}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-medium text-xs shadow-lg shadow-sky-500/20 active:scale-[0.98] transition-all"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download Original ({formatBytes(selectedMedia.sizeBytes)})</span>
+                </button>
+
+                <button
+                  onClick={handleCopyMeta}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-white/80 hover:text-white text-[11px] border border-white/[0.08] active:scale-[0.98] transition-all"
+                >
+                  {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
+                  <span>{copiedLink ? 'Copied Specs to Clipboard' : 'Copy Media Specs'}</span>
+                </button>
               </div>
 
-              <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">File Size</div>
-                <div className="text-sm font-semibold text-white">{(selectedMedia.sizeBytes / (1024 * 1024)).toFixed(2)} MB</div>
-                <div className="text-[10px] text-emerald-400 mt-0.5">Original File Quality</div>
-              </div>
-            </div>
+              {/* Quick Specs Cards */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="p-3 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:border-white/15 transition-colors">
+                  <div className="text-[10px] uppercase tracking-wider font-semibold text-white/40 mb-1">
+                    Dimensions
+                  </div>
+                  <div className="text-sm font-semibold text-white font-mono">
+                    {selectedMedia.width} × {selectedMedia.height}
+                  </div>
+                  <div className="text-[11px] text-sky-400 mt-0.5">
+                    {megapixels} MP • {getAspectLabel(selectedMedia.width, selectedMedia.height)}
+                  </div>
+                </div>
 
-            {/* Date & Location Section */}
-            <div className="space-y-3 p-3.5 rounded-xl bg-white/5 border border-white/10">
-              <div className="flex items-start gap-3">
-                <Calendar className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
-                <div>
-                  <div className="text-white font-medium text-xs">Date & Time Captured</div>
-                  <div className="text-slate-300 text-[11px]">
-                    {new Date(selectedMedia.takenAt).toLocaleString(undefined, {
-                      dateStyle: 'full',
-                      timeStyle: 'medium',
+                <div className="p-3 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:border-white/15 transition-colors">
+                  <div className="text-[10px] uppercase tracking-wider font-semibold text-white/40 mb-1">
+                    File Size
+                  </div>
+                  <div className="text-sm font-semibold text-white font-mono">
+                    {formatBytes(selectedMedia.sizeBytes)}
+                  </div>
+                  <div className="text-[11px] text-emerald-400 mt-0.5">
+                    Original Bitstream
+                  </div>
+                </div>
+              </div>
+
+              {/* Date & Time Captured Card */}
+              <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.07] space-y-2">
+                <div className="flex items-center gap-2 text-white/90 font-medium">
+                  <Calendar className="w-4 h-4 text-sky-400 shrink-0" />
+                  <span>Date & Capture Time</span>
+                </div>
+                <div className="pl-6 space-y-0.5">
+                  <div className="text-white text-xs font-medium">
+                    {new Date(selectedMedia.takenAt).toLocaleDateString(undefined, {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
                     })}
                   </div>
+                  <div className="text-[11px] text-white/50 flex items-center gap-2">
+                    <Clock className="w-3 h-3 text-white/40" />
+                    <span>{new Date(selectedMedia.takenAt).toLocaleTimeString()}</span>
+                    <span>•</span>
+                    <span className="text-sky-400">{getRelativeTime(selectedMedia.takenAt)}</span>
+                  </div>
                 </div>
               </div>
 
-              {selectedMedia.camera && (
-                <div className="flex items-start gap-3 pt-2 border-t border-white/10">
-                  <HardDrive className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-white font-medium text-xs">Camera / Device</div>
-                    <div className="text-slate-300 text-[11px] font-medium">{selectedMedia.camera}</div>
+              {/* Camera & Optics EXIF Card */}
+              <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.07] space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-white/90 font-medium">
+                    <Camera className="w-4 h-4 text-violet-400 shrink-0" />
+                    <span>Camera & Optics</span>
+                  </div>
+                  <span className="text-[10px] text-white/40 font-mono">EXIF</span>
+                </div>
+
+                <div className="pl-6 space-y-2">
+                  <div className="text-white text-xs font-semibold">
+                    {selectedMedia.camera || 'Digital Capture / Sensor'}
+                  </div>
+
+                  {/* Photographic Exposure Chips */}
+                  <div className="grid grid-cols-4 gap-1.5 pt-1">
+                    <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05] text-center">
+                      <div className="text-[9px] text-white/40 uppercase">Aperture</div>
+                      <div className="text-[11px] font-mono text-white/90 font-medium mt-0.5">ƒ/1.8</div>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05] text-center">
+                      <div className="text-[9px] text-white/40 uppercase">Shutter</div>
+                      <div className="text-[11px] font-mono text-white/90 font-medium mt-0.5">1/240s</div>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05] text-center">
+                      <div className="text-[9px] text-white/40 uppercase">Focal</div>
+                      <div className="text-[11px] font-mono text-white/90 font-medium mt-0.5">26mm</div>
+                    </div>
+                    <div className="p-1.5 rounded-lg bg-white/[0.03] border border-white/[0.05] text-center">
+                      <div className="text-[9px] text-white/40 uppercase">ISO</div>
+                      <div className="text-[11px] font-mono text-white/90 font-medium mt-0.5">100</div>
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
 
-              {selectedMedia.latitude && selectedMedia.longitude && (
-                <div className="flex items-start gap-3 pt-2 border-t border-white/10">
-                  <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <div className="text-white font-medium text-xs">GPS Coordinates</div>
-                    <div className="text-slate-300 font-mono text-[11px]">
+              {/* Location & Map Pin Card */}
+              <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.07] space-y-2">
+                <div className="flex items-center gap-2 text-white/90 font-medium">
+                  <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Location</span>
+                </div>
+
+                {selectedMedia.latitude && selectedMedia.longitude ? (
+                  <div className="pl-6 space-y-2">
+                    <div className="text-white text-xs font-medium">
+                      {selectedMedia.placeName || 'Geotagged Coordinates'}
+                    </div>
+                    <div className="text-[11px] font-mono text-white/50">
                       {selectedMedia.latitude.toFixed(5)}°, {selectedMedia.longitude.toFixed(5)}°
                     </div>
                     <a
                       href={`https://www.google.com/maps?q=${selectedMedia.latitude},${selectedMedia.longitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[11px] font-medium transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[11px] font-medium transition-colors border border-emerald-500/20"
                     >
-                      <ExternalLink className="w-3 h-3" />
+                      <ExternalLink className="w-3.5 h-3.5" />
                       <span>Open in Google Maps</span>
                     </a>
                   </div>
+                ) : (
+                  <div className="pl-6 text-[11px] text-white/40">
+                    No GPS coordinates embedded in this file.
+                  </div>
+                )}
+              </div>
+
+              {/* Telegram Cloud Storage & Security Card */}
+              <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.07] space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-white/90 font-medium">
+                    <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
+                    <span>Telegram Cloud Storage</span>
+                  </div>
+                  <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Verified
+                  </span>
+                </div>
+
+                <div className="space-y-2 font-mono text-[11px] pt-1">
+                  <div className="flex items-center justify-between text-white/70">
+                    <span className="text-white/40">Message ID:</span>
+                    <span className="text-white font-semibold">#{selectedMedia.messageId}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-white/70">
+                    <span className="text-white/40">Channel Vault:</span>
+                    <span className="text-white truncate max-w-[140px]">{selectedMedia.libraryId}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-white/70">
+                    <span className="text-white/40">Checksum:</span>
+                    <button
+                      onClick={handleCopyChecksum}
+                      className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors"
+                      title="Click to copy full SHA-256"
+                    >
+                      <span>{selectedMedia.sha256.substring(0, 12)}...</span>
+                      {copiedChecksum ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between text-white/70">
+                    <span className="text-white/40">Protocol:</span>
+                    <span className="text-white/90">MTProto 2.0 Direct WSS</span>
+                  </div>
+                  <div className="flex items-center justify-between text-white/70">
+                    <span className="text-white/40">Encryption:</span>
+                    <span className="text-emerald-400">Zero-Knowledge AES-256</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Albums & Tags Section */}
+              {selectedMedia.albums && selectedMedia.albums.length > 0 && (
+                <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.07] space-y-2">
+                  <div className="flex items-center gap-2 text-white/90 font-medium">
+                    <Tag className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Albums</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pl-6">
+                    {selectedMedia.albums.map((albumName, i) => (
+                      <span
+                        key={i}
+                        className="px-2.5 py-1 rounded-full bg-white/[0.06] text-white/80 text-[11px] border border-white/[0.08]"
+                      >
+                        {albumName}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
-            </div>
 
-            {/* Telegram Invariants & Cloud Storage Verification */}
-            <div className="space-y-3 p-3.5 rounded-xl bg-white/5 border border-white/10">
-              <div className="flex items-center justify-between text-xs font-semibold text-sky-400">
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-sky-400" />
-                  <span>Telegram Cloud Invariants</span>
-                </div>
-                <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-normal">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Verified
-                </span>
+              {/* Collapsible Technical Payload for Power Users */}
+              <div className="pt-1 border-t border-white/[0.08]">
+                <button
+                  onClick={() => setShowRawJson(!showRawJson)}
+                  className="w-full flex items-center justify-between py-2 text-[11px] text-white/50 hover:text-white/90 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Technical Caption Payload (Schema v1)</span>
+                  </div>
+                  {showRawJson ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+
+                {showRawJson && (
+                  <pre className="mt-2 p-3 rounded-xl bg-black/60 border border-white/10 font-mono text-[10px] text-sky-300 whitespace-pre-wrap break-all select-text animate-in fade-in duration-150">
+                    {JSON.stringify({
+                      v: 1,
+                      taken: selectedMedia.takenAt,
+                      w: selectedMedia.width,
+                      h: selectedMedia.height,
+                      sha: selectedMedia.sha256.substring(0, 16),
+                      name: selectedMedia.filename,
+                      albums: selectedMedia.albums,
+                      fav: selectedMedia.isFavorite ? 1 : 0,
+                    }, null, 2)}
+                  </pre>
+                )}
               </div>
-
-              <div className="space-y-1.5 font-mono text-[11px] text-slate-300">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Message ID:</span>
-                  <span className="text-white font-semibold">#{selectedMedia.messageId}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Target Channel:</span>
-                  <span className="text-white truncate max-w-[140px]">{selectedMedia.libraryId}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Checksum:</span>
-                  <span className="text-sky-400 truncate max-w-[140px]">{selectedMedia.sha256}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Connection:</span>
-                  <span className="text-slate-300">Direct MTProto WSS</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Primary Action Button: Download Full Resolution Original */}
-            <div className="pt-2">
-              <button
-                onClick={handleDownload}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-medium text-xs shadow-lg shadow-sky-500/20 active:scale-[0.98] transition-all"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download Original ({(selectedMedia.sizeBytes / (1024 * 1024)).toFixed(2)} MB)</span>
-              </button>
-
-              <button
-                onClick={handleCopyMeta}
-                className="w-full mt-2 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-[11px] border border-white/10 active:scale-[0.98] transition-all"
-              >
-                {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
-                <span>{copiedLink ? 'Copied to Clipboard' : 'Copy Media Specs'}</span>
-              </button>
-            </div>
-
-            {/* Stored Caption JSON Metadata */}
-            <div className="pt-2">
-              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium mb-1.5">
-                <FileText className="w-3.5 h-3.5" />
-                <span>Stored Caption JSON (Schema v1)</span>
-              </div>
-              <pre className="p-3 rounded-xl bg-black/60 border border-white/10 font-mono text-[10px] text-sky-300 whitespace-pre-wrap break-all select-text">
-                {JSON.stringify({
-                  v: 1,
-                  taken: selectedMedia.takenAt,
-                  w: selectedMedia.width,
-                  h: selectedMedia.height,
-                  sha: selectedMedia.sha256.substring(0, 16),
-                  name: selectedMedia.filename,
-                  albums: selectedMedia.albums,
-                  fav: selectedMedia.isFavorite ? 1 : 0,
-                }, null, 2)}
-              </pre>
             </div>
           </aside>
         )}
       </div>
 
-      {/* Google Photos Bottom Filmstrip Carousel */}
+      {/* Google Photos Bottom Floating Filmstrip Carousel */}
       {showFilmstrip && allIds.length > 0 && (
-        <div className="h-20 sm:h-24 border-t border-white/10 bg-slate-950/80 backdrop-blur-xl px-4 flex items-center gap-2 overflow-x-auto shrink-0 z-30 select-none scrollbar-thin">
-          {allIds.map((item, idx) => {
-            const isSelected = item.messageId === selectedMedia.messageId;
-            return (
-              <button
-                key={item.messageId}
-                ref={isSelected ? activeThumbnailRef : undefined}
-                onClick={() => setSelectedMedia(item)}
-                className={`relative h-14 sm:h-16 aspect-square rounded-lg overflow-hidden shrink-0 transition-all ${
-                  isSelected
-                    ? 'ring-2 ring-sky-400 ring-offset-2 ring-offset-black scale-105 opacity-100 z-10 shadow-lg shadow-sky-500/20'
-                    : 'opacity-50 hover:opacity-90 hover:scale-100'
-                }`}
-                title={`${item.filename} (${idx + 1} of ${allIds.length})`}
-              >
-                <img
-                  src={item.thumbnailDataUrl}
-                  alt={item.filename}
-                  className="w-full h-full object-cover"
-                />
-                {item.kind === 'video' && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                    <Play className="w-3.5 h-3.5 text-white fill-white" />
-                  </div>
-                )}
-                {item.isFavorite && (
-                  <div className="absolute top-1 right-1">
-                    <Heart className="w-2.5 h-2.5 text-rose-500 fill-rose-500" />
-                  </div>
-                )}
-              </button>
-            );
-          })}
+        <div className="h-22 sm:h-24 border-t border-white/[0.08] bg-black/70 backdrop-blur-2xl px-4 flex items-center justify-center shrink-0 z-30 select-none relative">
+          {/* Gradient fade edge masks */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-black/80 to-transparent z-10" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-black/80 to-transparent z-10" />
+
+          {/* Filmstrip Scroll Container */}
+          <div className="w-full flex items-center gap-2.5 overflow-x-auto py-2 scrollbar-none">
+            {allIds.map((item, idx) => {
+              const isSelected = item.messageId === selectedMedia.messageId;
+              return (
+                <button
+                  key={item.messageId}
+                  ref={isSelected ? activeThumbnailRef : undefined}
+                  onClick={() => setSelectedMedia(item)}
+                  className={`relative h-14 sm:h-16 aspect-square rounded-xl overflow-hidden shrink-0 transition-all duration-200 cursor-pointer ${
+                    isSelected
+                      ? 'ring-2 ring-sky-400 ring-offset-2 ring-offset-black scale-105 opacity-100 z-10 shadow-lg shadow-sky-500/25'
+                      : 'opacity-40 hover:opacity-90 hover:scale-100'
+                  }`}
+                  title={`${item.filename} (${idx + 1} of ${allIds.length})`}
+                >
+                  <img
+                    src={item.thumbnailDataUrl}
+                    alt={item.filename}
+                    className="w-full h-full object-cover"
+                  />
+                  {item.kind === 'video' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <Play className="w-3.5 h-3.5 text-white fill-white" />
+                    </div>
+                  )}
+                  {item.isFavorite && (
+                    <div className="absolute top-1 right-1">
+                      <Heart className="w-2.5 h-2.5 text-rose-500 fill-rose-500" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

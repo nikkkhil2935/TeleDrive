@@ -12,7 +12,11 @@ import {
   RefreshCw,
   Eye,
   EyeOff,
-  CheckCircle2
+  CheckCircle2,
+  Check,
+  ArrowLeft,
+  KeyRound,
+  Send
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import {
@@ -36,6 +40,7 @@ export const AuthModal: React.FC = () => {
   const [step, setStep] = useState<'creds' | 'code' | '2fa'>('creds');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [keysFilled, setKeysFilled] = useState(false);
 
   // QR Login State
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -54,6 +59,8 @@ export const AuthModal: React.FC = () => {
     setApiId(TELEGRAM_DESKTOP_API_ID);
     setApiHash(TELEGRAM_DESKTOP_API_HASH);
     setError(null);
+    setKeysFilled(true);
+    setTimeout(() => setKeysFilled(false), 2500);
   };
 
   // Reset states on modal close
@@ -63,6 +70,9 @@ export const AuthModal: React.FC = () => {
       setIsLoading(false);
       setQrDataUrl(null);
       setQrExpiresIn(0);
+      setStep('creds');
+      setCode('');
+      setPassword('');
     }
   }, [isAuthModalOpen]);
 
@@ -180,7 +190,7 @@ export const AuthModal: React.FC = () => {
               width: 240,
               margin: 1,
               color: {
-                dark: '#0f172a',
+                dark: '#07080B',
                 light: '#ffffff',
               },
             });
@@ -225,73 +235,86 @@ export const AuthModal: React.FC = () => {
   if (!isAuthModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150">
-      <div className="t-modal-content bg-[#FFFFFF] dark:bg-[#1E1F20] border border-slate-200 dark:border-[#444746]/60 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col text-[#1F1F1F] dark:text-[#E3E3E3] transition-colors">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200 select-none">
+      <div className="bg-[#0F1015]/95 backdrop-blur-3xl border border-white/[0.08] text-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col relative transition-all duration-300">
+        {/* Subtle Ambient Radial Glow */}
+        <div className="absolute top-0 right-0 w-72 h-72 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-60 h-60 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+
         {/* Modal Header */}
-        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-sky-500/15 text-sky-500 dark:text-sky-400 flex items-center justify-center font-bold text-sm">
-              TG
+        <div className="p-5 sm:p-6 border-b border-white/[0.08] flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-3.5">
+            {/* Telegram Authentic Squircle Brand Icon */}
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-500 via-sky-600 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/25 shrink-0">
+              <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+              </svg>
             </div>
             <div>
-              <h3 className="text-base font-semibold">Sign in with Telegram</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Connects directly via client MTProto WebSocket</p>
+              <h3 className="text-base sm:text-lg font-semibold tracking-tight text-white">Sign in with Telegram</h3>
+              <p className="text-xs text-white/50">Direct client-to-datacenter MTProto • Zero knowledge</p>
             </div>
           </div>
+
           <button
             onClick={() => setIsAuthModalOpen(false)}
             aria-label="Close"
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="text-white/40 hover:text-white p-2 rounded-full hover:bg-white/10 active:scale-95 transition-all"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="p-6 space-y-5 overflow-y-auto max-h-[78vh]">
-          {/* Privacy Guarantee Banner */}
-          <div className="p-3.5 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-500/30 text-xs text-sky-900 dark:text-sky-200 space-y-1">
-            <div className="font-semibold flex items-center gap-1.5 text-sky-600 dark:text-sky-400">
-              <ShieldCheck className="w-4 h-4" />
+        <div className="p-5 sm:p-6 space-y-4.5 overflow-y-auto max-h-[78vh] scrollbar-thin relative z-10">
+          {/* Privacy Guarantee Card */}
+          <div className="p-4 rounded-2xl bg-sky-500/[0.06] border border-sky-500/20 text-xs text-sky-200 space-y-1.5">
+            <div className="font-semibold flex items-center gap-2 text-sky-400">
+              <ShieldCheck className="w-4 h-4 shrink-0" />
               <span>Direct Telegram MTProto Connection</span>
             </div>
-            <p className="text-[11px] leading-relaxed text-sky-800/80 dark:text-sky-300/80">
-              Your browser communicates directly with Telegram servers over WSS. No middleman server ever receives your credentials, session keys, or media files.
+            <p className="text-[11px] leading-relaxed text-sky-200/80">
+              Your browser communicates directly with official Telegram servers over encrypted WSS. No middleman server ever receives your credentials, session keys, or media files.
             </p>
           </div>
 
-          {/* Quick Keys Option */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 text-xs">
-            <div className="space-y-0.5">
-              <div className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          {/* Quick Keys Helper */}
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.07] text-xs">
+            <div className="space-y-0.5 pr-2">
+              <div className="font-medium text-white flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 <span>Need quick Telegram API keys?</span>
               </div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="text-[11px] text-white/40">
                 You can auto-fill standard Telegram Desktop keys or use your own.
               </div>
             </div>
             <button
               type="button"
               onClick={useOfficialAppKeys}
-              className="text-xs bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-medium px-2.5 py-1.5 rounded-lg transition-colors shrink-0"
+              className={`text-xs font-medium px-3 py-1.5 rounded-xl transition-all shrink-0 active:scale-95 flex items-center gap-1.5 ${
+                keysFilled
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : 'bg-white/[0.08] hover:bg-white/[0.14] text-white/90 border border-white/10'
+              }`}
             >
-              Fill API Keys
+              {keysFilled ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <KeyRound className="w-3.5 h-3.5 text-amber-400" />}
+              <span>{keysFilled ? 'Keys Applied' : 'Fill API Keys'}</span>
             </button>
           </div>
 
           {/* Tab Selector: Phone / QR Code */}
-          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium">
+          <div className="grid grid-cols-2 gap-1.5 p-1 bg-black/40 rounded-2xl border border-white/[0.08] text-xs font-medium">
             <button
               type="button"
               onClick={() => {
                 setAuthMethod('credentials');
                 setError(null);
               }}
-              className={`flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all ${
                 authMethod === 'credentials'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white font-semibold shadow-md shadow-sky-500/25'
+                  : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <Smartphone className="w-4 h-4" />
@@ -304,10 +327,10 @@ export const AuthModal: React.FC = () => {
                 setError(null);
                 if (!qrDataUrl) handleStartQrLogin();
               }}
-              className={`flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all ${
                 authMethod === 'qr'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white font-semibold shadow-md shadow-sky-500/25'
+                  : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <QrCode className="w-4 h-4" />
@@ -316,29 +339,33 @@ export const AuthModal: React.FC = () => {
           </div>
 
           {error && (
-            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs flex items-start gap-2.5 animate-in fade-in duration-150">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
               <span className="leading-relaxed">{error}</span>
             </div>
           )}
 
           {authMethod === 'credentials' ? (
             step === 'creds' ? (
-              <form onSubmit={handleRequestCode} className="space-y-4">
+              <form onSubmit={handleRequestCode} className="space-y-4 pt-1">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">API ID</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+                      API ID
+                    </label>
                     <input
                       type="number"
                       required
                       placeholder="e.g. 2040"
                       value={apiId}
                       onChange={(e) => setApiId(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 font-mono transition-all"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">API Hash</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
+                      API Hash
+                    </label>
                     <input
                       type="text"
                       required
@@ -347,15 +374,17 @@ export const AuthModal: React.FC = () => {
                       placeholder="e.g. b18441..."
                       value={apiHash}
                       onChange={(e) => setApiHash(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-sky-500"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/20 font-mono focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 font-medium">
-                    <label>Phone Number (International format)</label>
-                    <span className="text-[11px] text-slate-400 font-normal">e.g. +15551234567</span>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <label className="font-semibold uppercase tracking-wider text-white/50">
+                      Phone Number (International format)
+                    </label>
+                    <span className="text-white/40 font-mono">e.g. +15551234567</span>
                   </div>
                   <input
                     type="tel"
@@ -364,25 +393,39 @@ export const AuthModal: React.FC = () => {
                     placeholder="+1 555 123 4567"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 font-mono transition-all"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-white font-medium text-xs py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-sky-500 via-sky-600 to-blue-600 hover:from-sky-400 hover:via-sky-500 hover:to-blue-500 disabled:opacity-50 text-white font-medium text-xs sm:text-sm py-3 rounded-xl shadow-lg shadow-sky-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
                 >
-                  {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  <span>{isLoading ? 'Requesting Code from Telegram...' : 'Send Verification Code'}</span>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Requesting Code from Telegram...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Send Verification Code</span>
+                    </>
+                  )}
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleVerifyCode} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                    Verification Code ({isCodeViaApp ? 'Sent via Telegram App' : 'Sent via SMS'})
-                  </label>
+              <form onSubmit={handleVerifyCode} className="space-y-4 pt-1">
+                <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <label className="font-medium text-white/80">
+                      Telegram Login Code
+                    </label>
+                    <span className="text-[10px] text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/20">
+                      {isCodeViaApp ? 'Telegram In-App Notification' : 'SMS Message'}
+                    </span>
+                  </div>
                   <input
                     type="text"
                     required
@@ -390,16 +433,19 @@ export const AuthModal: React.FC = () => {
                     autoComplete="one-time-code"
                     inputMode="numeric"
                     spellCheck={false}
-                    placeholder="Enter 5-digit code"
+                    placeholder="• • • • •"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-center text-lg font-mono tracking-widest focus:outline-none focus:border-sky-500"
+                    className="w-full bg-black/60 border border-sky-500/40 rounded-xl px-4 py-3 text-center text-xl font-mono tracking-[0.4em] font-bold text-sky-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/30 transition-all placeholder-white/20"
                   />
+                  <p className="text-[11px] text-white/40 text-center">
+                    Check your other Telegram clients or messages for the login code.
+                  </p>
                 </div>
 
                 {step === '2fa' && (
-                  <div className="space-y-2 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-500/30 animate-in fade-in">
-                    <div className="flex items-center justify-between text-xs font-semibold text-amber-700 dark:text-amber-400">
+                  <div className="space-y-2 p-4 rounded-2xl bg-amber-500/[0.07] border border-amber-500/30 animate-in fade-in">
+                    <div className="flex items-center justify-between text-xs font-semibold text-amber-400">
                       <label className="flex items-center gap-1.5">
                         <Lock className="w-3.5 h-3.5" />
                         <span>2FA Cloud Password</span>
@@ -408,7 +454,7 @@ export const AuthModal: React.FC = () => {
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        className="text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 font-normal text-[11px]"
+                        className="text-amber-400 hover:underline flex items-center gap-1 font-normal text-[11px]"
                       >
                         {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                         <span>{showPassword ? 'Hide' : 'Show'}</span>
@@ -422,15 +468,15 @@ export const AuthModal: React.FC = () => {
                       placeholder="Enter your 2FA Cloud Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-950 border border-amber-300 dark:border-amber-600/50 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-amber-500 text-slate-900 dark:text-slate-100"
+                      className="w-full bg-black/50 border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-amber-400 text-white placeholder-white/30"
                     />
-                    <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80">
+                    <p className="text-[11px] text-amber-200/70">
                       This password is encrypted client-side using SRP-6A before being verified by Telegram.
                     </p>
                   </div>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex gap-2.5 pt-1">
                   <button
                     type="button"
                     onClick={() => {
@@ -441,21 +487,22 @@ export const AuthModal: React.FC = () => {
                       }
                       setError(null);
                     }}
-                    className="w-1/3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs py-2.5 rounded-lg transition-colors"
+                    className="w-1/3 bg-white/[0.06] hover:bg-white/[0.1] text-white/80 hover:text-white text-xs font-medium py-3 rounded-xl border border-white/[0.08] transition-all flex items-center justify-center gap-1.5"
                   >
-                    Back
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Back</span>
                   </button>
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-2/3 bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-white font-medium text-xs py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2"
+                    className="w-2/3 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 disabled:opacity-50 text-white font-medium text-xs sm:text-sm py-3 rounded-xl shadow-lg shadow-sky-500/25 transition-all flex items-center justify-center gap-2"
                   >
                     {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                     <span>
                       {isLoading
                         ? 'Verifying with Telegram...'
                         : step === '2fa'
-                        ? 'Verify Cloud Password & Sign In'
+                        ? 'Verify Password & Sign In'
                         : 'Sign In'}
                     </span>
                   </button>
@@ -465,63 +512,72 @@ export const AuthModal: React.FC = () => {
           ) : (
             <div className="flex flex-col items-center justify-center space-y-4 text-center py-2">
               {isQrLoading ? (
-                <div className="w-60 h-60 flex flex-col items-center justify-center border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl space-y-3">
-                  <Loader2 className="w-8 h-8 text-sky-500 animate-spin" />
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Connecting to Telegram MTProto...</span>
+                <div className="w-60 h-60 flex flex-col items-center justify-center border border-dashed border-white/20 rounded-3xl space-y-3 bg-white/[0.02]">
+                  <Loader2 className="w-8 h-8 text-sky-400 animate-spin" />
+                  <span className="text-xs text-white/50">Connecting to Telegram MTProto...</span>
                 </div>
               ) : qrDataUrl ? (
-                <div className="flex flex-col items-center space-y-3">
-                  <div className="p-3 bg-white rounded-2xl shadow-lg border border-slate-200">
-                    <img src={qrDataUrl} alt="Telegram Login QR Code" className="w-52 h-52 object-contain" />
+                <div className="flex flex-col items-center space-y-3.5">
+                  <div className="p-3.5 bg-white rounded-3xl shadow-2xl border-4 border-white/10 ring-4 ring-sky-500/20">
+                    <img src={qrDataUrl} alt="Telegram Login QR Code" className="w-52 h-52 object-contain rounded-xl" />
                   </div>
-                  <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1">
-                    <p className="font-semibold">Scan with your Telegram mobile app:</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Settings → Devices → <strong>Link Desktop Device</strong>
-                    </p>
+
+                  <div className="text-xs text-white/80 space-y-1.5 max-w-xs">
+                    <p className="font-semibold text-white">Scan with your Telegram mobile app:</p>
+                    <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[11px] text-white/60">
+                      Settings → Devices → <strong className="text-sky-400">Link Desktop Device</strong>
+                    </div>
                   </div>
+
                   {qrExpiresIn > 0 ? (
-                    <div className="text-[11px] text-slate-400">
-                      Code expires in <span className="font-mono font-semibold text-sky-500">{qrExpiresIn}s</span>
+                    <div className="text-[11px] text-white/50 flex items-center gap-1.5">
+                      <span>Code expires in</span>
+                      <span className="font-mono font-semibold text-sky-400 px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20">
+                        {qrExpiresIn}s
+                      </span>
                     </div>
                   ) : (
-                    <div className="text-[11px] text-amber-500 font-medium">
+                    <div className="text-[11px] text-amber-400 font-medium">
                       QR code expired. Please refresh.
                     </div>
                   )}
+
                   <button
                     type="button"
                     onClick={handleStartQrLogin}
-                    className="text-xs text-sky-500 hover:underline flex items-center gap-1 font-medium"
+                    className="text-xs text-sky-400 hover:text-sky-300 hover:underline flex items-center gap-1.5 font-medium py-1"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" /> Refresh QR Code
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Refresh QR Code</span>
                   </button>
                 </div>
               ) : (
                 <button
                   type="button"
                   onClick={handleStartQrLogin}
-                  className="bg-sky-500 hover:bg-sky-400 text-white font-medium text-xs px-4 py-2.5 rounded-lg transition-colors"
+                  className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-medium text-xs sm:text-sm px-6 py-3 rounded-xl shadow-lg shadow-sky-500/25 transition-all flex items-center gap-2"
                 >
-                  Generate Telegram QR Code
+                  <QrCode className="w-4 h-4" />
+                  <span>Generate Telegram QR Code</span>
                 </button>
               )}
 
               {qrNeeds2fa && (
                 <form onSubmit={handleQrPasswordSubmit} className="w-full max-w-xs space-y-2 pt-2 text-left">
-                  <label className="text-xs font-semibold text-amber-500 flex items-center gap-1">
-                    <Lock className="w-3.5 h-3.5" /> 2FA Password Required
+                  <label className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>2FA Password Required</span>
                   </label>
                   <input
                     type="password"
                     placeholder="Enter Cloud Password"
                     value={qrPassword}
                     onChange={(e) => setQrPassword(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-sky-500 text-slate-900 dark:text-slate-100"
+                    className="w-full bg-black/50 border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-amber-400 text-white placeholder-white/30"
                   />
                   <button
                     type="submit"
-                    className="w-full bg-amber-500 hover:bg-amber-400 text-white text-xs font-semibold py-2 rounded-lg"
+                    className="w-full bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs py-2.5 rounded-xl transition-all shadow-md"
                   >
                     Submit 2FA Password
                   </button>
